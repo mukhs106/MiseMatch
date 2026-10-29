@@ -44,12 +44,15 @@ export function estimate(derived) {
       mid,
       low: Math.max(0, Math.floor(mid * (1 - SPREAD))),
       high: Math.ceil(mid * (1 + SPREAD)),
+      // A missing ingredient could be a major source, so the total isn't shown as if complete.
+      incomplete: missing[n].length > 0,
     };
   }
   return result;
 }
 
 export function formatRange(r) {
+  if (r.incomplete) return "can't estimate";
   if (r.high <= 1) return "under 1 g";
   if (r.low === r.high) return `about ${r.low} g`;
   return `${r.low}–${r.high} g`;
@@ -57,6 +60,7 @@ export function formatRange(r) {
 
 /** "more", "less" or "about the same", with a tolerance so noise doesn't read as change. */
 export function direction(before, after) {
+  if (before.incomplete || after.incomplete) return "can't compare";
   const diff = after.mid - before.mid;
   const tolerance = Math.max(1, before.mid * 0.08);
   if (diff > tolerance) return "more";

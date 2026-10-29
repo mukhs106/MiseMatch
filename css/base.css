@@ -1,0 +1,262 @@
+/* Reset, typography and app shell. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-regular);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+dl,
+dd,
+figure,
+fieldset {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+fieldset {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--action);
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1.5px;
+}
+
+h1 {
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-tight);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-tight);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-snug);
+  font-weight: var(--fw-medium);
+}
+
+small,
+.small {
+  font-size: var(--fs-sm);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.qty,
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--s-2);
+  top: -100px;
+  z-index: 100;
+  padding: var(--s-2) var(--s-4);
+  background: var(--action);
+  color: var(--text-on-action);
+  border-radius: var(--radius-sm);
+}
+
+.skip-link:focus {
+  top: var(--s-2);
+}
+
+/* App shell */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--gutter);
+  max-width: var(--w-content);
+  margin: 0 auto;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--action);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  min-height: var(--tap);
+}
+
+.wordmark .amp {
+  display: inline-grid;
+  place-items: center;
+  width: 1.35em;
+  height: 1.35em;
+  background: var(--highlight);
+  color: var(--c-ink);
+  border-radius: 46% 54% 50% 50% / 55% 45% 55% 45%;
+  font-size: 0.8em;
+  transform: rotate(-8deg);
+}
+
+main {
+  max-width: var(--w-content);
+  margin: 0 auto;
+  padding: 0 var(--gutter) calc(var(--s-8) + 72px);
+}
+
+.page {
+  max-width: var(--w-mobile);
+  margin: 0 auto;
+}
+
+@media (min-width: 720px) {
+  .page {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 960px) {
+  .page.page--wide {
+    max-width: none;
+  }
+}
+
+/* Navigation: bottom tabs on small screens, inline in header on wide */
+
+.tabbar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--gutter) calc(var(--s-2) + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.tabbar a {
+  flex: 1;
+  max-width: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: var(--tap);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  text-decoration: none;
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-sm);
+}
+
+.tabbar a[aria-current="page"] {
+  background: var(--surface-support);
+  color: var(--action);
+}
+
+.tabbar .count {
+  min-width: 1.5em;
+  padding: 0 0.4em;
+  border-radius: var(--radius-pill);
+  background: var(--highlight);
+  color: var(--c-ink);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  text-align: center;
+}
+
+@media (min-width: 960px) {
+  .tabbar {
+    position: static;
+    padding: 0;
+    border: 0;
+    background: none;
+    justify-content: flex-end;
+  }
+  .tabbar a {
+    flex: none;
+    padding: 0 var(--s-4);
+  }
+  main {
+    padding-bottom: var(--s-8);
+  }
+}

@@ -20,7 +20,7 @@ export const RECIPES = [
     servings: 4,
     blurb: "A weeknight curry where the onion-tomato masala does most of the work and spinach goes in at the end.",
     ingredients: [
-      { slot: "chickpeas", item: "chickpeas", qty: 480, unit: "g", group: "main", prep: "about 2 cans, drained" },
+      { slot: "chickpeas", item: "chickpeas", qty: 480, unit: "g", group: "main", prep: "drained; a 400 g can gives about 240 g" },
       { slot: "spinach", item: "spinach-fresh", qty: 200, unit: "g", group: "main", prep: "roughly chopped" },
       { slot: "tomatoes", item: "canned-tomatoes", qty: 400, unit: "g", group: "main", prep: "crushed" },
       { slot: "onion", item: "onion", qty: 1, unit: "", group: "main", prep: "finely chopped" },

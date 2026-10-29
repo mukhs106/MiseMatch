@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="mise & match: adapt recipes to what you have, how many you're feeding, and optional goals.">
+    <meta name="theme-color" content="#ffffff">
+    <title>mise &amp; match</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23febd02'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Arial' font-weight='700' font-size='17' fill='%2359000e'%3E%26%3C/text%3E%3C/svg%3E">
+    <link rel="preload" href="fonts/ApfelGrotezk-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/screens.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#app">Skip to content</a>
+    <header class="app-header">
+      <a class="wordmark" href="#/" aria-label="mise and match, home">mise <span class="amp" aria-hidden="true">&amp;</span> match</a>
+      <nav id="nav" class="tabbar" aria-label="Main"></nav>
+    </header>
+    <main id="app" tabindex="-1"></main>
+    <div id="toast" class="toast-region" role="status" aria-live="polite"></div>
+    <dialog id="sheet" class="sheet"></dialog>
+    <noscript><p style="padding:1rem">mise &amp; match needs JavaScript to run.</p></noscript>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

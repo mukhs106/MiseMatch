@@ -37,13 +37,13 @@ export const ITEMS = {
   "edamame": { name: "Shelled edamame, frozen", short: "edamame", aisle: "Frozen", nutrition: { protein: 11, fiber: 5 }, key: true },
 
   "canned-tomatoes": { name: "Canned tomatoes", aisle: "Pantry", nutrition: { protein: 0.8, fiber: 1.0 }, key: true },
-  "chickpeas": { name: "Chickpeas, cooked or canned and drained", short: "chickpeas", aisle: "Pantry", nutrition: { protein: 8, fiber: 7 }, key: true },
+  "chickpeas": { name: "Chickpeas, cooked or canned", short: "chickpeas", aisle: "Pantry", nutrition: { protein: 8, fiber: 7 }, key: true },
   "red-lentils": { name: "Red lentils (masoor dal)", short: "red lentils", aisle: "Pantry", nutrition: { protein: 24, fiber: 11 }, key: true },
   // Split moong fiber figures vary widely between sources, so it is left unknown.
   "moong-dal": { name: "Split yellow moong dal", short: "moong dal", aisle: "Pantry", nutrition: { protein: 24, fiber: null }, key: true },
-  "basmati": { name: "White basmati rice", short: "rice", aisle: "Pantry", nutrition: { protein: 7, fiber: 1 }, key: true },
+  "basmati": { name: "White basmati rice", short: "basmati rice", aisle: "Pantry", nutrition: { protein: 7, fiber: 1 }, key: true },
   "brown-basmati": { name: "Brown basmati rice", short: "brown rice", aisle: "Pantry", nutrition: { protein: 7.5, fiber: 3.5 }, key: true },
-  "jasmine": { name: "Jasmine rice", short: "rice", aisle: "Pantry", nutrition: { protein: 7, fiber: 1 }, key: true },
+  "jasmine": { name: "Jasmine rice", short: "jasmine rice", aisle: "Pantry", nutrition: { protein: 7, fiber: 1 }, key: true },
   "roti": { name: "Whole wheat rotis", short: "rotis", aisle: "Bakery", nutrition: { protein: 9, fiber: 6 }, gPerUnit: 40, key: true },
 
   "paneer": { name: "Paneer", aisle: "Dairy & eggs", nutrition: { protein: 18, fiber: 0 }, key: true },

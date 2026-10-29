@@ -6,7 +6,7 @@ import { SWAPS, getSwap } from "../js/data/swaps.js";
 import { ITEMS } from "../js/data/items.js";
 import { convert, formatQty } from "../js/core/units.js";
 import { deriveRecipe, defaultAdaptation, applySwap, removeSwap, setServings, checkSwap } from "../js/core/adapt.js";
-import { estimate, direction } from "../js/core/nutrition.js";
+import { estimate, direction, formatRange } from "../js/core/nutrition.js";
 import {
   needsFor, syncRecipe, emptyList, setOverride, deleteLine, addManual, resolveConflict,
   isListCurrent, displayQty, clearChecked, toggleChecked, undismiss,
@@ -121,7 +121,11 @@ test("nutrition: ranges move with nutrition swaps; missing data is reported, not
   assert.equal(direction(base.fiber, more.fiber), "more");
   assert.ok(base.protein.low < base.protein.mid && base.protein.mid < base.protein.high);
   const moong = estimate(deriveRecipe(dal, applySwap(defaultAdaptation(dal), "md-moong")));
-  assert.deepEqual(moong.fiber.missing ?? moong.missing.fiber, ["Split yellow moong dal"]);
+  assert.deepEqual(moong.missing.fiber, ["Split yellow moong dal"]);
+  assert.equal(moong.fiber.incomplete, true);
+  assert.equal(formatRange(moong.fiber), "can't estimate");
+  assert.equal(direction(base.fiber, moong.fiber), "can't compare");
+  assert.equal(moong.protein.incomplete, false);
   // per-serving values don't change with portions
   const half = estimate(deriveRecipe(dal, setServings(defaultAdaptation(dal), 2)));
   assert.equal(Math.round(half.protein.mid), Math.round(base.protein.mid));
