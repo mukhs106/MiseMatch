@@ -40,6 +40,16 @@ Not inspected by anyone working in the repository: the Figma file and its eight 
 | Oct 29 | Keep the "Start here" chana masala block on My Recipes rather than landing directly on the recipe, because pantry suggestions on home are part of what is being tested | Confirmed |
 | Oct 29 | Selected kitchen chips are control states, not color blocks, so their yellow fill stays, provided the selected state is also shown without color (check icon and `aria-pressed`). Verified in code: both are present. | Confirmed |
 | Oct 29 | The demo's partial amount goes on rice (a partial on fresh tomatoes stops counting once the canned tomato swap is applied) | Confirmed |
+| Oct 29 | C8: partial amounts move into each recipe's adaptation state; the shared on-hand list keeps presence only | Confirmed (T04) |
+| Oct 29 | C1: secondary button becomes a tonal fill with ink text and no outline (`#F3F2E7` on white surfaces, white on `#F3F2E7` surfaces); primary stays burgundy | Confirmed (T04) |
+| Oct 29 | C3: the four drawn accents stay as temporary placeholders, each a swappable SVG in assets/accents/; placeholder accents are allowed if swappable and recorded as temporary | Confirmed (T04) |
+| Oct 29 | C4: canned tomato copy is "more concentrated, cooked flavor, can be slightly more acidic, less fresh brightness"; the earlier record wording was wrong | Confirmed (T04) |
+| Oct 29 | C5: ground ginger stays with the garlic step; the record changes to match | Confirmed (T04) |
+| Oct 29 | C6: paneer carries a plain "contains dairy" note, stated as fact, not allergy guidance | Confirmed (T04) |
+| Oct 29 | C2: the build's colors win; the record's color table follows the tokens | Confirmed (T04) |
+| Oct 29 | C7: swap entry points appear only where swaps exist; no dead-end buttons | Confirmed (T04) |
+| Oct 29 | C9: no generic "No change." text; a consequence dimension shows only when the data says something about it | Confirmed (T04) |
+| Oct 29 | C10: when servings differ from the original, one short note says cooking times, pan size and oil may need adjusting; no per-ingredient logic | Confirmed (T04) |
 
 ### October 22 testing: observations, revisions, and next question
 
