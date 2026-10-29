@@ -1,7 +1,7 @@
 // Review evidence: screenshots of the main screens at several viewports, a
 // recorded walkthrough of the demo journey, and machine-checked results.
 //
-//   node capture.mjs --label before|after --out ../../reviews/<dated-folder> [--video] [--base http://localhost:8080]
+//   node capture.mjs --label before|after --out ../../reviews/<dated-folder> [--video] [--base http://localhost:8080] [--revision <sha>]
 //
 // Uses the installed Google Chrome (channel "chrome"), so no browser download is needed.
 // Each viewport runs in a fresh browser context, i.e. fresh localStorage.
@@ -32,7 +32,8 @@ const VIEWPORTS = [
 
 const git = (...a) => execFileSync("git", a, { cwd: repo }).toString().trim();
 // The tested revision: HEAD, flagged if the app itself (not this tooling) has uncommitted changes.
-const revision = `${git("rev-parse", "--short", "HEAD")}${git("status", "--porcelain", "--", ".", ":!reviews", ":!tools", ":!.gitignore") ? " + uncommitted app changes" : ""}`;
+// --revision names it explicitly when --base serves another checkout (e.g. a worktree of an older commit).
+const revision = args.revision ?? `${git("rev-parse", "--short", "HEAD")}${git("status", "--porcelain", "--", ".", ":!reviews", ":!tools", ":!.gitignore") ? " + uncommitted app changes" : ""}`;
 
 async function ensureServer() {
   try {
