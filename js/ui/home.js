@@ -1,129 +1,151 @@
-// My Recipes: a way in to the demo recipe, optional "cook from what you have"
-// suggestions, saved recipes, then the demo collection.
+// Recipes: search, All recipes / Use what you have, a one-line pantry summary,
+// a slim way in to the demo recipe, then saved recipes and the rest of the collection.
 
 import { html, plural } from "./html.js";
-import { icon, doodle } from "./icons.js";
+import { icon } from "./icons.js";
 import { RECIPES, getRecipe, HERO_RECIPE_ID } from "../data/recipes.js";
-import { shortName } from "../data/items.js";
-import { suggest, pantryChipItems } from "../core/suggest.js";
+import { ITEMS, shortName } from "../data/items.js";
+import { suggest } from "../core/suggest.js";
 import { isAdapted } from "../core/adapt.js";
 
+/** Matches a recipe by name, description, cuisine or any ingredient name. */
+function matches(recipe, query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  const words = [recipe.title, recipe.subtitle, recipe.cuisine, ...recipe.ingredients.map((i) => ITEMS[i.item]?.name ?? "")];
+  return words.some((w) => w.toLowerCase().includes(q));
+}
+
 export function homeView(ctx) {
-  const { state } = ctx;
-  const saved = state.saved.map(getRecipe).filter(Boolean);
-  const others = RECIPES.filter((r) => !state.saved.includes(r.id));
+  const { state, ui } = ctx;
+  const query = ui.query;
+  const haveMode = ui.mode === "have";
+  const results = haveMode ? suggest(RECIPES, state.pantry).filter((r) => matches(r.recipe, query)) : null;
+  // One line of wordplay per screen: the empty "Use what you have" state takes the slot.
+  const offScript = haveMode && !results.length;
   return html`
     <div class="page home">
       <header class="home-intro">
-        <h1 tabindex="-1" data-route-focus>My Recipes</h1>
-        <p class="muted">Recipes that work with what you have and what you need.</p>
+        <h1 tabindex="-1" data-route-focus>Recipes</h1>
+        ${offScript ? "" : html`<p class="muted">Blend the rules.</p>`}
       </header>
-      ${startCard(ctx)}
-      ${kitchenSection(ctx)}
+      <div class="recipe-tools">
+        <label class="field search-field">
+          <span class="visually-hidden">Search recipes or ingredients</span>
+          ${icon("search")}
+          <input class="input" type="search" data-action="recipe-search" value="${query}" placeholder="Search recipes or ingredients" autocomplete="off">
+        </label>
+        <div class="view-toggle mode-toggle" role="group" aria-label="Which recipes to show">
+          <button class="view-btn" aria-pressed="${!haveMode}" data-action="set-mode" data-mode="all">All recipes</button>
+          <button class="view-btn" aria-pressed="${haveMode}" data-action="set-mode" data-mode="have">Use what you have</button>
+        </div>
+      </div>
+      ${pantryRow(state)}
+      ${haveMode ? useWhatYouHave(results, query, state) : allRecipes(ctx, query)}
+      <p class="small muted home-note">Recipes, swaps and nutrition figures are demo data. Settings and Reset demo are in Profile and settings.</p>
+    </div>`;
+}
+
+function pantryRow(state) {
+  const n = Object.keys(state.pantry).length;
+  return html`
+    <div class="pantry-row">
+      ${icon("jar")}
+      <span>${n ? `${plural(n, "ingredient")} in your pantry` : "Your pantry is empty"}</span>
+      <a class="btn btn--quiet" href="#/pantry">${n ? "Edit" : "Add ingredients"}</a>
+    </div>`;
+}
+
+// A slim way in to the hero demo recipe.
+function startRow(ctx) {
+  const r = getRecipe(HERO_RECIPE_ID);
+  const adapted = isAdapted(r, ctx.state.adaptations[r.id]);
+  return html`
+    <a class="start-row" href="#/recipe/${r.id}">
+      <span class="eyebrow">${adapted ? "Pick up where you left off" : "Start here"}</span>
+      <span class="start-title">${r.title}</span>
+      <span class="start-arrow" aria-hidden="true">${icon("next")}</span>
+    </a>`;
+}
+
+function allRecipes(ctx, query) {
+  const { state } = ctx;
+  const saved = state.saved.map(getRecipe).filter(Boolean).filter((r) => matches(r, query));
+  const others = RECIPES.filter((r) => !state.saved.includes(r.id) && matches(r, query));
+  if (!saved.length && !others.length) {
+    return html`
+      <div class="empty">
+        <p>No recipes match “${query.trim()}”. Try an ingredient, like chickpeas or paneer.</p>
+        <button class="btn btn--secondary" data-action="clear-search">Clear search</button>
+      </div>`;
+  }
+  return html`
+    ${query.trim() ? "" : startRow(ctx)}
+    ${saved.length ? html`
       <section class="home-section" aria-labelledby="saved-h">
         <div class="section-head">
           <h2 id="saved-h">Saved</h2>
           <span class="muted small">${plural(saved.length, "recipe")}</span>
         </div>
-        ${saved.length
-          ? html`<ul class="recipe-cards">${saved.map((r) => html`<li>${recipeCard(ctx, r)}</li>`)}</ul>`
-          : html`<div class="empty">${doodle.pot}<p>Nothing saved yet. Save a recipe from the collection below and it'll live here.</p></div>`}
-      </section>
-      ${others.length ? html`
-        <section class="home-section" aria-labelledby="demo-h">
-          <div class="section-head">
-            <h2 id="demo-h">Demo collection</h2>
-            <span class="tag tag--demo">Demo data</span>
-          </div>
-          <ul class="collection">
-            ${others.map((r) => html`
-              <li class="collection-row">
-                <a href="#/recipe/${r.id}">
-                  <span class="collection-title">${r.title}</span>
-                  <span class="muted small">${r.subtitle} · ${r.minutes} min</span>
-                </a>
-                <button class="btn btn--secondary btn--small" data-action="save-recipe" data-id="${r.id}" aria-label="Save ${r.title}">
-                  ${icon("bookmark")} Save
-                </button>
-              </li>`)}
-          </ul>
-        </section>` : ""}
-      ${aboutSection()}
-    </div>`;
+        <ul class="recipe-cards">${saved.map((r) => html`<li>${recipeCard(ctx, r)}</li>`)}</ul>
+      </section>` : ""}
+    ${others.length ? html`
+      <section class="home-section" aria-labelledby="more-h">
+        <div class="section-head">
+          <h2 id="more-h">${saved.length ? "More recipes" : "Recipes"}</h2>
+          <span class="tag tag--demo">Demo data</span>
+        </div>
+        <ul class="collection">
+          ${others.map((r) => html`
+            <li class="collection-row">
+              <a href="#/recipe/${r.id}">
+                <span class="collection-title">${r.title}</span>
+                <span class="muted small">${r.subtitle} · ${r.minutes} min</span>
+              </a>
+              <button class="btn btn--secondary btn--small" data-action="save-recipe" data-id="${r.id}" aria-label="Save ${r.title}">
+                ${icon("bookmark")} Save
+              </button>
+            </li>`)}
+        </ul>
+      </section>` : ""}`;
 }
 
-// A compact way in to the hero demo recipe. Deliberately quieter than the collection.
-function startCard(ctx) {
-  const r = getRecipe(HERO_RECIPE_ID);
-  const adapted = isAdapted(r, ctx.state.adaptations[r.id]);
-  return html`
-    <a class="start-card" href="#/recipe/${r.id}">
-      <span class="eyebrow">${adapted ? "Pick up where you left off" : "Start here"} · Demo recipe</span>
-      <span class="start-title">${r.title}</span>
-      <span class="small muted">${adapted ? "Open your adapted version." : "Swap an ingredient and see what changes before you commit."}</span>
-      <span class="start-arrow" aria-hidden="true">${icon("next")}</span>
-    </a>`;
-}
+const STATUS = ["Can make now", "One swap away"];
 
-function kitchenSection(ctx) {
-  const { state } = ctx;
-  const chips = pantryChipItems(RECIPES);
-  // Chips show shared presence. An item with a partial amount in some recipe shows as "some".
-  const inRecipe = (id) => Object.values(state.adaptations).some((a) => a.partial?.[id]);
-  const marked = chips.filter((id) => state.pantry[id]?.status === "have" || inRecipe(id));
-  const results = suggest(RECIPES, state.pantry, state.adaptations).slice(0, 3);
-  // Optional: collapsed until used. Open state is remembered for the session.
-  const open = ctx.ui.open.kitchen ?? marked.length > 0;
-  return html`
-    <details class="kitchen" data-open-key="kitchen" ${open ? "open" : ""}>
-      <summary>
-        <h2 id="kitchen-h">Cook from what you have</h2>
-        <span class="small muted">${marked.length ? `${marked.length} on hand · see what you could make` : "Optional · tap what's in your kitchen"}</span>
-      </summary>
-      <div class="kitchen-body">
-      <p class="small muted kitchen-hint">Mark what you have today. Suggestions and recipes both use it, and nothing needs upkeep.</p>
-      <div class="chips" role="group" aria-label="Ingredients you have">
-        ${chips.map((id) => {
-          const on = state.pantry[id]?.status === "have";
-          const status = on ? "have" : inRecipe(id) ? "some" : "";
-          return html`<button class="chip" aria-pressed="${on}" data-state="${status}" data-action="pantry-toggle" data-item="${id}">
-            ${on ? icon("check") : ""}${capitalize(shortName(id))}${status === "some" ? html`<span class="visually-hidden">, some in a recipe</span><span aria-hidden="true" class="chip-some">some</span>` : ""}
-          </button>`;
-        })}
-      </div>
-      ${marked.length ? html`<button class="btn btn--quiet kitchen-clear" data-action="pantry-clear">Clear all</button>` : ""}
-      ${marked.length ? suggestions(results) : ""}
-      </div>
-    </details>`;
-}
-
-function suggestions(results) {
+function useWhatYouHave(results, query, state) {
   if (!results.length) {
-    return html`<p class="suggest-empty small">None of the recipes use these yet. Try marking a few more.</p>`;
+    const empty = !Object.keys(state.pantry).length;
+    return html`
+      <div class="empty">
+        <p class="empty-lead">Dinner, off-script.</p>
+        <p>${empty
+          ? "Add what's in your kitchen to your pantry, and recipes that use it will show here."
+          : query.trim()
+            ? `Nothing you can make matches “${query.trim()}”. Clear the search, or add more to your pantry.`
+            : "None of the recipes use what's in your pantry yet. Add a few more ingredients, or browse all recipes."}</p>
+        <a class="btn btn--secondary" href="#/pantry">Go to Pantry</a>
+      </div>`;
   }
   return html`
-    <div class="suggest">
-      <h3 class="eyebrow">You could make</h3>
-      <ol class="suggest-list">
-        ${results.map((r) => {
-          const fixes = r.missing.filter((m) => m.fix);
-          const gaps = r.missing.filter((m) => !m.fix);
-          return html`
-            <li>
-              <a class="suggest-item" href="#/recipe/${r.recipe.id}">
-                <span class="suggest-title">${r.recipe.title}</span>
-                <span class="suggest-status ${r.ready ? "is-ready" : ""}">
-                  ${r.ready
-                    ? fixes.length ? `Ready with ${plural(fixes.length, "swap")}` : "You have the key ingredients"
-                    : `${r.have + fixes.length} of ${r.total} key ingredients${fixes.length ? `, using ${plural(fixes.length, "swap")}` : ""}`}
-                </span>
-                ${fixes.map((m) => html`<span class="small">Swap: ${swapLabel(m)}</span>`)}
-                ${gaps.length ? html`<span class="small muted">Still need: ${gaps.map((m) => shortName(m.item)).join(", ")}</span>` : ""}
-              </a>
-            </li>`;
-        })}
-      </ol>
-    </div>`;
+    <ol class="suggest-list" aria-label="Recipes you can make, best match first">
+      ${results.map((r) => html`
+        <li>
+          <a class="suggest-item" href="#/recipe/${r.recipe.id}">
+            <span class="suggest-status ${r.rank === 0 ? "is-ready" : ""}">${STATUS[r.rank] ?? `${r.have} of ${r.total} key ingredients`}</span>
+            <span class="suggest-title">${r.recipe.title}</span>
+            <span class="small">${reason(r)}</span>
+          </a>
+        </li>`)}
+    </ol>`;
+}
+
+/** One short reason per card. */
+function reason(r) {
+  if (r.rank === 0) return "You have the key ingredients.";
+  const fixes = r.missing.filter((m) => m.fix);
+  const gaps = r.missing.filter((m) => !m.fix);
+  if (!gaps.length) return `Swap: ${fixes.map(swapLabel).join("; ")}.`;
+  return `Still need ${gaps.map((m) => shortName(m.item)).join(", ")}.`;
 }
 
 function swapLabel(m) {
@@ -148,20 +170,6 @@ function recipeCard(ctx, recipe) {
         ${listed ? html`<span class="tag tag--cool">${icon("list")} On your list</span>` : ""}
       </span>
     </a>`;
-}
-
-function aboutSection() {
-  return html`
-    <section class="about" aria-labelledby="about-h">
-      <h2 id="about-h" class="eyebrow">About this prototype</h2>
-      <p class="small muted">
-        The recipes and swaps are demo data written for this prototype, not tested sources.
-        Nutrition figures are rough ranges from typical values, and swaps are not checked for allergy safety.
-        Your changes are saved in this browser only.
-      </p>
-      <p class="small muted">Not built yet: importing from links or video, accounts, live AI suggestions, onboarding.</p>
-      <button class="btn btn--secondary btn--small" data-action="reset-demo">Reset demo</button>
-    </section>`;
 }
 
 export function capitalize(s) {

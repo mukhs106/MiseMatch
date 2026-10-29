@@ -162,6 +162,11 @@ const actions = {
     const goals = state.goals.includes(goal) ? state.goals.filter((g) => g !== goal) : [...state.goals, goal];
     commit({ ...state, goals });
   },
+  "clear-search": () => {
+    ui.query = "";
+    render({ keepFocus: false });
+    document.querySelector('[data-action="recipe-search"]')?.focus();
+  },
   "set-mode": ({ mode }) => {
     ui.mode = mode;
     render();
@@ -357,7 +362,9 @@ function parseRoute() {
 function focusSignature(el) {
   if (!el || el === document.body || !root.contains(el)) return null;
   const attrs = ["data-action", "data-id", "data-item", "data-key", "data-line", "data-slot", "data-swap", "data-delta", "data-goal", "data-view", "data-mode", "data-group", "data-place", "value"];
-  return attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a))}"]`).join("");
+  // `value` identifies a radio or checkbox option; on text fields it changes as you type.
+  const choice = el.type === "radio" || el.type === "checkbox";
+  return attrs.filter((a) => el.hasAttribute(a) && (a !== "value" || choice)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a))}"]`).join("");
 }
 
 /**

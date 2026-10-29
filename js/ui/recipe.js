@@ -8,6 +8,7 @@ import { swapsForRecipe, getSwap } from "../data/swaps.js";
 import { formatQty, unitFamily } from "../core/units.js";
 import { estimate, formatRange, direction } from "../core/nutrition.js";
 import { isListCurrent } from "../core/shopping.js";
+import { availability as pantryAvailability } from "../core/pantry.js";
 import { defaultAdaptation, deriveRecipe, isAdapted } from "../core/adapt.js";
 import { capitalize } from "./home.js";
 
@@ -32,7 +33,7 @@ export function recipeView(ctx, recipe) {
   const changes = adaptation.applied.length + (adaptation.servings !== recipe.servings ? 1 : 0);
   return html`
     <div class="page page--wide recipe">
-      <a class="back-link" href="#/">${icon("back")} My Recipes</a>
+      <a class="back-link" href="#/">${icon("back")} Recipes</a>
       <header class="recipe-head">
         <p class="eyebrow">${recipe.cuisine} · ${recipe.minutes} min</p>
         <h1 tabindex="-1" data-route-focus>${recipe.title}</h1>
@@ -180,14 +181,14 @@ function ingredientsSection(ctx, recipe, d) {
         <h2 id="ing-h">Ingredients</h2>
         <span class="muted small">for ${d.servings}</span>
       </div>
-      <p class="small muted ing-hint">Mark what you have. Anything unmarked counts as needed.</p>
+      <p class="small muted ing-hint">Mark what you have. It's saved to your <a href="#/pantry">pantry</a> and used by every recipe.</p>
       ${d.cautions.map((c) => html`<div class="notice">${icon("info")}<p>${c}</p></div>`)}
       ${GROUPS.map(([g, label]) => {
         const lines = d.ingredients.filter((l) => l.group === g);
         if (!lines.length) return "";
         const compact = g === "spices" || g === "staples";
         const items = lines.flatMap((l) => l.entries.map((e) => e.item)).filter((id) => !ITEMS[id].noShop);
-        const allHave = items.every((id) => availOf(ctx, recipe, id).status === "have");
+        const allHave = items.every((id) => availOf(ctx, recipe, id).status !== "need");
         return html`
           <div class="group">
             <div class="group-head">
@@ -270,11 +271,9 @@ function d_scaled(ctx, recipe) {
   return ctx.adaptation(recipe.id).servings !== recipe.servings;
 }
 
-/** This recipe's partial amount if it has one, otherwise shared presence. */
+/** Availability comes from the pantry, the one ingredient state every recipe shares. */
 function availOf(ctx, recipe, item) {
-  const partial = ctx.adaptation(recipe.id).partial?.[item];
-  if (partial) return { status: "some", ...partial };
-  return { status: ctx.state.pantry[item]?.status ?? "" };
+  return pantryAvailability(ctx.state.pantry, item);
 }
 
 function availability(ctx, recipe, entry) {
@@ -292,7 +291,7 @@ function availability(ctx, recipe, entry) {
 }
 
 function haveToggle(ctx, recipe, entry) {
-  const have = availOf(ctx, recipe, entry.item).status === "have";
+  const have = availOf(ctx, recipe, entry.item).status !== "need";
   return html`
     <label class="check have-check">
       <input type="checkbox" ${have ? "checked" : ""} data-action="avail-toggle" data-id="${recipe.id}" data-item="${entry.item}">
@@ -312,7 +311,7 @@ function partialInput(ctx, recipe, entry) {
   const id = `partial-${entry.item}`;
   return html`
     <div class="partial">
-      <label for="${id}" class="small">How much do you have for this recipe?</label>
+      <label for="${id}" class="small">How much do you have? Saved to your pantry.</label>
       <div class="partial-row">
         <input id="${id}" class="input input--num" type="number" inputmode="decimal" min="0" step="any"
           value="${have.qty ?? ""}" placeholder="amount" data-action="avail-qty" data-id="${recipe.id}" data-item="${entry.item}" data-unit="${mismatch ? entry.unit : unit}">
@@ -322,7 +321,7 @@ function partialInput(ctx, recipe, entry) {
           : html`<span class="small">${entry.unit || "count"}</span>`}
       </div>
       ${have.qty == null ? html`<p class="small muted">Without an amount, the full quantity stays on your list.</p>` : ""}
-      ${mismatch ? html`<p class="small warn">You entered this as ${have.unit}, which can't be compared with ${entry.unit || "a count"}. Enter it again here.</p>` : ""}
+      ${mismatch && have.qty != null ? html`<p class="small warn">Your pantry has ${formatQty(have.qty, have.unit)}, which can't be compared with ${entry.unit || "a count"}. It counts as amount unknown until you enter it here.</p>` : ""}
     </div>`;
 }
 
@@ -405,8 +404,6 @@ function shopBar(ctx, recipe, d, placement) {
   const needs = ctx.needs(recipe.id);
   const listed = ctx.state.list.synced[recipe.id] != null;
   const current = listed && isListCurrent(ctx.state.list, recipe.id, needs);
-  const unmarked = d.ingredients.flatMap((l) => l.entries)
-    .filter((e) => !ITEMS[e.item].noShop && !availOf(ctx, recipe, e.item).status).length;
   let action;
   if (current) action = html`<a class="btn btn--secondary btn--small" href="#/list">${icon("check")} On your list</a>`;
   else if (listed) action = html`<button class="btn btn--primary btn--small" data-action="sync-list" data-id="${recipe.id}" data-place="${placement}">Update list</button>`;
@@ -415,7 +412,7 @@ function shopBar(ctx, recipe, d, placement) {
     <div class="shop-bar shop-bar--${placement}" role="region" aria-label="Shopping for this recipe">
       <p class="shop-text">
         <strong>${needs.length ? `${plural(needs.length, "thing")} to buy` : "Nothing to buy"}</strong>
-        <span class="small muted">${listed && !current ? "Recipe changed since you added it" : unmarked ? `${unmarked} unmarked, counted as needed` : "Based on what you marked"}</span>
+        <span class="small muted">${listed && !current ? "Recipe or pantry changed since you added it" : "Based on your pantry"}</span>
       </p>
       ${action}
     </div>`;

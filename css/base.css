@@ -213,7 +213,9 @@ main {
   }
 }
 
-/* Navigation: bottom tabs on small screens, inline in header on wide */
+/* Navigation: three primary destinations. A bottom tab bar on small screens,
+   in the header on wide ones. The current tab has an indicator bar and a heavier
+   label as well as color. Pushed screens (recipe, profile) hide it on small screens. */
 
 .tabbar {
   position: fixed;
@@ -221,54 +223,116 @@ main {
   z-index: 20;
   display: flex;
   justify-content: center;
-  gap: var(--s-2);
-  padding: var(--s-2) var(--gutter) calc(var(--s-2) + env(safe-area-inset-bottom));
+  padding: 0 var(--s-2) env(safe-area-inset-bottom);
   background: var(--surface);
-  border-top: 1px solid var(--border-subtle);
+  border-top: var(--rule);
 }
 
 .tabbar a {
+  position: relative;
   flex: 1;
-  max-width: 200px;
+  max-width: 160px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--s-2);
-  min-height: var(--tap);
-  border-radius: var(--radius-pill);
-  color: var(--text);
+  gap: 2px;
+  min-height: 60px;
+  color: var(--text-muted);
   text-decoration: none;
   font-weight: var(--fw-medium);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
 }
 
 .tabbar a[aria-current="page"] {
-  background: var(--surface-support);
   color: var(--action);
+  font-weight: var(--fw-bold);
+}
+
+.tabbar a[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 25%;
+  right: 25%;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--action);
 }
 
 .tabbar .count {
+  position: absolute;
+  top: 6px;
+  left: calc(50% + 8px);
   min-width: 1.5em;
   padding: 0 0.4em;
   border-radius: var(--radius-pill);
   background: var(--highlight);
   color: var(--c-ink);
   font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
   line-height: 1.5;
   text-align: center;
+}
+
+/* Avatar: Profile and settings, top right of primary screens. */
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--surface-support);
+}
+
+.avatar:hover {
+  background: var(--border-subtle);
+}
+
+body[data-route="profile"] .avatar {
+  visibility: hidden;
+}
+
+@media (max-width: 959px) {
+  body[data-screen="pushed"] .tabbar,
+  body[data-screen="pushed"] .avatar {
+    display: none;
+  }
+  body[data-screen="pushed"] main {
+    padding-bottom: var(--s-8);
+  }
 }
 
 @media (min-width: 960px) {
   .tabbar {
     position: static;
+    gap: var(--s-1);
     padding: 0;
     border: 0;
     background: none;
-    justify-content: flex-end;
+    margin-left: auto;
   }
   .tabbar a {
     flex: none;
-    padding: 0 var(--s-4);
+    flex-direction: row;
+    gap: var(--s-2);
+    min-height: var(--tap);
+    padding: 0 var(--s-3);
+    font-size: var(--fs-sm);
+  }
+  .tabbar a[aria-current="page"]::before {
+    top: auto;
+    bottom: 0;
+    left: var(--s-3);
+    right: var(--s-3);
+    border-radius: 3px 3px 0 0;
+  }
+  .tabbar .count {
+    position: static;
+  }
+  .avatar {
+    margin-left: var(--s-2);
   }
   main {
     padding-bottom: var(--s-8);

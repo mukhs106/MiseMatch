@@ -40,35 +40,95 @@
   max-width: var(--measure);
 }
 
-/* Start here: one quiet card; burgundy only in its title. */
-.start-card {
-  position: relative;
+/* Recipes: search and the two-option mode control. */
+.recipe-tools {
   display: grid;
-  gap: var(--s-1);
-  padding: var(--s-4) calc(var(--s-4) + 28px) var(--s-4) var(--s-4);
+  gap: var(--s-3);
+}
+
+.search-field {
+  position: relative;
+}
+
+.search-field .icon {
+  position: absolute;
+  left: var(--s-3);
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.search-field .input {
+  width: 100%;
+  padding-left: calc(var(--s-3) + 28px);
+}
+
+.mode-toggle {
+  display: flex;
+}
+
+.mode-toggle .view-btn {
+  flex: 1;
+  justify-content: center;
+  min-height: var(--tap);
+}
+
+@media (min-width: 720px) {
+  .recipe-tools {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}
+
+/* One compact row each for the pantry summary and the demo way in. */
+.pantry-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) 0;
+  border-top: var(--rule);
+  border-bottom: var(--rule);
+}
+
+.pantry-row .btn--quiet {
+  margin-left: auto;
+}
+
+.start-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  min-height: var(--tap);
+  padding: var(--s-3) var(--s-4);
   border: var(--rule);
   border-radius: var(--radius-md);
   color: var(--text);
   text-decoration: none;
 }
 
-.start-card:hover {
+.start-row:hover {
   background: var(--surface-support);
 }
 
 .start-title {
-  font-size: var(--fs-xl);
+  font-size: var(--fs-lg);
   font-weight: var(--fw-bold);
-  line-height: var(--lh-tight);
   color: var(--action);
-  letter-spacing: -0.01em;
 }
 
 .start-arrow {
-  position: absolute;
-  right: var(--s-4);
-  top: 50%;
-  transform: translateY(-50%);
+  margin-left: auto;
+  align-self: center;
+}
+
+.home-note {
+  max-width: var(--measure);
+}
+
+.empty-lead {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--text);
 }
 
 /* Cook from what you have: optional, a single row until opened. */
@@ -1135,4 +1195,69 @@ input.line-name:focus-visible {
   .no-swap {
     padding-left: 0;
   }
+}
+
+/* ---------- Pantry ---------- */
+
+.pantry-page,
+.profile-page {
+  display: grid;
+  gap: var(--s-5);
+  padding-top: var(--s-3);
+}
+
+.pantry-add {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.pantry-add .input {
+  width: 100%;
+}
+
+.pantry-matches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.pantry-free {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-left: calc(-1 * var(--s-3));
+}
+
+.pantry-line .line-row {
+  grid-template-columns: 1fr auto auto;
+}
+
+.pantry-line .line-qty {
+  gap: var(--s-2);
+}
+
+.pantry-unit {
+  min-height: var(--tap);
+  padding: 0 var(--s-2);
+}
+
+.line-to-pantry {
+  justify-self: start;
+  margin-left: calc(-1 * var(--s-3));
+  font-size: var(--fs-sm);
+}
+
+/* ---------- Profile ---------- */
+
+.profile-group {
+  display: grid;
+  gap: var(--s-2);
+  justify-items: start;
+  padding-top: var(--s-4);
+  border-top: var(--rule);
+}
+
+.profile-group p {
+  max-width: var(--measure);
 }

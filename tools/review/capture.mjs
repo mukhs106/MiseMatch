@@ -102,6 +102,11 @@ async function screens(browser, vp) {
   await page.waitForSelector("h1");
   await shoot(page, dir, "02-recipe-top", false);
   await pageChecks(page, vp, "recipe, after navigation", errors);
+  if (label !== "before") {
+    // Pushed screen: no tab bar on small screens; header navigation stays on wide ones.
+    const navShown = await page.locator("#nav").isVisible();
+    record("recipe is a pushed screen (tab bar hidden on small, header nav on wide)", vp.name, navShown === !vp.mobile, `nav visible: ${navShown}`);
+  }
 
   // Adapt: portions, availability with a partial amount, swap preview, apply.
   await visible(page, '[data-action="servings"][data-delta="-1"]').click();
@@ -133,8 +138,29 @@ async function screens(browser, vp) {
   await page.locator('.add-item button[type="submit"]').click();
   await page.waitForTimeout(6500);
   await page.evaluate(() => document.activeElement?.blur()); // the Tab above was intentional keyboard use
+  if (label !== "before") {
+    await page.locator(".line", { hasText: "Onion" }).locator('input[type="checkbox"]').check();
+    await page.waitForTimeout(300);
+  }
   await shoot(page, dir, "05-list-populated");
   await pageChecks(page, vp, "grocery list, populated", errors);
+
+  if (label !== "before") {
+    await page.goto(`${base}/#/pantry`);
+    await page.waitForSelector("h1");
+    await shoot(page, dir, "07-pantry");
+    await pageChecks(page, vp, "pantry", errors);
+    await page.goto(`${base}/#/`);
+    await page.waitForSelector("h1");
+    await page.locator('[data-action="set-mode"][data-mode="have"]').click();
+    await page.waitForTimeout(300);
+    await shoot(page, dir, "08-use-what-you-have");
+    await pageChecks(page, vp, "recipes, use what you have", errors);
+    await page.locator(".avatar").click();
+    await page.waitForFunction(() => document.title.startsWith("Profile"));
+    await shoot(page, dir, "09-profile");
+    await pageChecks(page, vp, "profile and settings", errors);
+  }
 
   await context.close();
 
@@ -201,8 +227,34 @@ async function walkthrough(browser) {
   await pause();
 
   // Pointer navigation: focus still moves to the title for screen readers, with no ring.
-  await page.locator('nav a[href="#/"]').click();
-  await page.waitForSelector("h1");
+  await page.locator('.back-link').click();
+  await page.waitForFunction(() => document.title === "mise & match");
+  await pause(600);
+  // Keyboard order on a primary screen: skip link, wordmark, the three tabs, avatar, then content.
+  await page.evaluate(() => document.activeElement.blur());
+  const order = [];
+  await page.focus(".skip-link");
+  for (let i = 0; i < 6; i++) {
+    order.push(await page.evaluate(() => {
+      const a = document.activeElement;
+      return a.getAttribute("aria-label") ?? a.textContent.trim().replace(/\s+/g, " ");
+    }));
+    await page.keyboard.press("Tab");
+  }
+  order.push(await page.evaluate(() => document.activeElement.dataset.action ?? document.activeElement.tagName));
+  record("keyboard: focus order skip link, wordmark, tabs, avatar, search", vp.name,
+    order.join(" > ") === "Skip to content > mise & match, Recipes > Recipes > Grocery list > Pantry > Profile and settings > recipe-search", order.join(" > "));
+  await page.mouse.click(5, 300);
+
+  // Find it: search by ingredient, then Use what you have (empty pantry says what to do next).
+  await page.locator('[data-action="recipe-search"]').pressSequentially("chickpea", { delay: 60 });
+  await pause();
+  const found = await page.locator(".recipe-card-title, .collection-title").allInnerTexts();
+  record("search: 'chickpea' finds the chickpea recipes", vp.name, found.includes("Chana masala") && found.includes("Chana palak") && !found.includes("Tomato and egg stir-fry"), found.join(", "));
+  await page.locator('[data-action="set-mode"][data-mode="have"]').click();
+  await pause(1200);
+  await page.locator('[data-action="set-mode"][data-mode="all"]').click();
+  await page.locator('[data-action="recipe-search"]').fill("");
   await pause(600);
   await page.locator(`a[href="#/recipe/chana-masala"]`).first().click();
   await page.waitForFunction(() => document.title.startsWith("Chana masala")); // wait for the route render, not the old page's h1
@@ -223,8 +275,24 @@ async function walkthrough(browser) {
   await qty.press("Tab");
   await pause();
 
+  // See it in Pantry, then come back to the recipe.
+  await page.locator(".back-link").click();
+  await page.waitForFunction(() => document.title === "mise & match");
+  await page.locator('nav a[href="#/pantry"]').click();
+  await page.waitForFunction(() => document.title.startsWith("Pantry"));
+  await pause(1500);
+  const riceRow = await page.locator(".pantry-line", { hasText: "basmati" }).locator('input[data-action="pantry-qty"]').inputValue();
+  record("pantry: rice Some 100 g from the recipe shows in Pantry", vp.name, riceRow === "100", `rice ${riceRow}`);
+  await page.locator('nav a[href="#/"]').click();
+  await page.waitForFunction(() => document.title === "mise & match");
+  await page.locator(`a[href="#/recipe/chana-masala"]`).first().click();
+  await page.waitForFunction(() => document.title.startsWith("Chana masala"));
+  await pause();
+
   await visible(page, '[data-action="open-swaps"][data-slot="tomatoes"]').click();
   await pause();
+  const sheetTitle = await page.locator("#sheet-title").innerText();
+  record("swap sheet title", vp.name, sheetTitle === "Thyme for a swap.", sheetTitle);
   await page.locator('.option[data-swap="cm-canned-tomatoes"]').click();
   await pause(1500);
   const preview = await page.locator(".sheet-body").innerText();
@@ -259,8 +327,10 @@ async function walkthrough(browser) {
 
   await visible(page, '[data-action="sync-list"]').click();
   await pause(1200);
+  await page.locator(".back-link").click();
+  await page.waitForFunction(() => document.title === "mise & match");
   await page.locator('nav a[href="#/list"]').click();
-  await page.waitForSelector("h1");
+  await page.waitForFunction(() => document.title.startsWith("Grocery list"));
   await pause();
   const riceLine = page.locator(".line", { hasText: "basmati" });
   const riceQty = await riceLine.locator('input[data-action="list-qty"]').inputValue();
@@ -272,6 +342,27 @@ async function walkthrough(browser) {
   await page.locator('.add-item button[type="submit"]').click();
   await pause(1200);
 
+  // Check off a bought item: Add to pantry is offered, never automatic.
+  const onion = page.locator(".line", { hasText: "Onion" });
+  await onion.locator('input[type="checkbox"]').check();
+  await pause();
+  const autoAdded = await page.evaluate(() => "onion" in JSON.parse(localStorage.getItem("mise-match:v1")).pantry);
+  await page.locator(".line", { hasText: "Onion" }).locator('[data-action="list-to-pantry"]').click();
+  await pause(1200);
+  const added = await page.evaluate(() => JSON.parse(localStorage.getItem("mise-match:v1")).pantry.onion);
+  record("list: checking off offers Add to pantry; it adds only when chosen", vp.name, !autoAdded && added?.qty === 1, JSON.stringify({ autoAdded, added }));
+
+  // Avatar opens Profile and settings as a pushed screen with a way back.
+  await page.locator(".avatar").click();
+  await page.waitForFunction(() => document.title.startsWith("Profile"));
+  await pause(1200);
+  const profile = await page.evaluate(() => ({ tabbar: getComputedStyle(document.getElementById("nav")).display, back: !!document.querySelector(".back-link") }));
+  record("avatar: Profile and settings opens as a pushed screen", vp.name, profile.tabbar === "none" && profile.back, JSON.stringify(profile));
+  await page.locator(".back-link").click();
+  await page.waitForFunction(() => document.title === "mise & match");
+  await page.locator('nav a[href="#/list"]').click();
+  await page.waitForFunction(() => document.title.startsWith("Grocery list"));
+
   await page.reload();
   await page.waitForSelector("h1");
   await pause(1200);
@@ -281,10 +372,10 @@ async function walkthrough(browser) {
   }));
   record("reload: list edit and manual item persist", vp.name, persisted.rice === "100" && persisted.mango, JSON.stringify(persisted));
   await page.locator('nav a[href="#/"]').click();
-  await page.waitForSelector("h1");
+  await page.waitForFunction(() => document.title === "mise & match");
   await pause();
   await page.locator(`a[href="#/recipe/chana-masala"]`).first().click();
-  await page.waitForSelector("h1");
+  await page.waitForFunction(() => document.title.startsWith("Chana masala"));
   await pause(1200);
   const kept = await page.evaluate(() => ({
     servings: [...document.querySelectorAll(".stepper output")].find((o) => o.offsetParent)?.textContent,
