@@ -346,6 +346,12 @@ window.addEventListener("hashchange", () => {
 // ---------- events ----------
 
 document.addEventListener("click", (e) => {
+  // The skip link's "#app" would be read as a route by the hash router; move focus directly instead.
+  if (e.target.closest(".skip-link")) {
+    e.preventDefault();
+    root.focus();
+    return;
+  }
   const el = e.target.closest("[data-action]");
   if (!el || el.tagName === "INPUT" || el.tagName === "SELECT" || el.tagName === "FORM") return;
   const fn = actions[el.dataset.action];

@@ -169,14 +169,16 @@ async function walkthrough(browser) {
   const skip = await page.evaluate(() => ({ cls: document.activeElement.className, outline: getComputedStyle(document.activeElement).outlineStyle, top: document.activeElement.getBoundingClientRect().top }));
   record("keyboard: first Tab shows skip link", vp.name, skip.cls.includes("skip-link") && skip.top >= 0, JSON.stringify(skip));
   await page.keyboard.press("Enter");
-  const skipped = await page.evaluate(() => ({ id: document.activeElement.id, outline: getComputedStyle(document.activeElement).outlineStyle }));
-  record("keyboard: skip link moves focus to content without a ring on main", vp.name, skipped.id === "app" && skipped.outline === "none", JSON.stringify(skipped));
+  await page.waitForTimeout(100);
+  const skipped = await page.evaluate(() => ({ id: document.activeElement.id, outline: getComputedStyle(document.activeElement).outlineStyle, hash: location.hash }));
+  record("keyboard: skip link moves focus to content, keeps the route, no ring on main", vp.name,
+    skipped.id === "app" && skipped.outline === "none" && skipped.hash === "#/", JSON.stringify(skipped));
   await pause();
 
   // Keyboard navigation: the new page's title takes focus and shows a compact ring.
   await page.focus(`a[href="#/recipe/chana-masala"]`);
   await page.keyboard.press("Enter");
-  await page.waitForSelector("h1");
+  await page.waitForFunction(() => document.title.startsWith("Chana masala"));
   const kb = await page.evaluate(() => ({ tag: document.activeElement.tagName, outline: getComputedStyle(document.activeElement).outlineStyle }));
   record("keyboard navigation: title focused with visible ring", vp.name, kb.tag === "H1" && kb.outline === "solid", JSON.stringify(kb));
   await pause();
@@ -186,7 +188,7 @@ async function walkthrough(browser) {
   await page.waitForSelector("h1");
   await pause(600);
   await page.locator(`a[href="#/recipe/chana-masala"]`).first().click();
-  await page.waitForSelector("h1");
+  await page.waitForFunction(() => document.title.startsWith("Chana masala")); // wait for the route render, not the old page's h1
   const pt = await page.evaluate(() => ({ tag: document.activeElement.tagName, outline: getComputedStyle(document.activeElement).outlineStyle }));
   record("pointer navigation: title focused, no ring", vp.name, pt.tag === "H1" && pt.outline === "none", JSON.stringify(pt));
   await pause();
