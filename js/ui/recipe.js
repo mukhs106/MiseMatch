@@ -10,6 +10,7 @@ import { estimate, formatRange, direction } from "../core/nutrition.js";
 import { isListCurrent } from "../core/shopping.js";
 import { defaultAdaptation, deriveRecipe, isAdapted } from "../core/adapt.js";
 import { capitalize } from "./home.js";
+import { recipePhoto } from "./photo.js";
 
 export const REASON_LABEL = {
   missing: "If you're out",
@@ -32,22 +33,25 @@ export function recipeView(ctx, recipe) {
   const changes = adaptation.applied.length + (adaptation.servings !== recipe.servings ? 1 : 0);
   return html`
     <div class="page page--wide recipe">
-      <a class="back-link" href="#/">${icon("back")} My Recipes</a>
-      <header class="recipe-head">
-        <p class="eyebrow">${recipe.cuisine} · ${recipe.minutes} min</p>
-        <h1 tabindex="-1" data-route-focus>${recipe.title}</h1>
-        <p class="recipe-sub">${recipe.subtitle}</p>
-        ${doodle.squiggle}
-        <p class="recipe-blurb muted">${recipe.blurb} <span class="tag tag--demo">Demo recipe</span></p>
-        <div class="recipe-actions">
-          <button class="btn btn--secondary btn--small" data-action="${saved ? "unsave-recipe" : "save-recipe"}" data-id="${recipe.id}" aria-pressed="${saved}">
-            ${icon(saved ? "bookmark-filled" : "bookmark")} ${saved ? "Saved" : "Save recipe"}
-          </button>
-          <div class="view-toggle" role="group" aria-label="Which version to show">
-            <button class="view-btn" aria-pressed="${view === "mine"}" data-action="set-view" data-id="${recipe.id}" data-view="mine">
-              My version${changes ? html` <span class="count">${changes}</span>` : ""}
+      <a class="back-link" href="#/">${icon("back")} Recipes</a>
+      <header class="recipe-head ${recipe.image ? "has-photo" : ""}">
+        ${recipe.image ? recipePhoto(recipe, "hero", { loading: "eager" }) : ""}
+        <div class="recipe-head-text">
+          <p class="eyebrow">${recipe.cuisine} · ${recipe.minutes} min</p>
+          <h1 tabindex="-1" data-route-focus>${recipe.title}</h1>
+          <p class="recipe-sub">${recipe.subtitle}</p>
+          ${doodle.squiggle}
+          <p class="recipe-blurb muted">${recipe.blurb} <span class="tag tag--demo">Demo recipe</span></p>
+          <div class="recipe-actions">
+            <button class="btn btn--secondary btn--small" data-action="${saved ? "unsave-recipe" : "save-recipe"}" data-id="${recipe.id}" aria-pressed="${saved}">
+              ${icon(saved ? "bookmark-filled" : "bookmark")} ${saved ? "Saved" : "Save recipe"}
             </button>
-            <button class="view-btn" aria-pressed="${view === "original"}" data-action="set-view" data-id="${recipe.id}" data-view="original">Original</button>
+            <div class="view-toggle" role="group" aria-label="Which version to show">
+              <button class="view-btn" aria-pressed="${view === "mine"}" data-action="set-view" data-id="${recipe.id}" data-view="mine">
+                My version${changes ? html` <span class="count">${changes}</span>` : ""}
+              </button>
+              <button class="view-btn" aria-pressed="${view === "original"}" data-action="set-view" data-id="${recipe.id}" data-view="original">Original</button>
+            </div>
           </div>
         </div>
       </header>

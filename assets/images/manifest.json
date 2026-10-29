@@ -1,0 +1,485 @@
+{
+  "description": "Review of every original in assets/images. Originals are never edited, renamed, moved or deleted, and are git-ignored. 'shows' is from visual review, not the filename. status: cleared (source and license confirmed), unverified (not yet confirmed; do not publish), excluded (never used). use: recipe:<id> (shows that dish), brand:<screen> or header:<screen> (one supporting image), held (kept for a future matching recipe), near-duplicate (the other file of the pair is kept), excluded. Variants are built by tools/images for every entry that is not excluded and not a nearDuplicateOf another kept file.",
+  "reviewed": "2026-10-29",
+  "images": [
+    {
+      "file": " chai-02.jpg",
+      "cleanName": "chai-glass-paratha",
+      "shows": "Masala chai in a cut-glass mug on a dark metal tray, with layered lachha parathas and a cilantro sprig in front.",
+      "width": 4000,
+      "height": 6000,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 2453265,
+      "sha256": "69ef1a2f0a2bdf7903215546aa3c6e75089be5b8811b91220467fbed60b9a622",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "EXIF Artist and Copyright fields present but empty."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "near-duplicate",
+      "nearDuplicateOf": "paratha-01.jpg",
+      "notes": "Filename starts with a space. Same shoot as paratha-01; paratha-01 is the one kept."
+    },
+    {
+      "file": "butter-paneer-01.jpg",
+      "cleanName": "paneer-butter-masala",
+      "shows": "Paneer cubes in an orange tomato gravy with chopped cilantro, in a steel bowl on a white plate; tomatoes, peppers, onion, roti and small bowls of spices around it on a dark wood table.",
+      "width": 4480,
+      "height": 6720,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 2171919,
+      "sha256": "d69fb0dd525b9cedebc4c92b8e0c4b062dd757aa54d4e4591702c38a609a7a34",
+      "metadata": {
+        "creator": "Prashant Kumar",
+        "copyright": "Pixytales",
+        "notes": "IPTC Copyright 'Pixytales'; XMP dc:creator 'Prashant Kumar', dc:rights 'Pixytales', xmpRights:Marked True."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": "Metadata carries a third-party copyright notice (Pixytales, rights marked), the same reason palak-channa-01 and thali-02 are excluded. Owner to decide; not used anywhere."
+    },
+    {
+      "file": "chai-01.jpg",
+      "cleanName": "masala-chai-kulhad",
+      "shows": "Frothy masala chai in clay kulhad cups and a glass, garnished with saffron, with fresh ginger and green cardamom pods and a grater on a dark surface.",
+      "width": 3270,
+      "height": 4905,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 1830891,
+      "sha256": "92073220dc3abbc8d736e37b17f99c5d22fac278a0abd6a5d62fc065436303c7",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "No creator or copyright fields."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": ""
+    },
+    {
+      "file": "channa-masala-01.jpg",
+      "cleanName": "chana-masala-bowl",
+      "shows": "Chickpea curry in a spiced tomato masala served over white rice in a ceramic bowl, topped with chopped herbs and diced cucumber, with slices of dark bread, on a brass plate and striped cloth.",
+      "width": 3753,
+      "height": 5629,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 2652864,
+      "sha256": "9e416ad971a3ab2318fd96ac5998163e975756148afedee58c9b89ccf17a1832",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "Empty XMP packet; no creator or copyright fields."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "recipe:chana-masala",
+      "alt": "Chickpea curry over rice in a ceramic bowl, topped with herbs and diced cucumber",
+      "focal": {
+        "card": "50% 52%",
+        "hero": "50% 50%"
+      },
+      "notes": "Reasonably shows chana masala: whole chickpeas in an onion-tomato masala over basmati. The cucumber and bread are a serving style, not part of our recipe."
+    },
+    {
+      "file": "dosa-01.jpg",
+      "cleanName": "masala-dosa",
+      "shows": "Masala dosa folded over a yellow potato filling on a banana leaf on a wooden tray, with coconut chutney, a small bowl of potato sabzi and a piece of plantain.",
+      "width": 3949,
+      "height": 5924,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 2501481,
+      "sha256": "07992fa1baf2fd92fbed0abf8d525f9c618f19d031e781bea0c1401b2ee49bea",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "No creator or copyright fields."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": ""
+    },
+    {
+      "file": "idli-no-bg-01.png",
+      "cleanName": "idli-curry-cutout",
+      "shows": "Cutout (transparent background): three idlis in an orange onion-tomato curry on a round steel plate, seen from above.",
+      "width": 2931,
+      "height": 3273,
+      "format": "png",
+      "alpha": true,
+      "bytes": 9090307,
+      "sha256": "dd37f024031397db5d7c471486027009d781e73eb6633181d7c988e5032f5e0e",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "XMP holds only pixel dimensions (3024 x 4032 original); no creator or copyright fields."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": "Background already removed; WebP keeps the alpha channel."
+    },
+    {
+      "file": "mutton-curry-rice-01.jpg",
+      "cleanName": "mutton-curry-ghee-rice",
+      "shows": "Mutton curry with a marrow bone in a steel kadai, beside a bowl of white rice topped with fried onions, cashews and raisins, with papad and a red chutney on carved wood.",
+      "width": 3024,
+      "height": 4032,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 2409524,
+      "sha256": "a018c20e2d4fbf52f663b5fc5f20d95527a3ab87a51a39b6a461c759a4ba6318",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "No creator or copyright fields."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": ""
+    },
+    {
+      "file": "palak-channa-01.jpg",
+      "cleanName": null,
+      "shows": "A hand tearing a piece of roti dipped in a yellow lentil and chickpea dal with tomato, next to a steel plate of rotis on a wooden table. No spinach is visible, so it does not show chana palak despite the filename.",
+      "width": 2528,
+      "height": 1889,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 1405089,
+      "sha256": "8cf0f8d9c0f07416381714c61bbd02878e72f70d9d9cf127951ad2902249f472",
+      "metadata": {
+        "creator": "NiN_Teerapong:2016:Copyright",
+        "copyright": "B.Teerapong@Tel.0952496593",
+        "notes": "EXIF Artist and Copyright; XMP dc:creator and dc:rights carry the same notice."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "excluded",
+      "use": "excluded",
+      "nearDuplicateOf": "thali-02.jpg",
+      "notes": "Excluded by the owner: metadata carries a third-party copyright notice. No variants are made."
+    },
+    {
+      "file": "paratha-01.jpg",
+      "cleanName": "lachha-paratha-chai",
+      "shows": "A stack of layered lachha parathas with cilantro and sliced onion on a dark metal tray, with a cut-glass mug of masala chai behind, against a black background.",
+      "width": 4000,
+      "height": 6000,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 2185971,
+      "sha256": "b4a0bb99be30dd9023fc833d52f20fbb3705c2ce396cb6dacb70fb34f23b1608",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "EXIF Artist and Copyright fields present but empty."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": "Kept from the near-duplicate pair with chai-02."
+    },
+    {
+      "file": "pav-bhaji-01.jpg",
+      "cleanName": "pav-bhaji",
+      "shows": "Pav bhaji seen from above: a steel bowl of bhaji topped with butter, chopped onion and cilantro, with four buttered pav, lime wedges and red onion on a black plate.",
+      "width": 2508,
+      "height": 2948,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 1483644,
+      "sha256": "19434710453353d4a3a54261c51d309b0ee23bf1f870acf9f98c601cf0a91359",
+      "metadata": {
+        "creator": "SACHIN",
+        "copyright": "",
+        "notes": "EXIF Artist and XMP dc:creator 'SACHIN'; dc:rights present but empty."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": ""
+    },
+    {
+      "file": "punjabi-kadhi-01.jpg",
+      "cleanName": "kadhi-pakora",
+      "shows": "Yellow kadhi with a pakora, mustard seeds and curry leaves in a stone bowl with a wooden spoon, beside a wooden box of whole spices.",
+      "width": 2465,
+      "height": 3405,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 1276355,
+      "sha256": "681ff06bccb6866109399cf769360cbbf9d9125218bcf3d303a6694ed46753bf",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "No creator or copyright fields."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": "The pakora suggests kadhi pakora; regional style not confirmed."
+    },
+    {
+      "file": "spices-01.jpg",
+      "cleanName": "whole-spices-closeup",
+      "shows": "Close-up of whole spices on slate: green cardamom pods, coriander seeds, mustard seeds, cumin and cloves, with red chili powder and turmeric behind.",
+      "width": 2592,
+      "height": 3888,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 1437797,
+      "sha256": "3e57877184122bfe61538e7655795da54fa1922d70eacb11c4a7e6c6ebad72b8",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "Empty XMP packet; no creator or copyright fields."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": "Spice image: never used for a recipe."
+    },
+    {
+      "file": "spices-02.jpg",
+      "cleanName": "spice-spoons-wood",
+      "shows": "Spoons of ground and whole spices (turmeric, chili, coriander, fenugreek, cumin) with bay leaves, cinnamon bark, dried chilies and chana dal scattered on wood, from above.",
+      "width": 6000,
+      "height": 4000,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 3211675,
+      "sha256": "ebca686637737a4a187765c78bb5ce908d30e289710a453e25864c39d7ae0e41",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "EXIF Artist and Copyright fields present but empty."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": "Spice image: never used for a recipe."
+    },
+    {
+      "file": "spices-03.jpg",
+      "cleanName": "spice-market-stall",
+      "shows": "Market stall of ground spice mounds in patterned paper trays with handwritten German labels (for example 'Scharf', 'Curry'), in low warm light.",
+      "width": 7915,
+      "height": 5277,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 3350252,
+      "sha256": "2e5e001258f11999f4ec6f46ca7796d80eb5c753e18736e6a937410b7c14e762",
+      "metadata": {
+        "creator": "Julia Volk",
+        "copyright": "",
+        "notes": "EXIF Artist and XMP dc:creator 'Julia Volk'; no copyright field."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": "Spice image: never used for a recipe. Shows readable label text."
+    },
+    {
+      "file": "spices-04.jpg",
+      "cleanName": "spice-market-mounds",
+      "shows": "Market display of tall spice mounds: red chili flakes, black seeds, ochre and pale ground spices, with dried chilies behind.",
+      "width": 6000,
+      "height": 4000,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 3790984,
+      "sha256": "9e9a59d94621da1697ae650fab5e0edfb99b8b9c069a19014a885b9997f3d89d",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "IPTC block present but holds no creator or copyright."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": "Spice image: never used for a recipe."
+    },
+    {
+      "file": "spices-05.jpg",
+      "cleanName": "spice-spoons-slate",
+      "shows": "Vintage spoons of turmeric, coriander, chili, cumin, mustard seed, peppercorns and cardamom with star anise, cinnamon, dried chilies and bay leaves on dark slate, from above.",
+      "width": 4480,
+      "height": 5952,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 4207232,
+      "sha256": "1ddfd92b8e41b9d6cd1d54a92dc564aaef0c86803a5899cb7127fa1715f2e71c",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "Empty XMP packet; no creator or copyright fields."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": "Spice image: never used for a recipe."
+    },
+    {
+      "file": "spices-06.jpg",
+      "cleanName": "spice-box-grid",
+      "shows": "A wooden spice box from above in a three by three grid: dried red chilies in the centre, with coriander seeds, fennel, cloves, black pepper, cinnamon bark, mace, green cardamom and star anise.",
+      "width": 2938,
+      "height": 2938,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 1333382,
+      "sha256": "df6c3ffdba315f8b68c9f4245781f416e9f0c8ff28d2ae9a0890f9a446f483a3",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "Empty XMP packet; no creator or copyright fields."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "header:pantry",
+      "alt": "",
+      "focal": {
+        "header": "50% 50%"
+      },
+      "notes": "Reserved for the Pantry header when T05 builds it. Supporting image, empty alt."
+    },
+    {
+      "file": "thali-02.jpg",
+      "cleanName": null,
+      "shows": "Same shoot as palak-channa-01, wider: a divided steel thali with tandoori roti, onion, a pickled chili and bean sabzi and red chutney, a hand dipping roti into a bowl of yellow dal.",
+      "width": 4000,
+      "height": 2667,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 1713354,
+      "sha256": "4b83224fcfebf4156664876fbf39cba911612f6487e5350f6c76377135f44bfe",
+      "metadata": {
+        "creator": "NiN_Teerapong:2016:Copyright",
+        "copyright": "B.Teerapong@Tel.0952496593",
+        "notes": "EXIF, IPTC (By-line, Copyright) and XMP all carry the notice."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "excluded",
+      "use": "excluded",
+      "nearDuplicateOf": "palak-channa-01.jpg",
+      "notes": "Excluded by the owner: metadata carries a third-party copyright notice. No variants are made."
+    },
+    {
+      "file": "thali-03-01.jpg",
+      "cleanName": "restaurant-spread",
+      "shows": "Restaurant spread on a dark tray: a basket of garlic naan, onion bhajis with salad, curries in clay pots with julienned ginger, and green chutney.",
+      "width": 4608,
+      "height": 2592,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 1112428,
+      "sha256": "23184049215a36fa6781a90b6752b702b31319b9a58026b013de370e922237b0",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "EXIF Artist and Copyright fields present but empty."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": "Kept from the near-duplicate pair with thali-03-02. Not a thali."
+    },
+    {
+      "file": "thali-03-02.jpg",
+      "cleanName": "restaurant-spread-wide",
+      "shows": "Same spread as thali-03-01 from a wider angle: naan basket, two plates of onion bhajis with salad, four clay-pot curries and green chutney.",
+      "width": 4608,
+      "height": 2592,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 1172985,
+      "sha256": "9c57240e4271c01c795f783f16851f47dd191dfbeb880f84116eb4fc3335c43b",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "EXIF Artist and Copyright fields present but empty."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "near-duplicate",
+      "nearDuplicateOf": "thali-03-01.jpg",
+      "notes": "Near-duplicate of thali-03-01; not processed."
+    },
+    {
+      "file": "thali-04.jpg",
+      "cleanName": "veg-thali",
+      "shows": "Vegetarian thali from above on wood: aloo gobi, a pea curry, dal, rice, butter naan, papad, raita, gulab jamun, pickle, tomato, onion and a green chili.",
+      "width": 3024,
+      "height": 4032,
+      "format": "jpeg",
+      "alpha": false,
+      "bytes": 2294090,
+      "sha256": "f4d13f52c76c8ac95ef3cebadc3ec8b4508c79116ca1d947a0c8c227820d8d27",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "No creator or copyright fields."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "held",
+      "notes": ""
+    },
+    {
+      "file": "thali-no-bg-01.png",
+      "cleanName": "thali-cutout",
+      "shows": "Cutout (transparent background): a round steel thali from above with a paneer curry, aloo matar, dal, roti, papad, jeera rice, chaas, and onion with lime.",
+      "width": 3559,
+      "height": 3461,
+      "format": "png",
+      "alpha": true,
+      "bytes": 17948259,
+      "sha256": "be80b782272df996b3ea88a8b2bf73541779ee4c9dbfb9e95839da4cd06c4b23",
+      "metadata": {
+        "creator": "",
+        "copyright": "",
+        "notes": "XMP holds only pixel dimensions; no creator or copyright fields."
+      },
+      "sourceUrl": "",
+      "license": "",
+      "status": "unverified",
+      "use": "brand:recipes",
+      "alt": "",
+      "focal": {
+        "brand": "50% 50%"
+      },
+      "notes": "Recipes brand moment, at most one supporting image on the screen. Supporting image, empty alt."
+    }
+  ]
+}

@@ -12,3 +12,12 @@
 - Evidence: `reviews/2026-10-29-visual-refresh/` and `reviews/2026-10-29-visual-refresh.zip` (git-ignored).
 - Not checked: Safari, Firefox, a physical phone, a screen reader. Not pushed (pushing updates GitHub Pages).
 - Follow-up: T01's after screenshots should be retaken on this design; En Clair remains an unverified wordmark candidate.
+
+## 2026-10-29 · Photography and discovery pass (owner request, run before the queue)
+- Changed: reviewed all 22 photos by eye into `assets/images/manifest.json` (2 excluded for third-party copyright notices, 20 unverified, 0 cleared); originals git-ignored, never modified. `tools/images` (sharp) builds 102 WebP/JPEG variants at 480/960/1440 into `assets/img/` and generates `docs/image-sources.md`. Chana masala gets the only recipe photo (card 4:3, hero 4:5 capped / 4:3 wide); the other four recipes get the `#F3F2E7` tile, which also covers failed loads. Thali cutout as the Recipes supporting image; spice box reserved for Pantry. My Recipes renamed Recipes; search with an honest scope label; All recipes / Use what you have / Saved with reasons from `suggest()`. T05 trimmed to tabs, avatar and Pantry. Decision log: discovery (Confirmed), image rules and recipe sourcing (Proposed). Dev server sends image MIME types; `capture.mjs` takes `CHROME_PATH` and checks images, search, views and the fallback.
+- Verified: `npm test` 20 pass (2 new). Review capture before 60/60, after 170/170 at 430, 360 and 1280, plus a 430 walkthrough MP4; all 102 variant URLs 200.
+- Evidence: `reviews/2026-10-29-photography-discovery/` and `reviews/2026-10-29-photography-discovery.zip` (git-ignored).
+- Size: 61.3 MB of originals → 4.1 MB for the largest WebP of each (93.4% smaller); 14.2 MB for all variants (76.8% smaller).
+- Not checked: Safari, Firefox, a physical phone, a screen reader.
+- Not pushed: every used image is unverified. The originals were already pushed in `2b76443` (see the handoff).
+- Follow-up: owner to fill `sourceUrl` and `license` and set statuses; decide on butter-paneer-01 (Pixytales copyright notice) and on "Blend the rules." for the Recipes header.

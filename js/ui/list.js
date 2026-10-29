@@ -47,7 +47,7 @@ export function listView(ctx) {
         <div class="empty">
           ${doodle.pot}
           <p>Open a recipe, mark what you have, and choose Add to list. Anything you add here yourself stays put.</p>
-          <a class="btn btn--primary" href="#/">Go to My Recipes</a>
+          <a class="btn btn--primary" href="#/">Go to Recipes</a>
         </div>`}
     </div>`;
 }

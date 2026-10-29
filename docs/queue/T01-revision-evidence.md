@@ -7,7 +7,7 @@
 **Scope:**
 - Add the October 22 testing entry to the decision log in docs/product-context.md, keeping its wording and its note that original test records were not inspected.
 - Using the demo reset, capture "after" screenshots at 430px of these states, saved as PNGs in `docs/revisions/2026-10-29/after/`:
-  1. `01-home-suggestions.png`: My Recipes with on-hand chips selected and a "one swap away" suggestion visible
+  1. `01-home-suggestions.png`: Recipes in Use what you have, with ingredients marked and a "one swap away" reason visible
   2. `02-recipe-scaled.png`: chana masala scaled from 4 to 2 servings with availability marked, including one partial amount
   3. `03-swap-compare.png`: the swap sheet comparing fresh and canned tomatoes before applying
   4. `04-recipe-adapted.png`: the recipe after applying the swap and one protein or fiber change, with changes marked in place

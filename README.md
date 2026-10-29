@@ -53,19 +53,34 @@ If it doesn't load, check both devices are on the same network (guest or office 
 
 ## Try this (the demo path)
 
-1. On **My Recipes**, open **Chana masala** from the "Start here" card.
+1. On **Recipes**, open **Chana masala** from the "Start here" card. (Or search, or try **Use what you have** after marking a few ingredients under **What you have**.)
 2. Set servings to 2. Mark chickpeas and onion as **Have**, use **I have all of these** for spices, and set rice to **Some** with 100 g.
 3. Under **Ways to adapt**, choose **Tomatoes**, compare canned tomatoes, then apply it.
 4. Choose **More protein or fiber**, preview and apply **Add paneer** (or **Add frozen spinach**), then **Undo** one change.
 5. Try **Swap** on chickpeas to see dried chickpeas (soak and longer cooking) and why lentils aren't offered.
 6. Reload: your version is kept. Then **Add to list**, open the **Grocery list** and edit an amount.
 
-**Reset demo** at the bottom of My Recipes restores the starting state.
+**Reset demo** at the bottom of Recipes restores the starting state.
 
 ## Replacing placeholder art
 
 - Wordmark: typographic, set in `index.html` and styled by `.wordmark` in `css/base.css`.
 - Icons: replace any file in `assets/icons/` with a drawing of the same name (shown at 20 × 20 px).
+
+## Photos
+
+Original photos go in `assets/images/` and stay on your computer: git ignores them, and the scripts never edit, rename, move or delete them. Every file is reviewed in `assets/images/manifest.json` (what it shows, size, embedded credit, source, license, status). Only reviewed web variants in `assets/img/` are committed.
+
+```bash
+cd tools/images
+npm install
+node build.mjs
+node sources.mjs
+```
+
+`build.mjs` writes WebP and JPEG variants (WebP with alpha for cutouts) at 480, 960 and 1440 px and prints the size savings. `sources.mjs` regenerates `docs/image-sources.md` from the manifest. Don't push images whose status is `unverified`: see `docs/image-sources.md`.
+
+A recipe shows a photo only if the photo actually shows that dish (`image` in `js/data/recipes.js`); every other recipe gets a designed tile. There is no automated recipe or photo import.
 
 ## Review evidence
 
@@ -77,7 +92,7 @@ npm install
 node capture.mjs --label after --video --out ../../reviews/2026-10-29-visual-refresh
 ```
 
-It uses your installed Google Chrome and saves PNGs, an MP4 walkthrough and `results.json` (viewport, revision, scenario, pass/fail) under `reviews/`, which git ignores.
+It uses your installed Google Chrome (set `CHROME_PATH` to use another Chrome or Chromium binary) and saves PNGs, an MP4 walkthrough and `results.json` (viewport, revision, scenario, pass/fail) under `reviews/`, which git ignores.
 
 ## Docs
 

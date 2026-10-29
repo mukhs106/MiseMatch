@@ -12,6 +12,8 @@ import {
   isListCurrent, displayQty, clearChecked, toggleChecked, undismiss,
 } from "../js/core/shopping.js";
 import { suggest } from "../js/core/suggest.js";
+import { matchesQuery } from "../js/core/search.js";
+import { existsSync, readFileSync } from "node:fs";
 
 const chana = getRecipe("chana-palak");
 const dal = getRecipe("masoor-dal");
@@ -293,4 +295,39 @@ test("stored partial amounts from the shared list are dropped on load", async ()
   globalThis.localStorage = { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, v), removeItem: (k) => mem.delete(k) };
   const { load } = await import("../js/store.js");
   assert.deepEqual(load().pantry, { onion: { status: "have" } });
+});
+
+test("search matches names, ingredients and cuisine; every word must match", () => {
+  const masala = getRecipe("chana-masala");
+  assert.ok(matchesQuery(masala, "chana"));
+  assert.ok(matchesQuery(masala, "  CHICKPEAS ")); // ingredient, any case
+  assert.ok(matchesQuery(masala, "north indian"));
+  assert.ok(matchesQuery(masala, ""));
+  assert.ok(!matchesQuery(masala, "chana egg"));
+  assert.ok(matchesQuery(eggs, "chinese"));
+  assert.ok(matchesQuery(eggs, "fanqie")); // accents ignored
+  assert.deepEqual(RECIPES.filter((r) => matchesQuery(r, "paneer")).map((r) => r.id), ["paneer-bhurji"]);
+});
+
+test("recipe photos: only reviewed, non-excluded photos of that dish, with every variant present", () => {
+  const manifest = JSON.parse(readFileSync(new URL("../assets/images/manifest.json", import.meta.url), "utf8"));
+  const byName = Object.fromEntries(manifest.images.filter((e) => e.cleanName).map((e) => [e.cleanName, e]));
+  const withImage = RECIPES.filter((r) => r.image);
+  assert.deepEqual(withImage.map((r) => r.id), ["chana-masala"]); // no photo fits the others; they get the tile
+  for (const r of withImage) {
+    const entry = byName[r.image.name];
+    assert.ok(entry, `${r.id}: ${r.image.name} is not in the manifest`);
+    assert.notEqual(entry.status, "excluded");
+    assert.equal(entry.use, `recipe:${r.id}`, `${r.id}: the manifest must record the photo as showing this dish`);
+    assert.ok(r.image.alt.length > 10 && !/image|photo|picture/i.test(r.image.alt), `${r.id}: alt should plainly describe the dish`);
+    for (const f of ["card", "hero"]) assert.match(r.image.focal[f], /^\d+% \d+%$/);
+    for (const w of [480, 960, 1440]) {
+      for (const ext of ["webp", "jpg"]) {
+        assert.ok(existsSync(new URL(`../assets/img/${r.image.name}-${w}.${ext}`, import.meta.url)), `${r.image.name}-${w}.${ext} missing`);
+      }
+    }
+  }
+  for (const e of manifest.images.filter((x) => x.status === "excluded")) {
+    assert.ok(!withImage.some((r) => r.image.name === e.cleanName), `${e.file} is excluded`);
+  }
 });

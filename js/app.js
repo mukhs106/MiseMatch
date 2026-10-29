@@ -9,7 +9,7 @@ import { defaultAdaptation, deriveRecipe, applySwap, removeSwap, setServings } f
 import * as shop from "./core/shopping.js";
 import { html, plural } from "./ui/html.js";
 import { icon } from "./ui/icons.js";
-import { homeView } from "./ui/home.js";
+import { homeView, resultsView, resultsStatus } from "./ui/home.js";
 import { recipeView } from "./ui/recipe.js";
 import { listView } from "./ui/list.js";
 import { sheetView } from "./ui/swapSheet.js";
@@ -17,6 +17,8 @@ import { sheetView } from "./ui/swapSheet.js";
 let state = load();
 const ui = {
   route: { name: "home" },
+  recipesView: "all", // Recipes: "all" | "have" | "saved", for this session
+  query: "", // Recipes search, for this session
   view: {}, // recipeId -> "mine" | "original"
   open: {}, // disclosure open state by data-open-key, for this session
   undo: {}, // recipeId -> [previous adaptation], in-memory only
@@ -106,11 +108,11 @@ function syncList(id) {
 const actions = {
   "save-recipe": ({ id }) => {
     commit({ ...state, saved: [...state.saved.filter((x) => x !== id), id] });
-    toast(`Saved to My Recipes`);
+    toast("Saved. Find it under Saved in Recipes.");
   },
   "unsave-recipe": ({ id }) => {
     commit({ ...state, saved: state.saved.filter((x) => x !== id) });
-    toast("Removed from My Recipes. Your version is kept.", {
+    toast("Removed from Saved. Your version is kept.", {
       label: "Undo",
       run: () => commit({ ...state, saved: [...state.saved, id] }),
     });
@@ -200,6 +202,18 @@ const actions = {
     toast("Demo reset");
   },
   "close-dialog": () => closeDialog(),
+  "recipes-view": ({ view }) => {
+    ui.recipesView = view;
+    render();
+  },
+  // From Use what you have with nothing marked: open the "What you have" row and focus it.
+  "open-kitchen": () => {
+    ui.open.kitchen = true;
+    render({ keepFocus: false });
+    const summary = root.querySelector("#kitchen summary");
+    summary?.scrollIntoView({ block: "start" });
+    summary?.focus({ preventScroll: true });
+  },
 };
 
 // Inputs that commit on change (not on every keystroke, so typing isn't interrupted).
@@ -316,13 +330,14 @@ function render({ keepFocus = true, routeChanged = false, initial = false } = {}
   else if (r.name === "list") view = listView(ctx);
   else view = homeView(ctx);
   root.innerHTML = String(view);
+  checkImages(root);
   renderNav();
   if (ui.dialog && sheet.open) renderSheet();
 
   if (routeChanged) {
     window.scrollTo(0, 0);
     if (!initial) root.querySelector("[data-route-focus]")?.focus({ preventScroll: true });
-    document.title = r.name === "recipe" ? `${getRecipe(r.id).title} · mise & match` : r.name === "list" ? "Grocery list · mise & match" : "mise & match";
+    document.title = r.name === "recipe" ? `${getRecipe(r.id).title} · mise & match` : r.name === "list" ? "Grocery list · mise & match" : "Recipes · mise & match";
   } else if (sig) {
     root.querySelector(sig)?.focus({ preventScroll: true });
   }
@@ -332,7 +347,7 @@ function renderNav() {
   const open = state.list.lines.filter((l) => !l.checked).length;
   const r = ui.route.name;
   nav.innerHTML = String(html`
-    <a href="#/" ${r !== "list" ? html`aria-current="page"` : ""}>${icon("book")} My Recipes</a>
+    <a href="#/" ${r !== "list" ? html`aria-current="page"` : ""}>${icon("book")} Recipes</a>
     <a href="#/list" ${r === "list" ? html`aria-current="page"` : ""}>${icon("list")} Grocery list
       ${open ? html`<span class="count" aria-label="${plural(open, "item")}">${open}</span>` : ""}</a>`);
 }
@@ -377,6 +392,34 @@ document.addEventListener("submit", (e) => {
   commit({ ...state, list }, { keepFocus: false });
   document.querySelector('.add-item [name="name"]')?.focus();
 });
+
+// Search updates only the results, so typing is never interrupted by a full render.
+document.addEventListener("input", (e) => {
+  if (!e.target.matches?.('[data-action="recipe-search"]')) return;
+  ui.query = e.target.value;
+  const results = root.querySelector("#recipe-results");
+  if (!results) return;
+  results.innerHTML = String(resultsView(ctx));
+  root.querySelector("#results-status").textContent = resultsStatus(ctx);
+  checkImages(results);
+});
+
+// A recipe photo that fails shows its designed tile instead; a supporting image just goes away.
+// Error events don't bubble, so this listens in the capture phase.
+function imageFailed(img) {
+  const frame = img.closest("picture") && img.closest(".photo");
+  if (frame) frame.classList.add("is-failed");
+  else if (img.classList.contains("supporting")) img.hidden = true;
+}
+document.addEventListener("error", (e) => {
+  if (e.target instanceof HTMLImageElement) imageFailed(e.target);
+}, true);
+// Images that already failed (for example from the cache) before the listener saw them.
+function checkImages(scope) {
+  for (const img of scope.querySelectorAll(".photo picture img, img.supporting")) {
+    if (img.complete && img.currentSrc && img.naturalWidth === 0) imageFailed(img);
+  }
+}
 
 // <details> elements survive re-renders by remembering their open state.
 document.addEventListener("toggle", (e) => {

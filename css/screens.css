@@ -1,4 +1,4 @@
-/* Screen layouts: My Recipes, recipe detail, grocery list. */
+/* Screen layouts: Recipes, recipe detail, grocery list. */
 
 /* Empty states share one shape: accent, one sentence, one action, aligned to the page. */
 .empty {
@@ -18,7 +18,7 @@
   height: auto;
 }
 
-/* ---------- My Recipes ---------- */
+/* ---------- Recipes ---------- */
 
 .home {
   display: grid;
@@ -27,6 +27,13 @@
 }
 
 .home-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+.home-intro-text {
   display: grid;
   gap: var(--s-2);
 }
@@ -38,6 +45,19 @@
 
 .home-intro p {
   max-width: var(--measure);
+}
+
+/* The one supporting image on Recipes: a thali cutout, decorative. */
+.home-brand {
+  width: 112px;
+  height: auto;
+  margin-right: calc(-1 * var(--s-2));
+}
+
+@media (min-width: 720px) {
+  .home-brand {
+    width: 200px;
+  }
 }
 
 /* Start here: one quiet card; burgundy only in its title. */
@@ -129,39 +149,6 @@
   margin-left: 0.2em;
 }
 
-.suggest {
-  display: grid;
-  gap: var(--s-2);
-  margin-top: var(--s-2);
-  padding-top: var(--s-4);
-  border-top: var(--rule);
-}
-
-.suggest-list {
-  display: grid;
-  gap: var(--s-2);
-}
-
-.suggest-item {
-  display: grid;
-  gap: 2px;
-  padding: var(--s-3) var(--s-4);
-  border: var(--rule);
-  border-radius: var(--radius-md);
-  color: var(--text);
-  text-decoration: none;
-}
-
-.suggest-item:hover .suggest-title {
-  text-decoration: underline;
-}
-
-.suggest-title {
-  font-weight: var(--fw-bold);
-  font-size: var(--fs-lg);
-  color: var(--action);
-}
-
 .suggest-status {
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
@@ -178,71 +165,220 @@
   outline: 1.5px solid var(--c-ink);
 }
 
-.suggest-empty {
-  padding-top: var(--s-2);
-}
-
-.recipe-cards {
+/* Discovery: search, the three views, results. */
+.discover {
   display: grid;
   gap: var(--s-4);
 }
 
-@media (min-width: 720px) {
-  .recipe-cards {
-    grid-template-columns: 1fr 1fr;
+.search {
+  max-width: 34rem;
+}
+
+.recipe-views {
+  justify-self: start;
+  max-width: 100%;
+}
+
+.recipe-views .view-btn {
+  min-height: var(--tap);
+  padding: 0 var(--s-3);
+}
+
+@media (min-width: 400px) {
+  .recipe-views .view-btn {
+    padding: 0 var(--s-4);
   }
 }
 
-.recipe-card {
+#results-status {
+  margin-bottom: calc(-1 * var(--s-2));
+}
+
+.results-empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--s-2);
+  padding: var(--s-4) 0;
+  border-top: var(--rule);
+}
+
+.results-empty p {
+  max-width: 44ch;
+}
+
+.results-empty-line {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+
+/* Recipe cards: photo or tile at 4:3. Phones: a row with the photo beside the text. */
+.rcards {
+  display: grid;
+  gap: var(--s-4);
+}
+
+.rcard {
+  position: relative;
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s-3);
+  padding-bottom: var(--s-4);
+  border-bottom: var(--rule);
+}
+
+.rcard-body {
   display: grid;
   gap: var(--s-1);
-  padding: var(--s-5) var(--s-4) var(--s-4);
+  justify-items: start;
 }
 
-.recipe-card-title {
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-bold);
-  line-height: var(--lh-tight);
+.rcard-title {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-snug);
+}
+
+/* The title link covers the whole card; the Save button sits above it. */
+.rcard-link {
   color: var(--action);
-  letter-spacing: -0.01em;
+  text-decoration: none;
 }
 
-.recipe-card-meta {
+.rcard-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+}
+
+.rcard-link:hover {
+  text-decoration: underline;
+}
+
+.rcard-reasons {
+  display: grid;
+  gap: 2px;
+  margin-top: var(--s-1);
+}
+
+.rcard-meta {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-2);
+  margin-top: var(--s-1);
+}
+
+/* Long tags ("Your version · 2 servings · 1 change") wrap inside the narrow phone card. */
+.rcard-meta .tag {
+  white-space: normal;
+}
+
+.rcard-save {
+  position: relative;
+  z-index: 1;
   margin-top: var(--s-2);
 }
 
-
-.collection {
-  border-top: 1px solid var(--border-subtle);
+@media (min-width: 720px) {
+  .rcards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-6) var(--s-5);
+  }
+  .rcard {
+    grid-template-columns: minmax(0, 1fr);
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+  .rcard-title {
+    font-size: var(--fs-xl);
+    line-height: var(--lh-tight);
+  }
 }
 
-.collection-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-3);
-  padding: var(--s-3) 0;
-  border-bottom: 1px solid var(--border-subtle);
+@media (min-width: 960px) {
+  .rcards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
-.collection-row a {
+/* Photos. The tile is the designed fallback and sits under the photo, so a
+   recipe without a matching photo, or a photo that fails, shows the tile. */
+.photo {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--surface-support);
+}
+
+.photo--card {
+  aspect-ratio: 4 / 3;
+}
+
+.photo picture,
+.photo picture img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.photo picture img {
+  object-fit: cover;
+}
+
+.photo.is-failed picture {
+  display: none;
+}
+
+.photo-tile {
+  position: absolute;
+  inset: 0;
   display: grid;
+  align-content: end;
+  justify-items: start;
+  gap: var(--s-1);
+  padding: var(--s-2) var(--s-3);
   color: var(--text);
-  text-decoration: none;
-  min-height: var(--tap);
-  align-content: center;
 }
 
-.collection-title {
-  font-weight: var(--fw-medium);
-  font-size: var(--fs-lg);
+.photo-tile .icon {
+  margin-bottom: auto;
 }
 
-.collection-row a:hover .collection-title {
-  text-decoration: underline;
+.photo-tile-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 720px) {
+  .photo-tile {
+    padding: var(--s-4);
+  }
+  .photo-tile-name {
+    font-size: var(--fs-lg);
+  }
+}
+
+/* Recipe hero: 4:5 on phones, capped so the recipe below stays close; 4:3 when wider. */
+.photo--hero {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: min(38svh, 400px);
+}
+
+.photo--hero.is-failed {
+  aspect-ratio: auto;
+  height: 96px;
+}
+
+@media (min-width: 720px) {
+  .photo--hero {
+    aspect-ratio: 4 / 3;
+    max-height: 360px;
+  }
 }
 
 .about {
@@ -271,8 +407,28 @@
 
 .recipe-head {
   display: grid;
-  gap: var(--s-2);
+  gap: var(--s-4);
   padding: var(--s-2) 0 var(--s-5);
+}
+
+.recipe-head-text {
+  display: grid;
+  gap: var(--s-2);
+  align-content: start;
+}
+
+/* Wide: the photo sits beside the title at 4:3 instead of above it. */
+@media (min-width: 960px) {
+  .recipe-head.has-photo {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    column-gap: var(--s-7);
+    align-items: center;
+  }
+  .recipe-head.has-photo .photo--hero {
+    grid-column: 2;
+    grid-row: 1;
+    max-height: none;
+  }
 }
 
 .recipe-head h1 {

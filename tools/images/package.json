@@ -1,0 +1,13 @@
+{
+  "name": "mise-image-tools",
+  "private": true,
+  "description": "Builds optimized photo variants from assets/images. Kept separate so the app itself has no dependencies.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "sources": "node sources.mjs"
+  },
+  "dependencies": {
+    "sharp": "0.34.4"
+  }
+}

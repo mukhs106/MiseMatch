@@ -11,6 +11,10 @@
 // Steps use {slot} tokens, rendered with the slot's current ingredient name.
 // noSwap:      { slot: reason } when an ingredient has no tested swap at all.
 // unsupported: { slot: [{ label, reason }] } swaps people ask for that we explain instead of offering.
+// image:       optional, only when a photo actually shows this dish (see assets/images/manifest.json).
+//              { name: variant name in assets/img, alt: what the photo shows,
+//                focal: { card, hero } object-position for the 4:3 card and 4:5 hero crops }.
+//              Recipes without one get the designed fallback tile; never substitute another dish.
 
 export const HERO_RECIPE_ID = "chana-masala";
 
@@ -23,6 +27,11 @@ export const RECIPES = [
     minutes: 45,
     servings: 4,
     blurb: "The familiar weeknight chickpea curry. A good place to see what a swap changes before you commit to it.",
+    image: {
+      name: "chana-masala-bowl",
+      alt: "Chickpea curry over rice in a ceramic bowl, topped with herbs and diced cucumber",
+      focal: { card: "50% 52%", hero: "50% 50%" },
+    },
     ingredients: [
       { slot: "chickpeas", item: "chickpeas", qty: 480, unit: "g", group: "main", prep: "drained; a 400 g can gives about 240 g" },
       { slot: "tomatoes", item: "fresh-tomatoes", qty: 3, unit: "", group: "main", prep: "finely chopped" },

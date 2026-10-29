@@ -4,6 +4,7 @@
 //   node capture.mjs --label before|after --out ../../reviews/<dated-folder> [--video] [--base http://localhost:8080]
 //
 // Uses the installed Google Chrome (channel "chrome"), so no browser download is needed.
+// Set CHROME_PATH to use another Chrome or Chromium binary instead (for example in a cloud container).
 // Each viewport runs in a fresh browser context, i.e. fresh localStorage.
 
 import { chromium } from "playwright";
@@ -78,6 +79,51 @@ async function pageChecks(page, vp, scenario, errors) {
 
 const visible = (page, sel) => page.locator(sel).locator("visible=true").first();
 
+// Click after centering, so the fixed tab bar never covers the target.
+async function tap(page, sel) {
+  const el = page.locator(sel).first();
+  await el.evaluate((e) => e.scrollIntoView({ block: "center" }));
+  await el.click();
+}
+
+// Cumulative layout shift, collected from page load (see newContext below).
+const CLS_INIT = () => {
+  window.__cls = 0;
+  new PerformanceObserver((l) => {
+    for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls += e.value;
+  }).observe({ type: "layout-shift", buffered: true });
+};
+
+// Every photo and supporting image on the page: loaded, framed at the right ratio,
+// not stretched (object-fit: cover), and with the alt text its role calls for.
+async function imageChecks(page, vp, scenario, { frame, ratio }) {
+  await page.evaluate(async () => {
+    for (const img of document.querySelectorAll(".photo picture img, img.supporting")) {
+      img.dataset.loadingWas ??= img.getAttribute("loading");
+      img.loading = "eager";
+      await img.decode().catch(() => {});
+    }
+  });
+  const imgs = await page.evaluate(() => [...document.querySelectorAll(".photo picture img, img.supporting")].map((img) => {
+    const box = (img.closest(".photo") ?? img).getBoundingClientRect();
+    return {
+      src: img.currentSrc.split("/").pop(), natural: img.naturalWidth, alt: img.getAttribute("alt"), supporting: img.classList.contains("supporting"),
+      fit: getComputedStyle(img).objectFit, w: box.width, h: box.height, loading: img.dataset.loadingWas,
+      hasSize: img.hasAttribute("width") && img.hasAttribute("height"), frame: img.closest(".photo")?.className ?? "",
+    };
+  }));
+  record(`${scenario}: images present`, vp.name, imgs.length > 0, `${imgs.length}`);
+  record(`${scenario}: every image loaded (no broken or blocked variant)`, vp.name, imgs.every((i) => i.natural > 0), imgs.filter((i) => !i.natural).map((i) => i.src).join(", "));
+  record(`${scenario}: width and height attributes on every image`, vp.name, imgs.every((i) => i.hasSize));
+  record(`${scenario}: photos cover their frame (not stretched)`, vp.name, imgs.filter((i) => !i.supporting).every((i) => i.fit === "cover"));
+  const framed = imgs.filter((i) => i.frame.includes(frame));
+  const bad = framed.filter((i) => Math.abs(i.w / i.h - ratio(vp)) > 0.02);
+  record(`${scenario}: ${frame} frame ratio`, vp.name, framed.length > 0 && !bad.length, framed.map((i) => `${i.src} ${Math.round(i.w)}x${Math.round(i.h)}`).join("; "));
+  record(`${scenario}: alt text (photo describes the dish, supporting image empty)`, vp.name,
+    imgs.every((i) => (i.supporting ? i.alt === "" : i.alt && i.alt.length > 10)), imgs.map((i) => `${i.src}: "${i.alt}"`).join(" | "));
+  return imgs;
+}
+
 async function shoot(page, dir, name, fullPage = true) {
   await page.waitForTimeout(350); // let sheet/toast animations settle
   await page.screenshot({ path: join(dir, `${name}.png`), fullPage });
@@ -87,21 +133,76 @@ async function screens(browser, vp) {
   const dir = join(out, label, vp.name);
   mkdirSync(dir, { recursive: true });
   const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 2, isMobile: vp.mobile, hasTouch: vp.mobile });
+  await context.addInitScript(CLS_INIT);
   const page = await context.newPage();
   const errors = [];
+  const missing = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  page.on("response", (r) => r.status() >= 400 && missing.push(`${r.status()} ${r.url().replace(base, "")}`));
 
   await page.goto(`${base}/#/`);
   await page.waitForSelector("h1");
   await page.evaluate(() => document.fonts.ready);
+  await page.waitForLoadState("networkidle");
+  record("home: layout shift while loading (CLS < 0.02)", vp.name, (await page.evaluate(() => window.__cls)) < 0.02, `CLS ${(await page.evaluate(() => window.__cls)).toFixed(4)}`);
   await shoot(page, dir, "01-home-fresh");
   await pageChecks(page, vp, "home, fresh storage", errors);
+  const cards = await imageChecks(page, vp, "home cards", { frame: "photo--card", ratio: () => 4 / 3 });
+  record("home: lazy loading on cards", vp.name, cards.filter((i) => !i.supporting).every((i) => i.loading === "lazy"));
+  const tiles = await page.evaluate(() => [...document.querySelectorAll(".rcard .photo")].filter((p) => !p.querySelector("picture")).map((p) => p.innerText.trim()));
+  record("home: recipes without a matching photo show the tile with their name", vp.name, tiles.length === 4 && tiles.every(Boolean), tiles.join(", "));
+  record("home: All recipes shows the whole collection with Saved marks", vp.name,
+    (await page.locator(".rcard").count()) === 5 && (await page.locator('.rcard-save[aria-pressed="true"]').count()) === 2);
+
+  // Search within the current view.
+  const search = page.locator('input[data-action="recipe-search"]');
+  const searchLabel = await page.locator(".search .field-label").innerText();
+  record("search: label states scope (our collection, count, demo)", vp.name, /our collection/i.test(searchLabel) && /5 demo recipes/.test(searchLabel), searchLabel);
+  await search.fill("chickpea");
+  const hits = await page.locator(".rcard-title").allInnerTexts();
+  record("search: ingredient match in All recipes", vp.name, hits.join() === "Chana masala,Chana palak", `${hits.join(", ")} | ${await page.locator("#results-status").innerText()}`);
+  await search.fill("chinese");
+  record("search: cuisine match", vp.name, (await page.locator(".rcard-title").allInnerTexts()).join() === "Tomato and egg stir-fry");
+  await search.fill("lasagna");
+  const none = await page.locator(".results-empty").innerText().catch(() => "");
+  record("search: plain no-results message", vp.name, /No recipes in All recipes match "lasagna"/.test(none), none.replace(/\n/g, " "));
+  await shoot(page, dir, "01b-search-no-results");
+  await search.fill("");
+
+  // Saved view, then Use what you have.
+  await tap(page, '[data-action="recipes-view"][data-view="saved"]');
+  record("views: Saved shows saved recipes", vp.name, (await page.locator(".rcard-title").allInnerTexts()).join() === "Chana palak,Masoor dal tadka");
+  await search.fill("dal");
+  record("search: limited to the current view", vp.name, (await page.locator(".rcard-title").allInnerTexts()).join() === "Masoor dal tadka");
+  await search.fill("");
+  await tap(page, '[data-action="recipes-view"][data-view="have"]');
+  record("views: Use what you have asks to mark ingredients first", vp.name, (await page.locator('[data-action="open-kitchen"]').count()) === 1);
+  await tap(page, '[data-action="open-kitchen"]');
+  for (const item of ["chickpeas", "onion", "canned-tomatoes", "basmati"]) await tap(page, `[data-action="pantry-toggle"][data-item="${item}"]`);
+  const reasons = await page.locator(".rcard").evaluateAll((els) => els.map((el) => el.querySelector(".rcard-title").innerText + ": " + el.querySelector(".rcard-reasons")?.innerText.replace(/\n+/g, " / ")));
+  record("views: Use what you have orders by ready first, each card states its reason", vp.name,
+    reasons.length === 4 && reasons[0].startsWith("Chana masala: Ready with 1 swap / Supported swap: canned tomatoes for tomatoes")
+      && reasons.every((r) => /key ingredients|swap/.test(r)), reasons.join(" || "));
+  await page.locator(".discover").scrollIntoViewIfNeeded();
+  await shoot(page, dir, "01c-use-what-you-have");
+  await tap(page, '[data-action="pantry-clear"]');
+  await tap(page, '[data-action="recipes-view"][data-view="all"]');
 
   await page.goto(`${base}/#/recipe/chana-masala`);
   await page.waitForSelector("h1");
+  await page.waitForLoadState("networkidle");
+  record("recipe: layout shift while loading (CLS < 0.02)", vp.name, (await page.evaluate(() => window.__cls)) < 0.02, `CLS ${(await page.evaluate(() => window.__cls)).toFixed(4)}`);
   await shoot(page, dir, "02-recipe-top", false);
   await pageChecks(page, vp, "recipe, after navigation", errors);
+  // Hero: 4:5 on phones unless capped by height (then wider), 4:3 from 720px.
+  const hero = await imageChecks(page, vp, "recipe hero", {
+    frame: "photo--hero",
+    ratio: (v) => (v.width >= 720 ? 4 / 3 : Math.max(4 / 5, (v.width - 32) / Math.min(0.38 * v.height, 400))),
+  });
+  record("recipe: hero loads eagerly as WebP", vp.name, hero[0]?.loading === "eager" && hero[0]?.src.endsWith(".webp"), hero[0]?.src);
+  const heroBottom = await page.locator(".photo--hero").evaluate((el) => el.getBoundingClientRect().bottom);
+  record("recipe: hero leaves room for the recipe in the first screen", vp.name, heroBottom < vp.height * 0.6, `hero ends at ${Math.round(heroBottom)} of ${vp.height}px`);
 
   // Adapt: portions, availability with a partial amount, swap preview, apply.
   await visible(page, '[data-action="servings"][data-delta="-1"]').click();
@@ -136,7 +237,35 @@ async function screens(browser, vp) {
   await shoot(page, dir, "05-list-populated");
   await pageChecks(page, vp, "grocery list, populated", errors);
 
+  // Saved view now includes the adapted (unsaved) chana masala as Your version.
+  await page.goto(`${base}/#/`);
+  await page.waitForFunction(() => document.title.startsWith("Recipes")); // a hash change: wait for the new render
+  await tap(page, '[data-action="recipes-view"][data-view="saved"]');
+  const savedCards = await page.locator(".rcard").evaluateAll((els) => els.map((el) => el.innerText.replace(/\n/g, " ")));
+  record("views: Saved includes adapted versions labeled Your version", vp.name,
+    savedCards.some((t) => t.includes("Chana masala") && t.includes("Your version")), savedCards.map((t) => t.slice(0, 60)).join(" || "));
+  await shoot(page, dir, "05b-saved-your-version");
+  record("no 404s or other failed requests", vp.name, missing.length === 0, missing.join(", "));
+
   await context.close();
+
+  // Fallback: block the chana masala photo; its card and hero should show the tile, no broken image.
+  const blocked = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 2, isMobile: vp.mobile, hasTouch: vp.mobile });
+  await blocked.route("**/assets/img/chana-masala-bowl-*", (r) => r.abort());
+  const p3 = await blocked.newPage();
+  for (const [url, sel, shot] of [["#/", ".rcard .photo", "07-fallback-home"], ["#/recipe/chana-masala", ".photo--hero", "08-fallback-recipe"]]) {
+    await p3.goto(`${base}/${url}`);
+    await p3.waitForSelector("h1");
+    await p3.waitForTimeout(400);
+    const f = await p3.locator(sel).first().evaluate((el) => ({
+      failed: el.classList.contains("is-failed"),
+      picture: getComputedStyle(el.querySelector("picture")).display,
+      tile: el.querySelector(".photo-tile").innerText.trim(),
+    }));
+    record(`fallback: blocked photo shows the tile (${url})`, vp.name, f.failed && f.picture === "none" && f.tile === "Chana masala", JSON.stringify(f));
+    await shoot(p3, dir, shot, false);
+  }
+  await blocked.close();
 
   const empty = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 2, isMobile: vp.mobile, hasTouch: vp.mobile });
   const p2 = await empty.newPage();
@@ -190,6 +319,30 @@ async function walkthrough(browser) {
   const skipped = await page.evaluate(() => ({ id: document.activeElement.id, outline: getComputedStyle(document.activeElement).outlineStyle, hash: location.hash }));
   record("keyboard: skip link moves focus to content, keeps the route, no ring on main", vp.name,
     skipped.id === "app" && skipped.outline === "none" && skipped.hash === "#/", JSON.stringify(skipped));
+  await pause();
+
+  // Discovery: search, the three views, Use what you have reasons.
+  await page.locator('input[data-action="recipe-search"]').scrollIntoViewIfNeeded();
+  await page.locator('input[data-action="recipe-search"]').pressSequentially("spinach", { delay: 90 });
+  await pause(1200);
+  await page.locator('input[data-action="recipe-search"]').fill("");
+  await tap(page, '[data-action="recipes-view"][data-view="saved"]');
+  await pause(1200);
+  await tap(page, '[data-action="recipes-view"][data-view="have"]');
+  await pause();
+  await tap(page, '[data-action="open-kitchen"]');
+  await pause(600);
+  for (const item of ["chickpeas", "onion", "canned-tomatoes"]) {
+    await tap(page, `[data-action="pantry-toggle"][data-item="${item}"]`);
+    await pause(400);
+  }
+  await page.locator(".discover").scrollIntoViewIfNeeded();
+  await pause(1800);
+  record("walkthrough: Use what you have lists chana masala with a swap reason", vp.name,
+    (await page.locator(".rcard").first().innerText()).includes("Supported swap"));
+  await tap(page, '[data-action="pantry-clear"]');
+  await tap(page, '[data-action="recipes-view"][data-view="all"]');
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }));
   await pause();
 
   // Keyboard navigation: the new page's title takes focus and shows a compact ring.
@@ -312,7 +465,7 @@ async function walkthrough(browser) {
 }
 
 const server = await ensureServer();
-const browser = await chromium.launch({ channel: "chrome" });
+const browser = await chromium.launch(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : { channel: "chrome" });
 try {
   for (const vp of VIEWPORTS) await screens(browser, vp);
   if (args.video) await walkthrough(browser);

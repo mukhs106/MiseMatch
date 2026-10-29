@@ -1,0 +1,832 @@
+{
+  "generated": "tools/images/build.mjs",
+  "widths": [
+    480,
+    960,
+    1440
+  ],
+  "variants": {
+    "paneer-butter-masala": {
+      "source": "butter-paneer-01.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 720,
+          "format": "webp",
+          "file": "assets/img/paneer-butter-masala-480.webp",
+          "bytes": 30464
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "format": "jpeg",
+          "file": "assets/img/paneer-butter-masala-480.jpg",
+          "bytes": 41134
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "webp",
+          "file": "assets/img/paneer-butter-masala-960.webp",
+          "bytes": 84522
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "jpeg",
+          "file": "assets/img/paneer-butter-masala-960.jpg",
+          "bytes": 120835
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "webp",
+          "file": "assets/img/paneer-butter-masala-1440.webp",
+          "bytes": 146098
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "jpeg",
+          "file": "assets/img/paneer-butter-masala-1440.jpg",
+          "bytes": 221931
+        }
+      ]
+    },
+    "masala-chai-kulhad": {
+      "source": "chai-01.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 720,
+          "format": "webp",
+          "file": "assets/img/masala-chai-kulhad-480.webp",
+          "bytes": 29820
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "format": "jpeg",
+          "file": "assets/img/masala-chai-kulhad-480.jpg",
+          "bytes": 40347
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "webp",
+          "file": "assets/img/masala-chai-kulhad-960.webp",
+          "bytes": 74030
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "jpeg",
+          "file": "assets/img/masala-chai-kulhad-960.jpg",
+          "bytes": 114992
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "webp",
+          "file": "assets/img/masala-chai-kulhad-1440.webp",
+          "bytes": 136712
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "jpeg",
+          "file": "assets/img/masala-chai-kulhad-1440.jpg",
+          "bytes": 224728
+        }
+      ]
+    },
+    "chana-masala-bowl": {
+      "source": "channa-masala-01.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 720,
+          "format": "webp",
+          "file": "assets/img/chana-masala-bowl-480.webp",
+          "bytes": 32922
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "format": "jpeg",
+          "file": "assets/img/chana-masala-bowl-480.jpg",
+          "bytes": 43691
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "webp",
+          "file": "assets/img/chana-masala-bowl-960.webp",
+          "bytes": 79782
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "jpeg",
+          "file": "assets/img/chana-masala-bowl-960.jpg",
+          "bytes": 117326
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "webp",
+          "file": "assets/img/chana-masala-bowl-1440.webp",
+          "bytes": 136424
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "jpeg",
+          "file": "assets/img/chana-masala-bowl-1440.jpg",
+          "bytes": 213807
+        }
+      ]
+    },
+    "masala-dosa": {
+      "source": "dosa-01.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 720,
+          "format": "webp",
+          "file": "assets/img/masala-dosa-480.webp",
+          "bytes": 44182
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "format": "jpeg",
+          "file": "assets/img/masala-dosa-480.jpg",
+          "bytes": 52385
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "webp",
+          "file": "assets/img/masala-dosa-960.webp",
+          "bytes": 132452
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "jpeg",
+          "file": "assets/img/masala-dosa-960.jpg",
+          "bytes": 170362
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "webp",
+          "file": "assets/img/masala-dosa-1440.webp",
+          "bytes": 245436
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "jpeg",
+          "file": "assets/img/masala-dosa-1440.jpg",
+          "bytes": 334848
+        }
+      ]
+    },
+    "idli-curry-cutout": {
+      "source": "idli-no-bg-01.png",
+      "alpha": true,
+      "files": [
+        {
+          "width": 480,
+          "height": 536,
+          "format": "webp",
+          "file": "assets/img/idli-curry-cutout-480.webp",
+          "bytes": 31218
+        },
+        {
+          "width": 960,
+          "height": 1072,
+          "format": "webp",
+          "file": "assets/img/idli-curry-cutout-960.webp",
+          "bytes": 85204
+        },
+        {
+          "width": 1440,
+          "height": 1608,
+          "format": "webp",
+          "file": "assets/img/idli-curry-cutout-1440.webp",
+          "bytes": 148970
+        }
+      ]
+    },
+    "mutton-curry-ghee-rice": {
+      "source": "mutton-curry-rice-01.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 640,
+          "format": "webp",
+          "file": "assets/img/mutton-curry-ghee-rice-480.webp",
+          "bytes": 67408
+        },
+        {
+          "width": 480,
+          "height": 640,
+          "format": "jpeg",
+          "file": "assets/img/mutton-curry-ghee-rice-480.jpg",
+          "bytes": 67438
+        },
+        {
+          "width": 960,
+          "height": 1280,
+          "format": "webp",
+          "file": "assets/img/mutton-curry-ghee-rice-960.webp",
+          "bytes": 221646
+        },
+        {
+          "width": 960,
+          "height": 1280,
+          "format": "jpeg",
+          "file": "assets/img/mutton-curry-ghee-rice-960.jpg",
+          "bytes": 235469
+        },
+        {
+          "width": 1440,
+          "height": 1920,
+          "format": "webp",
+          "file": "assets/img/mutton-curry-ghee-rice-1440.webp",
+          "bytes": 429172
+        },
+        {
+          "width": 1440,
+          "height": 1920,
+          "format": "jpeg",
+          "file": "assets/img/mutton-curry-ghee-rice-1440.jpg",
+          "bytes": 471877
+        }
+      ]
+    },
+    "lachha-paratha-chai": {
+      "source": "paratha-01.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 720,
+          "format": "webp",
+          "file": "assets/img/lachha-paratha-chai-480.webp",
+          "bytes": 21562
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "format": "jpeg",
+          "file": "assets/img/lachha-paratha-chai-480.jpg",
+          "bytes": 31172
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "webp",
+          "file": "assets/img/lachha-paratha-chai-960.webp",
+          "bytes": 53496
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "jpeg",
+          "file": "assets/img/lachha-paratha-chai-960.jpg",
+          "bytes": 87102
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "webp",
+          "file": "assets/img/lachha-paratha-chai-1440.webp",
+          "bytes": 96092
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "jpeg",
+          "file": "assets/img/lachha-paratha-chai-1440.jpg",
+          "bytes": 167649
+        }
+      ]
+    },
+    "pav-bhaji": {
+      "source": "pav-bhaji-01.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 564,
+          "format": "webp",
+          "file": "assets/img/pav-bhaji-480.webp",
+          "bytes": 56448
+        },
+        {
+          "width": 480,
+          "height": 564,
+          "format": "jpeg",
+          "file": "assets/img/pav-bhaji-480.jpg",
+          "bytes": 56276
+        },
+        {
+          "width": 960,
+          "height": 1128,
+          "format": "webp",
+          "file": "assets/img/pav-bhaji-960.webp",
+          "bytes": 204274
+        },
+        {
+          "width": 960,
+          "height": 1128,
+          "format": "jpeg",
+          "file": "assets/img/pav-bhaji-960.jpg",
+          "bytes": 196883
+        },
+        {
+          "width": 1440,
+          "height": 1693,
+          "format": "webp",
+          "file": "assets/img/pav-bhaji-1440.webp",
+          "bytes": 391404
+        },
+        {
+          "width": 1440,
+          "height": 1693,
+          "format": "jpeg",
+          "file": "assets/img/pav-bhaji-1440.jpg",
+          "bytes": 407706
+        }
+      ]
+    },
+    "kadhi-pakora": {
+      "source": "punjabi-kadhi-01.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 663,
+          "format": "webp",
+          "file": "assets/img/kadhi-pakora-480.webp",
+          "bytes": 34806
+        },
+        {
+          "width": 480,
+          "height": 663,
+          "format": "jpeg",
+          "file": "assets/img/kadhi-pakora-480.jpg",
+          "bytes": 39862
+        },
+        {
+          "width": 960,
+          "height": 1326,
+          "format": "webp",
+          "file": "assets/img/kadhi-pakora-960.webp",
+          "bytes": 132286
+        },
+        {
+          "width": 960,
+          "height": 1326,
+          "format": "jpeg",
+          "file": "assets/img/kadhi-pakora-960.jpg",
+          "bytes": 149987
+        },
+        {
+          "width": 1440,
+          "height": 1989,
+          "format": "webp",
+          "file": "assets/img/kadhi-pakora-1440.webp",
+          "bytes": 256270
+        },
+        {
+          "width": 1440,
+          "height": 1989,
+          "format": "jpeg",
+          "file": "assets/img/kadhi-pakora-1440.jpg",
+          "bytes": 305794
+        }
+      ]
+    },
+    "whole-spices-closeup": {
+      "source": "spices-01.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 720,
+          "format": "webp",
+          "file": "assets/img/whole-spices-closeup-480.webp",
+          "bytes": 35002
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "format": "jpeg",
+          "file": "assets/img/whole-spices-closeup-480.jpg",
+          "bytes": 46715
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "webp",
+          "file": "assets/img/whole-spices-closeup-960.webp",
+          "bytes": 87508
+        },
+        {
+          "width": 960,
+          "height": 1440,
+          "format": "jpeg",
+          "file": "assets/img/whole-spices-closeup-960.jpg",
+          "bytes": 131119
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "webp",
+          "file": "assets/img/whole-spices-closeup-1440.webp",
+          "bytes": 157864
+        },
+        {
+          "width": 1440,
+          "height": 2160,
+          "format": "jpeg",
+          "file": "assets/img/whole-spices-closeup-1440.jpg",
+          "bytes": 244826
+        }
+      ]
+    },
+    "spice-spoons-wood": {
+      "source": "spices-02.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 320,
+          "format": "webp",
+          "file": "assets/img/spice-spoons-wood-480.webp",
+          "bytes": 28492
+        },
+        {
+          "width": 480,
+          "height": 320,
+          "format": "jpeg",
+          "file": "assets/img/spice-spoons-wood-480.jpg",
+          "bytes": 29048
+        },
+        {
+          "width": 960,
+          "height": 640,
+          "format": "webp",
+          "file": "assets/img/spice-spoons-wood-960.webp",
+          "bytes": 94706
+        },
+        {
+          "width": 960,
+          "height": 640,
+          "format": "jpeg",
+          "file": "assets/img/spice-spoons-wood-960.jpg",
+          "bytes": 101280
+        },
+        {
+          "width": 1440,
+          "height": 960,
+          "format": "webp",
+          "file": "assets/img/spice-spoons-wood-1440.webp",
+          "bytes": 192964
+        },
+        {
+          "width": 1440,
+          "height": 960,
+          "format": "jpeg",
+          "file": "assets/img/spice-spoons-wood-1440.jpg",
+          "bytes": 209882
+        }
+      ]
+    },
+    "spice-market-stall": {
+      "source": "spices-03.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 320,
+          "format": "webp",
+          "file": "assets/img/spice-market-stall-480.webp",
+          "bytes": 21748
+        },
+        {
+          "width": 480,
+          "height": 320,
+          "format": "jpeg",
+          "file": "assets/img/spice-market-stall-480.jpg",
+          "bytes": 26452
+        },
+        {
+          "width": 960,
+          "height": 640,
+          "format": "webp",
+          "file": "assets/img/spice-market-stall-960.webp",
+          "bytes": 55774
+        },
+        {
+          "width": 960,
+          "height": 640,
+          "format": "jpeg",
+          "file": "assets/img/spice-market-stall-960.jpg",
+          "bytes": 73367
+        },
+        {
+          "width": 1440,
+          "height": 960,
+          "format": "webp",
+          "file": "assets/img/spice-market-stall-1440.webp",
+          "bytes": 94554
+        },
+        {
+          "width": 1440,
+          "height": 960,
+          "format": "jpeg",
+          "file": "assets/img/spice-market-stall-1440.jpg",
+          "bytes": 131741
+        }
+      ]
+    },
+    "spice-market-mounds": {
+      "source": "spices-04.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 320,
+          "format": "webp",
+          "file": "assets/img/spice-market-mounds-480.webp",
+          "bytes": 34578
+        },
+        {
+          "width": 480,
+          "height": 320,
+          "format": "jpeg",
+          "file": "assets/img/spice-market-mounds-480.jpg",
+          "bytes": 33731
+        },
+        {
+          "width": 960,
+          "height": 640,
+          "format": "webp",
+          "file": "assets/img/spice-market-mounds-960.webp",
+          "bytes": 115208
+        },
+        {
+          "width": 960,
+          "height": 640,
+          "format": "jpeg",
+          "file": "assets/img/spice-market-mounds-960.jpg",
+          "bytes": 118030
+        },
+        {
+          "width": 1440,
+          "height": 960,
+          "format": "webp",
+          "file": "assets/img/spice-market-mounds-1440.webp",
+          "bytes": 221854
+        },
+        {
+          "width": 1440,
+          "height": 960,
+          "format": "jpeg",
+          "file": "assets/img/spice-market-mounds-1440.jpg",
+          "bytes": 237360
+        }
+      ]
+    },
+    "spice-spoons-slate": {
+      "source": "spices-05.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 638,
+          "format": "webp",
+          "file": "assets/img/spice-spoons-slate-480.webp",
+          "bytes": 62948
+        },
+        {
+          "width": 480,
+          "height": 638,
+          "format": "jpeg",
+          "file": "assets/img/spice-spoons-slate-480.jpg",
+          "bytes": 60939
+        },
+        {
+          "width": 960,
+          "height": 1275,
+          "format": "webp",
+          "file": "assets/img/spice-spoons-slate-960.webp",
+          "bytes": 249018
+        },
+        {
+          "width": 960,
+          "height": 1275,
+          "format": "jpeg",
+          "file": "assets/img/spice-spoons-slate-960.jpg",
+          "bytes": 235099
+        },
+        {
+          "width": 1440,
+          "height": 1913,
+          "format": "webp",
+          "file": "assets/img/spice-spoons-slate-1440.webp",
+          "bytes": 507382
+        },
+        {
+          "width": 1440,
+          "height": 1913,
+          "format": "jpeg",
+          "file": "assets/img/spice-spoons-slate-1440.jpg",
+          "bytes": 498186
+        }
+      ]
+    },
+    "spice-box-grid": {
+      "source": "spices-06.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 480,
+          "format": "webp",
+          "file": "assets/img/spice-box-grid-480.webp",
+          "bytes": 51720
+        },
+        {
+          "width": 480,
+          "height": 480,
+          "format": "jpeg",
+          "file": "assets/img/spice-box-grid-480.jpg",
+          "bytes": 50170
+        },
+        {
+          "width": 960,
+          "height": 960,
+          "format": "webp",
+          "file": "assets/img/spice-box-grid-960.webp",
+          "bytes": 153606
+        },
+        {
+          "width": 960,
+          "height": 960,
+          "format": "jpeg",
+          "file": "assets/img/spice-box-grid-960.jpg",
+          "bytes": 166388
+        },
+        {
+          "width": 1440,
+          "height": 1440,
+          "format": "webp",
+          "file": "assets/img/spice-box-grid-1440.webp",
+          "bytes": 264978
+        },
+        {
+          "width": 1440,
+          "height": 1440,
+          "format": "jpeg",
+          "file": "assets/img/spice-box-grid-1440.jpg",
+          "bytes": 322194
+        }
+      ]
+    },
+    "restaurant-spread": {
+      "source": "thali-03-01.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 270,
+          "format": "webp",
+          "file": "assets/img/restaurant-spread-480.webp",
+          "bytes": 22478
+        },
+        {
+          "width": 480,
+          "height": 270,
+          "format": "jpeg",
+          "file": "assets/img/restaurant-spread-480.jpg",
+          "bytes": 25759
+        },
+        {
+          "width": 960,
+          "height": 540,
+          "format": "webp",
+          "file": "assets/img/restaurant-spread-960.webp",
+          "bytes": 68350
+        },
+        {
+          "width": 960,
+          "height": 540,
+          "format": "jpeg",
+          "file": "assets/img/restaurant-spread-960.jpg",
+          "bytes": 79757
+        },
+        {
+          "width": 1440,
+          "height": 810,
+          "format": "webp",
+          "file": "assets/img/restaurant-spread-1440.webp",
+          "bytes": 113302
+        },
+        {
+          "width": 1440,
+          "height": 810,
+          "format": "jpeg",
+          "file": "assets/img/restaurant-spread-1440.jpg",
+          "bytes": 150072
+        }
+      ]
+    },
+    "veg-thali": {
+      "source": "thali-04.jpg",
+      "alpha": false,
+      "files": [
+        {
+          "width": 480,
+          "height": 640,
+          "format": "webp",
+          "file": "assets/img/veg-thali-480.webp",
+          "bytes": 64744
+        },
+        {
+          "width": 480,
+          "height": 640,
+          "format": "jpeg",
+          "file": "assets/img/veg-thali-480.jpg",
+          "bytes": 63742
+        },
+        {
+          "width": 960,
+          "height": 1280,
+          "format": "webp",
+          "file": "assets/img/veg-thali-960.webp",
+          "bytes": 228322
+        },
+        {
+          "width": 960,
+          "height": 1280,
+          "format": "jpeg",
+          "file": "assets/img/veg-thali-960.jpg",
+          "bytes": 232597
+        },
+        {
+          "width": 1440,
+          "height": 1920,
+          "format": "webp",
+          "file": "assets/img/veg-thali-1440.webp",
+          "bytes": 458876
+        },
+        {
+          "width": 1440,
+          "height": 1920,
+          "format": "jpeg",
+          "file": "assets/img/veg-thali-1440.jpg",
+          "bytes": 487760
+        }
+      ]
+    },
+    "thali-cutout": {
+      "source": "thali-no-bg-01.png",
+      "alpha": true,
+      "files": [
+        {
+          "width": 480,
+          "height": 467,
+          "format": "webp",
+          "file": "assets/img/thali-cutout-480.webp",
+          "bytes": 51746
+        },
+        {
+          "width": 960,
+          "height": 934,
+          "format": "webp",
+          "file": "assets/img/thali-cutout-960.webp",
+          "bytes": 153256
+        },
+        {
+          "width": 1440,
+          "height": 1400,
+          "format": "webp",
+          "file": "assets/img/thali-cutout-1440.webp",
+          "bytes": 274160
+        }
+      ]
+    }
+  }
+}

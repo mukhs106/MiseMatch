@@ -2,3 +2,6 @@
 node_modules/
 # Review evidence: dated capture folders and ZIPs stay out of source commits.
 reviews/
+# Original photos stay local; only reviewed web variants in assets/img are committed.
+assets/images/*.jpg
+assets/images/*.png
