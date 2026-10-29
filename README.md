@@ -53,14 +53,12 @@ If it doesn't load, check both devices are on the same network (guest or office 
 
 ## Try this (the demo path)
 
-1. On **My Recipes**, open **Chana masala** from the "Start here" card.
-2. Set servings to 2. Mark chickpeas and onion as **Have**, use **I have all of these** for spices, and set rice to **Some** with 100 g.
-3. Under **Ways to adapt**, choose **Tomatoes**, compare canned tomatoes, then apply it.
-4. Choose **More protein or fiber**, preview and apply **Add paneer** (or **Add frozen spinach**), then **Undo** one change.
-5. Try **Swap** on chickpeas to see dried chickpeas (soak and longer cooking) and why lentils aren't offered.
-6. Reload: your version is kept. Then **Add to list**, open the **Grocery list** and edit an amount.
-
-**Reset demo** at the bottom of My Recipes restores the starting state.
+1. On **Recipes**, search for an ingredient (for example "chickpea"), or switch to **Use what you have**.
+2. Open **Chana masala** (the "Start here" row). Set servings to 2 and set rice to **Some** with 100 g.
+3. Go back and open the **Pantry** tab: rice shows 100 g. Recipes and Pantry share it.
+4. Back in the recipe, under **Ways to adapt**, choose **Tomatoes**, compare canned tomatoes, then apply it. Try **Undo** on a change.
+5. Choose **Add to list**, then open the **Grocery list**: rice is 50 g (150 − 100). Check off an item and choose **Add to pantry**.
+6. Reload: everything is kept. **Reset demo** is under the avatar (Profile and settings).
 
 ## Replacing placeholder art
 

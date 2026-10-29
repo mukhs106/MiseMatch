@@ -218,13 +218,13 @@ Superseded: warm ivory `#FAF7F0` main background; the October 29 assistant palet
 
 Per the build prompt: a working web app in organized HTML, CSS, and modular JavaScript, with local persistence and an explicit demo reset. A small labeled seed collection with hand-authored, deterministic swap and consequence data. Recipe data, substitution rules, calculations, UI, and storage kept in separate modules without an elaborate framework.
 
-Core: recipe detail with servings scaling; availability marking including partial quantities; swap alternatives with consequences compared before applying; explicit apply and undo; a retained adapted version; an editable shopping list derived from one adaptation state. Supporting: lightweight saving, My Recipes with pantry-based suggestions, optional nutrition-oriented swaps.
+Core: recipe detail with servings scaling; availability marking including partial quantities; swap alternatives with consequences compared before applying; explicit apply and undo; a retained adapted version; an editable shopping list derived from one adaptation state. Supporting: lightweight saving, Recipes with pantry-based suggestions (Use what you have), a Pantry screen, optional nutrition-oriented swaps.
 
 Deferred: social and video imports, accounts, live AI, onboarding, budgets, restaurants, ratings, weekly planning, social features, named versions.
 
 ### First demo scenario: chana masala (Confirmed)
 
-Chana masala is the hero recipe and the scenario used to judge whether adaptation works. Path: the user opens it at 4 servings from the "Start here" block on My Recipes, scales to 2, marks what is on hand (with the partial amount on rice), finds fresh tomatoes missing and compares canned tomatoes, then applies a "more protein" or "more fiber" adjustment, sees the adapted recipe with changes marked, and generates a list.
+Chana masala is the hero recipe and the scenario used to judge whether adaptation works. Path: the user opens it at 4 servings from the "Start here" row on Recipes (or finds it by search or Use what you have), scales to 2, marks what is on hand (with the partial amount on rice), finds fresh tomatoes missing and compares canned tomatoes, then applies a "more protein" or "more fiber" adjustment, sees the adapted recipe with changes marked, and generates a list.
 
 Candidate swaps from v0.4, all demonstration content to be labeled as such and written with honest, non-precise consequences. How each was built is noted in brackets; disagreements are in Part 8.
 
@@ -235,15 +235,18 @@ Candidate swaps from v0.4, all demonstration content to be labeled as such and w
 - More fiber: stir in spinach (fresh or frozen; frozen must be thawed and squeezed); changes color and adds a leafy note. [Built with frozen spinach only, per the build instruction.]
 - An unsupported request (for example swapping chickpeas for lentils) should explain that the dish changes too much to adapt reliably rather than produce an answer. [Built: shown in the chickpeas swap sheet with a reason.]
 
-### Pantry model (Confirmed)
+### Pantry model (Confirmed Oct 29; superseded the same day by T05)
+
+The text below is v0.4's light presence-only model, kept as history. Current model: the pantry holds optional quantities as the single ingredient state (decision log, T05).
+
 
 A light shared "on hand" list across recipes, with no maintained inventory. Each ingredient is either on hand or not, and that presence powers the "can make now" and "one change away" suggestions in My Recipes. When a specific recipe needs a quantity, the user can optionally enter a partial amount in that recipe ("I have 1 of 2 cans"), which reduces that recipe's shopping need. Partial amounts belong to the recipe and do not become inventory. Buying something on the list does not mark it as permanently on hand unless the user says so.
 
-Build note (C8, confirmed Oct 29): implemented this way. The shared list stores presence only (`have` / `need`); "Some" with an amount is stored in that recipe's adaptation state, so two recipes never subtract the same amount.
+Build note: superseded on Oct 29 by T05 (built). The pantry now holds optional quantities as the single ingredient state; see "Behavior as built" in Part 7. C8's per-recipe partial amounts were removed, and older saves migrate into the pantry.
 
 ### Screen purposes (from the build prompt's compact flow, Proposed detail)
 
-1. **My Recipes.** Choose what to cook. Saved recipes with pantry-based suggestions from the on-hand list. Changes here: saving, unsaving, filtering, editing the on-hand list. (Built without filtering.)
+1. **My Recipes** (renamed **Recipes**, T05). Choose what to cook. Saved recipes with pantry-based suggestions from the on-hand list. Changes here: saving, unsaving, filtering, editing the on-hand list. (Built without filtering.)
 2. **Recipe detail with adaptation controls.** Fit the meal to today and trust the result. Original recipe, servings stepper, availability marks with optional partial amounts, and swap entry points per ingredient. After changes, it shows the adapted version with changes marked in place, a short "what changed" summary, per-change undo, and reset to original.
 3. **Swap panel (inline panel or dialog).** Decide on a change. Alternatives for one ingredient with consequences side by side (flavor, texture, quantity, preparation, nutrition when known). Nothing changes until Apply. (Built as a sheet: options listed first, then one option's before/after comparison at a time, not side by side.)
 4. **Grocery list.** Know what to buy. Derived needs grouped sensibly, each linked to its recipe, fully editable, with conflicts flagged when regenerating.
@@ -303,7 +306,7 @@ All values live in `css/tokens.css`.
 | --- | --- | --- |
 | Working surface | `#FFFFFF` | Page background, cards, inputs. |
 | Supporting surface | `#F3F2E7` | Secondary buttons, tags, view-toggle track, before/after rows, active tab, start-card hover. Large sections are white with `--rule` hairlines. |
-| Brand / action | `#59000E` | Primary buttons, links, recipe titles, focus ring, and the one color block on My Recipes (the chana masala hero). |
+| Brand / action | `#59000E` | Primary buttons, links, recipe titles, focus ring, the current-tab indicator. No large color blocks at the moment. |
 | Highlight | `#FEBD02` | Selected chips, "changed by you" dots and step numbers, the ampersand in the placeholder wordmark. Fill only. |
 | Highlight soft | `#FFF3C4` | Changed ingredient rows, applied ideas, notices. |
 | Cool counterpoint | `#A0B9C4` | Selected availability segment. Fill only. |
@@ -338,7 +341,7 @@ Apfel Grotezk by Collletttivo, SIL Open Font License 1.1 (license verified in th
 ### Spacing, controls, wordmark, icons, color blocks
 
 - 4px base scale (4–64px). Touch targets at least 44px; primary controls 48px. Buttons: primary (burgundy fill, white text), secondary (tonal fill with ink text and no outline: `#F3F2E7` on white surfaces, white on `#F3F2E7` panels and on the burgundy hero) and quiet (underlined link style). The servings control is a "– 2 +" stepper.
-- **Wordmark:** typographic, in the header link: "mise", a regular-weight "&", "match", Apfel Grotezk Bold at 22 px (24 px from 720 px wide), tracking −0.035em, burgundy. Its accessible name is "mise & match, My Recipes". No script web font is loaded.
+- **Wordmark:** typographic, in the header link: "mise", a regular-weight "&", "match", Apfel Grotezk Bold at 22 px (24 px from 720 px wide), tracking −0.035em, burgundy. Its accessible name is "mise & match, Recipes". No script web font is loaded.
 - **Focus:** controls keep the 3 px `:focus-visible` ring. Elements focused by script (`[tabindex="-1"]`: page titles, dialog title, `main`) show no ring for pointer users and a 2 px ring, sized to the text, for keyboard users (`html[data-input="keyboard"]`, set by keydown/pointerdown listeners). Nothing is focused on first load; in-app navigation focuses the new title for screen readers.
 - **Icons:** 14 plain black stroke SVGs in `assets/icons/<name>.svg`, all rendered at 20 × 20 px through `icon(name)` in `js/ui/icons.js`. Replace any file with an ink drawing of the same name. No icon sits on a burgundy fill.
 - **Color blocks:** none at the moment; the burgundy hero became a quiet white "Start here" card. Each screen has at most one burgundy action button.
@@ -348,10 +351,13 @@ Apfel Grotezk by Collletttivo, SIL Open Font License 1.1 (license verified in th
 
 | Screen | What it does |
 | --- | --- |
-| My Recipes (`#/`) | Title and one-line purpose, a quiet "Start here" card for chana masala ("Pick up where you left off" once adapted), "Cook from what you have" as an optional disclosure (collapsed until something is marked; holds the on-hand chips and suggestions, including "one swap away"), saved recipe cards with adapted and list status, demo collection with Save, About and Reset demo. |
-| Recipe (`#/recipe/:id`) | Servings stepper with a scaling note when servings differ, "Ways to adapt" (a button per swappable ingredient that opens its swap sheet, plus a jump to the protein and fiber ideas), your changes (undo each, undo last, restore original), Have / Some (amount for this recipe) / Need per ingredient with staples as a single check, Swap where swaps exist and an inline "No tested swap" note where a reason is recorded, "Contains dairy." on paneer, Ideas with optional protein/fiber goals, rough nutrition, method with changed steps marked, shopping bar, My version / Original toggle. |
-| Swap sheet (dialog) | Options for one ingredient plus any explained unsupported requests, then a before/after preview: quantity diff at current servings, notes on added ingredients ("Paneer: contains dairy."), only the effect dimensions the data covers (flavor, texture, quantities, prep, nutrition with ranges), method changes with old text struck through, cautions, conflict handling. Bottom sheet on mobile, side panel at 720px and up. |
-| Grocery list (`#/list`) | Same header and add form in both states. Populated: grouped by aisle; check off, edit amounts, remove, add your own, resolve conflicts, add back removed items, update when a recipe changed. Empty: "Nothing to get yet", one sentence on how items arrive, and a way back to My Recipes. |
+| Navigation | Three primary destinations, Recipes, Grocery list and Pantry: a bottom tab bar (icon and label; the current tab has an indicator bar, a heavier label and `aria-current`) below 960 px, and the header from 960 px. An avatar button at top right ("Profile and settings") on primary screens. Recipe detail and Profile are pushed screens with a back link and no tab bar below 960 px. Hash routes: `#/`, `#/list`, `#/pantry`, `#/recipe/:id`, `#/profile`. |
+| Recipes (`#/`) | Title with "Blend the rules.", a search field (recipe name, description, cuisine or any ingredient), an All recipes / Use what you have toggle, one pantry row ("8 ingredients in your pantry", Edit), a slim "Start here" row for chana masala. All recipes: Saved cards, then "More recipes" with Save. Use what you have: can make now, then one swap away, then partial matches, each with a one-line reason; with no matches, "Dinner, off-script." and a plain next step. |
+| Pantry (`#/pantry`) | Title with "Turn ‘what’s left?’ into ‘what’s next.’", add by searching the catalog (Enter adds the best match) or as a free-text item labeled "Not matched to recipes yet", Quick add chips, and the list of items with an optional amount and unit and a remove button. |
+| Profile and settings (`#/profile`) | Minimal until T06: a line saying preferences aren't built yet, the demo data note, "Saved on this device only", and Reset demo. |
+| Recipe (`#/recipe/:id`) | Servings stepper with a scaling note when servings differ, "Ways to adapt" (a button per swappable ingredient that opens its swap sheet, plus a jump to the protein and fiber ideas), your changes (undo each, undo last, restore original), Have / Some (amount, saved to the pantry) / Need per ingredient with staples as a single check, Swap where swaps exist and an inline "No tested swap" note where a reason is recorded, "Contains dairy." on paneer, Ideas with optional protein/fiber goals, rough nutrition, method with changed steps marked, shopping bar, My version / Original toggle. |
+| Swap sheet (dialog) | Titled "Thyme for a swap." with a plain line naming the ingredient. Options for one ingredient plus any explained unsupported requests, then a before/after preview: quantity diff at current servings, notes on added ingredients ("Paneer: contains dairy."), only the effect dimensions the data covers (flavor, texture, quantities, prep, nutrition with ranges), method changes with old text struck through, cautions, conflict handling. Bottom sheet on mobile, side panel at 720px and up. |
+| Grocery list (`#/list`) | Same header and add form in both states. Populated: grouped by aisle; check off (a checked item offers "Add to pantry", never automatic), edit amounts, remove, add your own, resolve conflicts, add back removed items, update when a recipe or the pantry changed. All checked: "Bean there, done that." Empty: "Nacho average grocery list.", one plain sentence on how items arrive, and a way back to Recipes. |
 
 ### Behavior as built
 
@@ -361,12 +367,12 @@ Apfel Grotezk by Collletttivo, SIL Open Font License 1.1 (license verified in th
 - **Composition order:** replacements, omissions and additions, then quantity adjustments (to whatever fills the slot), then portion scaling. Steps can be inserted at the start (`after: "start"`, used by the dried chickpeas soak).
 - **Unsupported:** same-ingredient swaps and declared incompatibilities (paneer with tofu in chana masala; extra egg with tofu) show the reason and offer an explicit "Switch to this swap". Asked-for swaps we don't support (`recipe.unsupported`, e.g. lentils for chickpeas) and ingredients with no tested swap (`noSwap`) explain why.
 - **Scaling:** linear by default; pan fat scales at half rate (no visible note); spices, salt and chiles scale and are marked "to taste" when servings change. Display rounds to measurable amounts; the list rounds counts up.
-- **Availability:** shared presence keyed by ingredient (`have` / `need`) in `state.pantry`, used by every recipe and the home chips. "Some" with an amount lives in that recipe's adaptation state (`adaptation.partial`) and overrides shared presence for that recipe only; the home chip shows "some" when any recipe has a partial amount. Partial amounts are kept through restore original and aren't part of the undo history. Older saves with shared partial amounts drop them on load. Unmarked counts as needed, and the UI says so. Without an amount, or with an incomparable unit, the full amount stays on the list, flagged.
-- **Shopping needs** = adjusted quantity minus available amount in the same unit family. Mass, volume and count never convert into each other.
-- **List regeneration** tracks each recipe's contribution per line. Manual items are untouched. Edited or checked lines whose amount changes get a conflict ("Use 300 g / Keep 400 g"). Lines no recipe needs are removed unless edited or checked, which flags them instead. Deleted or cleared generated lines are remembered and offered as "Add back", never re-added silently. The same item in the same unit family merges across recipes. Checking an item off does not mark it as on hand.
-- **Out-of-date detection:** each synced recipe stores a signature of its needs; the recipe and the list both say when a recipe changed since it was added.
+- **Pantry (T05):** `state.pantry` is the single ingredient state (`js/core/pantry.js`). Entry `{ qty?, unit?, some?, free?, name? }`: no amount means "have it, amount unknown"; `some` without an amount means "have some, amount not entered"; free-text entries never feed calculations. Not in the pantry means Need, which is what a recipe row shows by default. Recipe marks write back: Have keeps the item with amount unknown, Some sets or keeps an amount, Need removes it. Older saves migrate on load: shared "have" becomes an entry, per-recipe partial amounts move into the pantry.
+- **Shopping needs (T05):** adjusted quantity minus the pantry, allocated once across the recipes on the list in list order (`allocateNeeds`), so two recipes never subtract the same amount. A recipe not on the list is costed as if added last. "Update list" recalculates every listed recipe together. Have with amount unknown means nothing to buy. Some without an amount, or a pantry unit that can't be compared with the recipe's (mass, volume and count never convert), keeps the full amount on the list, flagged "Check before buying", and never subtracts.
+- **List regeneration** tracks each recipe's contribution per line. Manual items are untouched. Edited or checked lines whose amount changes get a conflict ("Use 300 g / Keep 400 g"). Lines no recipe needs are removed unless edited or checked, which flags them instead. Deleted or cleared generated lines are remembered and offered as "Add back", never re-added silently. The same item in the same unit family merges across recipes. Checking an item off does not add it to the pantry; it offers "Add to pantry", which adds the bought amount (to a comparable existing amount, or as a new entry).
+- **Out-of-date detection:** each synced recipe stores a signature of its needs; the recipe and the list both say when a recipe or the pantry changed since it was added.
 - **Nutrition:** protein and fiber only, per serving, as ±15% ranges from typical per-100 g values, collapsed unless a goal is on. Seasonings excluded as negligible. If a meaningful ingredient has no reliable value (split moong dal fiber), the nutrient shows "can't estimate" and comparisons "can't compare".
-- **Persistence:** localStorage key `mise-match:v1`, written on every change. Reset demo restores the starting state (two saved recipes, nothing marked, empty list).
+- **Persistence:** localStorage key `mise-match:v1`, written on every change. Reset demo (in Profile and settings) restores the starting state (two saved recipes, empty pantry, empty list).
 
 ### Seed data (demo)
 
@@ -378,10 +384,13 @@ Five recipes written for the prototype from common home-style versions, not test
 - The undo stack resets on reload.
 - Nutrition covers only protein and fiber, and the catalog is small.
 - Swaps are hand-written per recipe, which is slow but credible.
-- The placeholder wordmark SVG uses Helvetica/Arial (images can't use the page's web font).
+- After "Add to pantry" on a checked item, the list says the pantry changed; updating it turns that checked item into a "No recipe needs this anymore" conflict, since it no longer needs buying.
+- Profile and settings is a placeholder until T06.
 - Verified in Chrome (Playwright, and the in-app browser) at 430 × 932, 360 × 740 and 1280 × 860. Not checked in Safari or Firefox, on a physical phone, or with a screen reader. The UI relies on `:has()` and `<dialog>`.
 
 ### Verification log
+
+**T05, navigation, Recipes and Pantry (2026-10-29).** Evidence: `reviews/2026-10-29-t05-navigation-pantry/` and its ZIP (git-ignored). Before `2b76443` (served from a git worktree): 60/60. After `16b8d05`: 121/121 at 430 × 932, 360 × 740 and 1280 × 860, plus a 41 s walkthrough at 430 × 932 covering keyboard focus order, the skip link, keyboard vs pointer title focus, search by ingredient, Use what you have with an empty pantry, scaling to 2, rice Some 100 g appearing in Pantry, the "Thyme for a swap." sheet with Escape and focus return, apply and undo, list rice 50 g, Add to pantry only when chosen, the avatar opening Profile as a pushed screen, and reload persistence. `npm test` 20 pass (new: pantry-to-recipe sync, single allocation in both orders, unconvertible units, migration). Incident: commit `ec84eef`, made outside the session mid-task, imported two uncommitted view files and briefly broke GitHub Pages; `2706654` restored it.
 
 **Visual refresh, route-focus fix, mobile workflow (2026-10-29).** Evidence: `reviews/2026-10-29-visual-refresh/` and `reviews/2026-10-29-visual-refresh.zip` (git-ignored). Playwright 1.58.2 driving installed Chrome with fresh storage at 430 × 932, 360 × 740 and 1280 × 860. Before (`bacdbf7`): 48/60 checks; every viewport drew a 3 px outline round the full-width page title with no keyboard input. After (app code `b278a17`, captured at `c5a70aa`): 76/76 checks, covering no overflow, Apfel Grotezk 400/500/700 loaded, no console errors, no ring without keyboard input, the skip link focusing content without changing the route, keyboard navigation showing a ring on the new title and pointer navigation not, servings 4 → 2, swap preview content, Escape closing the sheet with focus returned to its trigger, apply then undo (Add paneer removed, tomato swap kept), list rice 50 g (150 − 100), list edit and manual item and the adapted version all persisting through a reload. A 31 s MP4 walkthrough at 430 × 932 was recorded. Returning-session check in the in-app browser with a save in the previous format: data intact, no ring on load. `npm test` 18 pass (no core logic changed). Found and fixed during review: the skip link's `#app` was read as a route by the hash router. Not tested: Safari, Firefox, a physical phone, a screen reader.
 

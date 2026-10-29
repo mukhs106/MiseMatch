@@ -12,3 +12,10 @@
 - Evidence: `reviews/2026-10-29-visual-refresh/` and `reviews/2026-10-29-visual-refresh.zip` (git-ignored).
 - Not checked: Safari, Firefox, a physical phone, a screen reader. Not pushed (pushing updates GitHub Pages).
 - Follow-up: T01's after screenshots should be retaken on this design; En Clair remains an unverified wordmark candidate.
+
+## 2026-10-29 · T05 Navigation, Recipes, and Pantry
+- Changed: bottom tabs (Recipes, Grocery list, Pantry) that move into the header at 960 px; avatar → Profile and settings; recipe and profile as pushed screens. Recipes: search, All / Use what you have, pantry row, slim Start here. New Pantry screen (catalog search, free text "not matched to recipes yet", optional amounts, quick add). Pantry is the single ingredient state (`js/core/pantry.js`); shopping allocates pantry amounts once across the list (`allocateNeeds`); checked list items offer Add to pantry. Assigned copy lines in place. Older saves migrate.
+- Verified: `npm test` 20 pass (new: pantry sync, single allocation both orders, unconvertible units, migration). Playwright before `2b76443` 60/60, after `16b8d05` 121/121 at 430, 360 and 1280 plus a 41 s walkthrough of the Done-when path; evidence in `reviews/2026-10-29-t05-navigation-pantry/` (+ ZIP).
+- Interpretations: not in pantry shows as Need (no "unmarked"); unconvertible or amount-less Some keeps the full amount on the list, flagged, never subtracted; Profile is a minimal placeholder holding Reset demo until T06; Update list recalculates all listed recipes together.
+- Incident: `ec84eef` (committed outside the session mid-task) imported uncommitted views and broke GitHub Pages; `2706654` restored it.
+- Not checked: Safari, Firefox, a physical phone, a screen reader.
