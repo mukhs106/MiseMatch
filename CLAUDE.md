@@ -2,6 +2,8 @@
 
 Recipe adaptation app for young adults. Core: adapt a recipe to what you have, portions, and optional protein/fiber goals, and explain what each change does to the dish. Saving, My Recipes and the grocery list are supporting features. Detailed product and design decisions live in `docs/product-context.md`; read it before changing scope, data or visual language.
 
+Queued work lives in docs/queue/QUEUE.md; run one task per session with /next and log results in docs/build-log.md.
+
 ## Commands (verified)
 
 - `npm start` serves the app at http://localhost:8080 (Node 18+, no dependencies). Opening `index.html` directly from disk does not work because of ES modules.
