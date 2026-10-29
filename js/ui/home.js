@@ -2,7 +2,7 @@
 
 import { html, plural } from "./html.js";
 import { icon, doodle } from "./icons.js";
-import { RECIPES, getRecipe } from "../data/recipes.js";
+import { RECIPES, getRecipe, HERO_RECIPE_ID } from "../data/recipes.js";
 import { shortName } from "../data/items.js";
 import { suggest, pantryChipItems } from "../core/suggest.js";
 import { isAdapted } from "../core/adapt.js";
@@ -17,6 +17,7 @@ export function homeView(ctx) {
         <h1 tabindex="-1" data-route-focus>My Recipes</h1>
         <p class="muted">Recipes that work with what you have and what you need.</p>
       </header>
+      ${heroSection(ctx)}
       ${kitchenSection(ctx)}
       <section class="home-section" aria-labelledby="saved-h">
         <div class="section-head">
@@ -48,6 +49,19 @@ export function homeView(ctx) {
         </section>` : ""}
       ${aboutSection()}
     </div>`;
+}
+
+// The screen's one burgundy block: points first-time visitors to the demo recipe.
+function heroSection(ctx) {
+  const r = getRecipe(HERO_RECIPE_ID);
+  const adapted = isAdapted(r, ctx.state.adaptations[r.id]);
+  return html`
+    <section class="hero" aria-labelledby="hero-h">
+      <p class="eyebrow">${adapted ? "Pick up where you left off" : "Start here"} · Demo recipe</p>
+      <h2 id="hero-h">${r.title}</h2>
+      <p>${r.blurb}</p>
+      <a class="btn btn--secondary" href="#/recipe/${r.id}">${adapted ? "Open your version" : "Open and adapt it"}</a>
+    </section>`;
 }
 
 function kitchenSection(ctx) {

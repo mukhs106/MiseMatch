@@ -84,10 +84,12 @@
   background: var(--surface-support);
 }
 
+/* One size for every icon so drawn replacements line up. */
 .icon {
   width: 20px;
   height: 20px;
   flex: none;
+  display: inline-block;
 }
 
 /* Chips: toggle buttons. Pressed state is shown by fill + check icon, not color alone. */
@@ -111,10 +113,6 @@
   font-weight: var(--fw-medium);
 }
 
-.chip .icon {
-  width: 16px;
-  height: 16px;
-}
 
 .chip[aria-pressed="true"] {
   background: var(--highlight);
@@ -203,10 +201,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25em;
-  min-width: 3.6em;
+  gap: 0.15em;
+  min-width: 3.4em;
   min-height: 40px;
-  padding: 0 var(--s-3);
+  padding: 0 var(--s-2);
   border-radius: var(--radius-pill);
   font-size: var(--fs-sm);
   color: var(--text-muted);
@@ -233,8 +231,6 @@
 }
 
 .seg .icon {
-  width: 14px;
-  height: 14px;
   display: none;
 }
 

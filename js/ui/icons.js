@@ -1,33 +1,16 @@
-// Functional icons (consistent 2px rounded strokes) and a few hand-drawn
-// accents. Accents are decorative and hidden from assistive tech.
+// Functional icons and a few hand-drawn accents. Accents are decorative and
+// hidden from assistive tech.
 
 import { raw } from "./html.js";
 
-const PATHS = {
-  check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
-  swap: '<path d="M7 7h11l-3-3M17 17H6l3 3"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>',
-  minus: '<path d="M5 12h14"/>',
-  close: '<path d="M6 6l12 12M18 6L6 18"/>',
-  back: '<path d="M15 5l-7 7 7 7"/>',
-  next: '<path d="M9 5l7 7-7 7"/>',
-  undo: '<path d="M9 7L5 11l4 4"/><path d="M5 11h9a5 5 0 010 10h-2"/>',
-  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
-  list: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" stroke-width="3"/>',
-  book: '<path d="M5 4.5h9.5a3 3 0 013 3V20H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h9.5"/>',
-  bookmark: '<path d="M7 4h10v16l-5-4-5 4z"/>',
-  bookmarkFilled: '<path d="M7 4h10v16l-5-4-5 4z" fill="currentColor"/>',
-  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
-};
-
+// Placeholder icons: plain black SVG files in assets/icons/, all shown at one
+// size (20px). Replace a file with a drawing of the same name to restyle it.
 export function icon(name, label) {
-  const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true" focusable="false"';
   return raw(
-    `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${a11y}>${PATHS[name]}</svg>`,
+    `<img class="icon" src="assets/icons/${name}.svg" width="20" height="20" alt="${label ?? ""}"${label ? "" : ' aria-hidden="true"'}>`,
   );
 }
 
-// Hand-drawn accents. Slightly irregular paths read as drawn rather than set.
 export const doodle = {
   squiggle: raw(
     '<svg class="doodle" viewBox="0 0 120 14" width="120" height="14" aria-hidden="true" focusable="false"><path d="M2 9c8-6 14-6 20 0s13 5 19-1 14-6 20 0 13 6 19 0 14-5 20 1 12 4 18-1" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>',

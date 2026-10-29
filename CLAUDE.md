@@ -14,6 +14,7 @@ Recipe adaptation app for young adults. Core: adapt a recipe to what you have, p
 - `js/store.js` localStorage persistence (one key, `mise-match:v1`).
 - `js/ui/` views as functions of state returning escaped HTML via `html```; `js/app.js` owns state, actions, routing, focus and the dialog.
 - `css/tokens.css` is the only place for raw colors, type, spacing and control sizes.
+- `assets/brand/wordmark.svg` is the logo slot; `assets/icons/*.svg` are placeholder icons for Suhani's drawings, used via `icon(name)` at one size (20px). Don't inline new icon SVGs or add per-context icon sizes.
 
 ## Rules
 
@@ -24,6 +25,8 @@ Recipe adaptation app for young adults. Core: adapt a recipe to what you have, p
 - List regeneration must keep manual items and user edits; edited or checked lines that change get a conflict, deleted lines are remembered.
 - Label demo data as demo data. Don't claim allergy safety.
 - `#FEBD02` and `#A0B9C4` are fills behind dark text only; they fail as text on white. Meaning is never carried by color alone.
+- At most one large burgundy or yellow color block per screen. Don't add new outlined button styles; reuse `.btn--primary/--secondary/--quiet`.
+- Chana masala (`HERO_RECIPE_ID`) is the demo's hero recipe; keep the demo path in README working.
 - Touch targets ≥ 44px, visible focus, labeled controls. Mobile first around 430px; check 960px+ too.
 - Add a test in `tests/core.test.js` for any change to `js/core/` or the seed data.
 - Prose style for docs and copy: concise, no em dashes in product copy.

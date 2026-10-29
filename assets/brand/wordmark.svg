@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" width="200" height="40">
+  <!-- Placeholder wordmark. Replace this file with the script logo (SVG or PNG; update the src in index.html if the extension changes). -->
+  <text x="0" y="28" font-family="Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="700" fill="#59000e">mise</text>
+  <circle cx="74" cy="20" r="13" fill="#febd02"/>
+  <text x="74" y="27" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-size="19" font-weight="700" fill="#1f1a17">&amp;</text>
+  <text x="92" y="28" font-family="Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="700" fill="#59000e">match</text>
+</svg>

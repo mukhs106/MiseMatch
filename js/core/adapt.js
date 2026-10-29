@@ -88,9 +88,9 @@ export function deriveRecipe(recipe, adaptation) {
       step.changedBy.push(swap.id);
     }
     for (const ins of swap.addSteps ?? []) {
-      const at = steps.findIndex((s) => s.id === ins.after);
       const step = { id: ins.id, template: ins.text, changedBy: [swap.id], added: true };
-      steps.splice(at === -1 ? steps.length : at + 1, 0, step);
+      const at = ins.after === "start" ? -1 : steps.findIndex((s) => s.id === ins.after);
+      steps.splice(ins.after === "start" ? 0 : at === -1 ? steps.length : at + 1, 0, step);
     }
   }
   steps = steps.map((s) => ({ ...s, text: renderTemplate(s.template, bySlot) }));

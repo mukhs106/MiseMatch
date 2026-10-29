@@ -9,8 +9,59 @@
 //   scaling  "linear" (default) | "taste" (scales, flagged to taste) | "pan" (scales at half rate)
 //   prep     optional preparation note
 // Steps use {slot} tokens, rendered with the slot's current ingredient name.
+// noSwap:      { slot: reason } when an ingredient has no tested swap at all.
+// unsupported: { slot: [{ label, reason }] } swaps people ask for that we explain instead of offering.
+
+export const HERO_RECIPE_ID = "chana-masala";
 
 export const RECIPES = [
+  {
+    id: "chana-masala",
+    title: "Chana masala",
+    subtitle: "Chickpeas in a spiced onion-tomato masala",
+    cuisine: "North Indian, home style",
+    minutes: 45,
+    servings: 4,
+    blurb: "The familiar weeknight chickpea curry. A good place to see what a swap changes before you commit to it.",
+    ingredients: [
+      { slot: "chickpeas", item: "chickpeas", qty: 480, unit: "g", group: "main", prep: "drained; a 400 g can gives about 240 g" },
+      { slot: "tomatoes", item: "fresh-tomatoes", qty: 3, unit: "", group: "main", prep: "finely chopped" },
+      { slot: "onion", item: "onion", qty: 2, unit: "", group: "main", prep: "finely chopped" },
+      { slot: "garlic", item: "garlic", qty: 4, unit: "cloves", group: "main", prep: "grated" },
+      { slot: "ginger", item: "ginger", qty: 1, unit: "tbsp", group: "main", prep: "grated" },
+      { slot: "chili", item: "green-chili", qty: 1, unit: "", group: "main", scaling: "taste", prep: "slit" },
+      { slot: "cilantro", item: "cilantro", qty: 2, unit: "tbsp", group: "main", prep: "chopped, optional" },
+      { slot: "cumin", item: "cumin-seeds", qty: 1, unit: "tsp", group: "spices", scaling: "taste" },
+      { slot: "coriander", item: "ground-coriander", qty: 2, unit: "tsp", group: "spices", scaling: "taste" },
+      { slot: "chilipowder", item: "chili-powder", qty: 1, unit: "tsp", group: "spices", scaling: "taste" },
+      { slot: "turmeric", item: "turmeric", qty: 0.5, unit: "tsp", group: "spices", scaling: "taste" },
+      { slot: "garam", item: "garam-masala", qty: 1, unit: "tsp", group: "spices", scaling: "taste" },
+      { slot: "salt", item: "salt", qty: 1, unit: "tsp", group: "spices", scaling: "taste" },
+      { slot: "oil", item: "neutral-oil", qty: 3, unit: "tbsp", group: "staples", scaling: "pan" },
+      { slot: "lemon", item: "lemon", qty: 0.5, unit: "", group: "staples" },
+      { slot: "rice", item: "basmati", qty: 300, unit: "g", group: "serve", prep: "uncooked" },
+    ],
+    steps: [
+      { id: "s1", text: "Rinse the {rice} and cook it with 1.5 times its volume of water, about 15 minutes. Rest it covered for 5 minutes." },
+      { id: "s2", text: "Heat the {oil} in a wide pan over medium heat. Add the {cumin} and let it sizzle for about 30 seconds." },
+      { id: "s3", text: "Add the {onion} and cook, stirring often, until deep golden, 10 to 12 minutes." },
+      { id: "s4", text: "Stir in the {garlic}, {ginger} and {chili}. Cook for 1 minute until fragrant." },
+      { id: "s5", text: "Add the {coriander}, {chilipowder} and {turmeric} for 30 seconds, then the {tomatoes} and {salt}. Cook until thick and the oil separates, 10 to 12 minutes." },
+      { id: "s6", text: "Add the {chickpeas} and about 250 ml water. Simmer for 10 to 15 minutes, mashing a few chickpeas to thicken the sauce." },
+      { id: "s7", text: "Finish with the {garam}, a squeeze of {lemon} and the {cilantro}." },
+    ],
+    noSwap: {
+      garam: "There is no reliable single replacement. Leaving it out keeps the dish edible but flatter, and we won't guess a blend.",
+    },
+    unsupported: {
+      chickpeas: [
+        {
+          label: "Lentils",
+          reason: "Lentils cook down into a soft dal in 20 to 30 minutes instead of staying whole, so the texture, sauce and timing all change. That's a different dish (see Masoor dal tadka), so it isn't offered as a swap here.",
+        },
+      ],
+    },
+  },
   {
     id: "chana-palak",
     title: "Chana palak",

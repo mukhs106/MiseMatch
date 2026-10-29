@@ -20,14 +20,21 @@ To run the tests:
 npm test
 ```
 
-## Try this
+## Try this (the demo path)
 
-1. On **My Recipes**, tap a few ingredients under "What's in your kitchen?" (for example Chickpeas, Frozen spinach, Canned tomatoes, Onion) and see the suggestions.
-2. Open **Chana palak**, set servings to 2, and use **Swap** on fresh spinach. Compare frozen spinach with kale, then apply one.
-3. Turn on **More protein** under Ideas, preview **Add paneer**, and check the rough nutrition ranges before and after.
-4. Mark ingredients as Have, Some (enter an amount) or Need, then **Add to list**.
-5. On the **Grocery list**, edit an amount, delete an item and add your own. Go back, change servings, and choose **Update list** to see how edits and deletions are kept.
-6. Switch between **My version** and **Original**, use **Undo**, and reload the page: everything persists. **Reset demo** at the bottom of My Recipes restores the starting state.
+1. On **My Recipes**, choose **Open and adapt it** on Chana masala.
+2. Set servings to 2. Mark chickpeas and onion as **Have**, use **I have all of these** for spices, and set rice to **Some** with 100 g.
+3. Use **Swap** on tomatoes, compare canned tomatoes, then apply it.
+4. Under Ideas, preview and apply **Add paneer** (or **Add frozen spinach**), then **Undo** one change.
+5. Try **Swap** on chickpeas to see dried chickpeas (soak and longer cooking) and why lentils aren't offered.
+6. Reload: your version is kept. Then **Add to list**, open the **Grocery list** and edit an amount.
+
+**Reset demo** at the bottom of My Recipes restores the starting state.
+
+## Replacing placeholder art
+
+- Logo: replace `assets/brand/wordmark.svg` (shown 32px tall).
+- Icons: replace any file in `assets/icons/` with a drawing of the same name (shown at 20 × 20 px).
 
 ## Docs
 

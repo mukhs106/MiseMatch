@@ -8,11 +8,116 @@
 //   add       new ingredients [{ item, qty, unit, group, prep }]; tokens use the item id
 //   adjust    [{ slot, factor }] multiplies whatever currently fills that slot
 //   steps     { stepId: replacement text }
-//   addSteps  [{ after: stepId, id, text }]
+//   addSteps  [{ after: stepId | "start", id, text }]
 //   effects   plain-language consequences shown before applying
 //   conflicts [{ swap, reason }] combinations we don't support
 
 export const SWAPS = [
+  // Chana masala (hero recipe)
+  {
+    id: "cm-canned-tomatoes",
+    recipe: "chana-masala",
+    label: "Canned tomatoes",
+    summary: "Use a can of tomatoes instead of fresh.",
+    reasons: ["missing"],
+    replace: { slot: "tomatoes", with: [{ item: "canned-tomatoes", qty: 400, unit: "g", prep: "crushed" }] },
+    steps: { s5: "Add the {coriander}, {chilipowder} and {turmeric} for 30 seconds, then the {tomatoes} and {salt}. Cook until thick and the oil separates, 8 to 10 minutes." },
+    effects: {
+      flavor: "Deeper and more cooked, a little less fresh. Very consistent from can to can.",
+      texture: "A smoother, more even sauce with no tomato skins.",
+      quantity: "One 400 g can stands in for 3 medium tomatoes.",
+      prep: "No chopping, and the masala comes together a couple of minutes faster.",
+      nutrition: "About the same.",
+    },
+  },
+  {
+    id: "cm-dried-chickpeas",
+    recipe: "chana-masala",
+    label: "Dried chickpeas",
+    summary: "Cook chickpeas from dry instead of using canned. Plan a day ahead.",
+    reasons: ["missing", "preference"],
+    replace: { slot: "chickpeas", with: [{ item: "dried-chickpeas", qty: 200, unit: "g", prep: "soaked overnight" }] },
+    addSteps: [{
+      after: "start",
+      id: "cm-soak-step",
+      text: "The night before, cover the {chickpeas} with plenty of water and soak for 8 to 12 hours. Drain, cover with fresh water and simmer until completely tender, 60 to 90 minutes (about 35 minutes in a pressure cooker). Keep a cup of the cooking liquid.",
+    }],
+    steps: { s6: "Add the cooked chickpeas and about 250 ml of their cooking liquid. Simmer for 10 to 15 minutes, mashing a few chickpeas to thicken the sauce." },
+    effects: {
+      flavor: "Nuttier and more savory. The cooking liquid gives the sauce more body.",
+      texture: "Creamier inside while holding their shape.",
+      quantity: "About 200 g dried chickpeas cook up to the 480 g the recipe uses.",
+      prep: "The big change: soak for 8 to 12 hours, then simmer for 60 to 90 minutes (about 35 in a pressure cooker). Start the day before.",
+      nutrition: "About the same once cooked (estimate).",
+    },
+  },
+  {
+    id: "cm-ground-ginger",
+    recipe: "chana-masala",
+    label: "Ground ginger",
+    summary: "Use ground ginger if you have no fresh.",
+    reasons: ["missing"],
+    replace: { slot: "ginger", with: [{ item: "ground-ginger", qty: 0.25, unit: "tsp" }] },
+    steps: { s4: "Stir in the {garlic}, {chili} and {ginger}. Cook for 30 seconds, just until fragrant; ground ginger scorches quickly." },
+    effects: {
+      flavor: "Warmer and more muted. You lose fresh ginger's bright, zesty bite.",
+      texture: "No change.",
+      quantity: "About ¼ tsp ground replaces 1 tbsp grated fresh.",
+      prep: "Nothing to grate. Cook it only briefly.",
+      nutrition: "No meaningful change.",
+    },
+  },
+  {
+    id: "cm-paneer",
+    recipe: "chana-masala",
+    label: "Add paneer",
+    summary: "Fold in paneer cubes for more protein.",
+    reasons: ["protein"],
+    add: [{ item: "paneer", qty: 200, unit: "g", group: "main", prep: "cubed" }],
+    addSteps: [{ after: "s6", id: "cm-paneer-step", text: "Add the {paneer} for the last 3 minutes and simmer gently so it softens without breaking up." }],
+    effects: {
+      flavor: "Milky and mild, softening the spice a little.",
+      texture: "Soft, chewy cubes alongside the chickpeas.",
+      quantity: "Adds 200 g paneer for 4 servings.",
+      prep: "One extra step, about 3 minutes.",
+      nutrition: "Noticeably more protein per serving (estimate).",
+    },
+    conflicts: [{ swap: "cm-tofu", reason: "Pick one protein addition. With both, there's too little sauce to coat everything." }],
+  },
+  {
+    id: "cm-tofu",
+    recipe: "chana-masala",
+    label: "Add firm tofu",
+    summary: "Fold in pan-fried tofu for more protein without dairy.",
+    reasons: ["protein"],
+    add: [{ item: "tofu", qty: 200, unit: "g", group: "main", prep: "pressed and cubed" }],
+    addSteps: [{ after: "s6", id: "cm-tofu-step", text: "Pan-fry the {tofu} in a little oil until golden, about 6 minutes, then fold it in for the last 2 minutes." }],
+    effects: {
+      flavor: "Neutral. It takes on the masala rather than adding its own flavor.",
+      texture: "Firm cubes with a light crust.",
+      quantity: "Adds 200 g tofu for 4 servings.",
+      prep: "Press for 10 minutes and pan-fry separately, about 15 minutes in total.",
+      nutrition: "More protein per serving (estimate). Tofu brands vary a lot.",
+    },
+    conflicts: [{ swap: "cm-paneer", reason: "Pick one protein addition. With both, there's too little sauce to coat everything." }],
+  },
+  {
+    id: "cm-spinach",
+    recipe: "chana-masala",
+    label: "Add frozen spinach",
+    summary: "Stir in spinach for more fiber, closer to chana palak.",
+    reasons: ["fiber"],
+    add: [{ item: "spinach-frozen", qty: 130, unit: "g", group: "main", prep: "thawed and squeezed" }],
+    addSteps: [{ after: "s6", id: "cm-spinach-step", text: "Squeeze the thawed {spinach-frozen} dry, stir it in and simmer for 3 minutes." }],
+    effects: {
+      flavor: "Green and slightly mineral; the masala still leads.",
+      texture: "Soft greens through the sauce.",
+      quantity: "Adds 130 g frozen spinach for 4 servings.",
+      prep: "Thaw it first, then squeeze out the water so the sauce doesn't turn thin.",
+      nutrition: "More fiber per serving (estimate).",
+    },
+  },
+
   // Chana palak
   {
     id: "cp-frozen-spinach",

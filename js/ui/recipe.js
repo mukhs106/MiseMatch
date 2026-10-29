@@ -40,8 +40,8 @@ export function recipeView(ctx, recipe) {
         ${doodle.squiggle}
         <p class="recipe-blurb muted">${recipe.blurb} <span class="tag tag--demo">Demo recipe</span></p>
         <div class="recipe-actions">
-          <button class="btn ${saved ? "btn--secondary" : "btn--primary"} btn--small" data-action="${saved ? "unsave-recipe" : "save-recipe"}" data-id="${recipe.id}" aria-pressed="${saved}">
-            ${icon(saved ? "bookmarkFilled" : "bookmark")} ${saved ? "Saved" : "Save recipe"}
+          <button class="btn btn--secondary btn--small" data-action="${saved ? "unsave-recipe" : "save-recipe"}" data-id="${recipe.id}" aria-pressed="${saved}">
+            ${icon(saved ? "bookmark-filled" : "bookmark")} ${saved ? "Saved" : "Save recipe"}
           </button>
           <div class="view-toggle" role="group" aria-label="Which version to show">
             <button class="view-btn" aria-pressed="${view === "mine"}" data-action="set-view" data-id="${recipe.id}" data-view="mine">

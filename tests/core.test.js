@@ -247,3 +247,21 @@ test("state survives a save and reload", async () => {
   assert.deepEqual(load(), initialState());
   assert.ok(getSwap("cp-frozen-spinach"));
 });
+
+test("chana masala: dried chickpeas add a first step; swaps compose at 2 servings", () => {
+  const masala = getRecipe("chana-masala");
+  let a = setServings(defaultAdaptation(masala), 2);
+  a = applySwap(a, "cm-dried-chickpeas");
+  a = applySwap(a, "cm-canned-tomatoes");
+  a = applySwap(a, "cm-spinach");
+  const d = deriveRecipe(masala, a);
+  assert.equal(d.steps[0].id, "cm-soak-step");
+  assert.match(d.steps[0].text, /soak/);
+  assert.equal(line(d, "chickpeas").entries[0].qty, 100);
+  assert.equal(line(d, "tomatoes").entries[0].qty, 200);
+  assert.equal(line(d, "spinach-frozen").entries[0].qty, 65);
+  const needs = needsFor(d, { "canned-tomatoes": { status: "some", qty: 150, unit: "g" } });
+  assert.equal(needs.find((n) => n.item === "canned-tomatoes").qty, 50);
+  assert.equal(checkSwap(masala, applySwap(a, "cm-paneer"), "cm-tofu").ok, false);
+  assert.ok(masala.unsupported.chickpeas[0].reason.length > 0);
+});

@@ -25,6 +25,36 @@
   font-size: var(--fs-3xl);
 }
 
+.hero {
+  display: grid;
+  gap: var(--s-2);
+  justify-items: start;
+  padding: var(--s-5);
+  border-radius: var(--radius-lg);
+  background: var(--action);
+  color: var(--text-on-action);
+}
+
+.hero .eyebrow {
+  color: var(--c-oat);
+}
+
+.hero h2 {
+  font-size: var(--fs-2xl);
+}
+
+.hero p {
+  max-width: 40ch;
+}
+
+.hero .btn {
+  margin-top: var(--s-2);
+}
+
+.hero .btn:focus-visible {
+  outline-color: var(--c-white);
+}
+
 .kitchen {
   display: grid;
   gap: var(--s-3);
@@ -129,10 +159,6 @@
   margin-top: var(--s-2);
 }
 
-.recipe-card-meta .icon {
-  width: 14px;
-  height: 14px;
-}
 
 .collection {
   border-top: 1px solid var(--border-subtle);
@@ -464,10 +490,6 @@
   height: 22px;
 }
 
-.swap-btn .icon {
-  width: 16px;
-  height: 16px;
-}
 
 .swap-none {
   font-size: var(--fs-sm);
@@ -499,10 +521,6 @@
   color: var(--warn-text);
 }
 
-.changed-by .icon {
-  width: 13px;
-  height: 13px;
-}
 
 .was {
   display: block;
@@ -602,10 +620,6 @@
   margin-top: var(--s-2);
 }
 
-.idea-tags .icon {
-  width: 12px;
-  height: 12px;
-}
 
 /* Nutrition */
 

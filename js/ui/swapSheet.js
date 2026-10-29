@@ -63,6 +63,11 @@ function slotSheet(ctx, { recipeId, slot }) {
           <p>${reason ?? "We haven't written a swap for this ingredient in this recipe yet, and we won't guess one."}</p>
         </div>`}
       ${options.length && reason ? html`<p class="small muted">${reason}</p>` : ""}
+      ${(recipe.unsupported?.[slot] ?? []).map((u) => html`
+        <div class="notice notice--cool">
+          <p><strong>${u.label} instead? Not supported here.</strong></p>
+          <p>${u.reason}</p>
+        </div>`)}
     </div>`;
 }
 

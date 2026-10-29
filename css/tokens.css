@@ -25,14 +25,6 @@
   font-style: normal;
   font-display: swap;
 }
-/* Brukt is a roughened cut, used only for the wordmark and sparse display accents. */
-@font-face {
-  font-family: "Apfel Grotezk Brukt";
-  src: url("../fonts/ApfelGrotezk-Brukt.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
 
 :root {
   /* Brand palette (raw values) */
@@ -69,7 +61,6 @@
 
   /* Type */
   --font-sans: "Apfel Grotezk", "Helvetica Neue", Arial, system-ui, sans-serif;
-  --font-display: "Apfel Grotezk Brukt", var(--font-sans);
   --fs-xs: 0.8125rem;  /* 13 */
   --fs-sm: 0.9375rem;  /* 15 */
   --fs-md: 1.0625rem;  /* 17, body */

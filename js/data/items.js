@@ -24,6 +24,7 @@ export const ITEMS = {
   "onion": { name: "Onion", aisle: "Produce", nutrition: { protein: 1.1, fiber: 1.7 }, gPerUnit: 150, key: true },
   "garlic": { name: "Garlic", aisle: "Produce", negligible: true },
   "ginger": { name: "Fresh ginger", aisle: "Produce", negligible: true },
+  "ground-ginger": { name: "Ground ginger", aisle: "Spices", negligible: true },
   "green-chili": { name: "Green chili", aisle: "Produce", negligible: true },
   "lemon": { name: "Lemon", aisle: "Produce", negligible: true },
   "cilantro": { name: "Cilantro", aisle: "Produce", negligible: true },
@@ -37,6 +38,8 @@ export const ITEMS = {
   "edamame": { name: "Shelled edamame, frozen", short: "edamame", aisle: "Frozen", nutrition: { protein: 11, fiber: 5 }, key: true },
 
   "canned-tomatoes": { name: "Canned tomatoes", aisle: "Pantry", nutrition: { protein: 0.8, fiber: 1.0 }, key: true },
+  // Dry weight, typical raw values. About 200 g dried cooks up to roughly 480 g.
+  "dried-chickpeas": { name: "Dried chickpeas", short: "dried chickpeas", aisle: "Pantry", nutrition: { protein: 19, fiber: 17 }, key: true },
   "chickpeas": { name: "Chickpeas, cooked or canned", short: "chickpeas", aisle: "Pantry", nutrition: { protein: 8, fiber: 7 }, key: true },
   "red-lentils": { name: "Red lentils (masoor dal)", short: "red lentils", aisle: "Pantry", nutrition: { protein: 24, fiber: 11 }, key: true },
   // Split moong fiber figures vary widely between sources, so it is left unknown.
