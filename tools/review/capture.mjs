@@ -9,7 +9,7 @@
 import { chromium } from "playwright";
 import ffmpegPath from "ffmpeg-static";
 import { execFileSync, spawn } from "node:child_process";
-import { mkdirSync, writeFileSync, renameSync, rmSync, readdirSync } from "node:fs";
+import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -153,10 +153,25 @@ async function walkthrough(browser) {
   const dir = join(out, label, "video");
   mkdirSync(dir, { recursive: true });
   const size = { width: 430, height: 932 };
-  // Plain 430 × 932 window: Chrome's mobile emulation (isMobile) records frames into
-  // a smaller area with a grey band. Layout depends only on width, so this matches.
-  const context = await browser.newContext({ viewport: size, recordVideo: { dir, size } });
+  // Recorded as timed page screenshots rather than Playwright's recordVideo: with
+  // installed Chrome, recordVideo scaled frames into a smaller area with a grey band.
+  const context = await browser.newContext({ viewport: size });
   const page = await context.newPage();
+  const framesDir = join(dir, "frames");
+  mkdirSync(framesDir, { recursive: true });
+  const frames = [];
+  let recording = true;
+  const recorder = (async () => {
+    while (recording) {
+      const file = join(framesDir, `${String(frames.length).padStart(5, "0")}.jpg`);
+      try {
+        await page.screenshot({ path: file, type: "jpeg", quality: 85 });
+        frames.push({ file, t: Date.now() });
+      } catch {
+        await new Promise((r) => setTimeout(r, 50)); // e.g. mid-reload
+      }
+    }
+  })();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
@@ -278,13 +293,21 @@ async function walkthrough(browser) {
   record("reload: adapted version persists", vp.name, kept.servings === "2" && kept.changes.length === 1, JSON.stringify(kept));
   await pageChecks(page, vp, "walkthrough end", errors);
 
-  const video = page.video();
+  await page.waitForTimeout(1200);
+  recording = false;
+  await recorder;
   await context.close();
-  const webm = await video.path();
+
+  // Each frame is shown for as long as it was current, so playback runs in real time.
+  const list = frames.map((f, i) => `file '${f.file}'\nduration ${((frames[i + 1]?.t ?? f.t + 1000) - f.t) / 1000}`);
+  list.push(`file '${frames.at(-1).file}'`);
+  const listFile = join(framesDir, "frames.txt");
+  writeFileSync(listFile, list.join("\n"));
   const mp4 = join(dir, "walkthrough-430x932.mp4");
-  execFileSync(ffmpegPath, ["-y", "-loglevel", "error", "-i", webm, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart", mp4]);
-  renameSync(webm, join(dir, "walkthrough-430x932.webm"));
-  for (const f of readdirSync(dir)) if (f.endsWith(".webm") && f !== "walkthrough-430x932.webm") rmSync(join(dir, f));
+  execFileSync(ffmpegPath, ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", listFile,
+    "-vf", "fps=25,format=yuv420p", "-c:v", "libx264", "-movflags", "+faststart", mp4]);
+  rmSync(framesDir, { recursive: true });
+  record("walkthrough recorded", vp.name, frames.length > 20, `${frames.length} frames`);
   return mp4;
 }
 
