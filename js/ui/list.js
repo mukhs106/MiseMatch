@@ -20,7 +20,9 @@ export function listView(ctx) {
     <div class="page list-page">
       <header class="list-head">
         <h1 tabindex="-1" data-route-focus>Grocery list</h1>
-        <p class="muted">${list.lines.length ? `${plural(open, "item")} to get${checked ? `, ${checked} checked off` : ""}` : "Nothing to get yet."}</p>
+        <p class="muted">${!list.lines.length
+          ? "Nacho average grocery list."
+          : !open ? "Bean there, done that." : `${plural(open, "item")} to get${checked ? `, ${checked} checked off` : ""}`}</p>
       </header>
       ${listNotices(ctx)}
       <form class="add-item" data-action="list-add" aria-label="Add an item">
@@ -39,14 +41,14 @@ export function listView(ctx) {
           ${groups.map(([aisle, lines]) => html`
             <section class="aisle" aria-label="${aisle}">
               <h2 class="eyebrow">${aisle}</h2>
-              <ul class="lines">${lines.map((l) => lineView(l))}</ul>
+              <ul class="lines">${lines.map((l) => lineView(l, ctx))}</ul>
             </section>`)}
         </div>
         ${checked ? html`<button class="btn btn--secondary" data-action="list-clear-checked">Clear ${plural(checked, "checked item")}</button>` : ""}
       ` : html`
         <div class="empty">
           ${doodle.pot}
-          <p>Open a recipe, mark what you have, and choose Add to list. Anything you add here yourself stays put.</p>
+          <p>Nothing to buy yet. Open a recipe, mark what you have, and choose Add to list. Anything you add here yourself stays put.</p>
           <a class="btn btn--primary" href="#/">Go to Recipes</a>
         </div>`}
     </div>`;
@@ -66,9 +68,9 @@ function listNotices(ctx) {
   return html`
     ${stale.map((r) => html`
       <div class="notice" role="status">
-        <p><strong>${r.title} changed</strong> since it was added. The list still shows the earlier amounts.</p>
+        <p><strong>${r.title} or your pantry changed</strong> since this was added. The list still shows the earlier amounts.</p>
         <div class="actions">
-          <button class="btn btn--primary btn--small" data-action="sync-list" data-id="${r.id}">Update from recipe</button>
+          <button class="btn btn--primary btn--small" data-action="sync-list" data-id="${r.id}">Update list</button>
           <a class="btn btn--quiet" href="#/recipe/${r.id}">Open recipe</a>
         </div>
       </div>`)}
@@ -92,7 +94,7 @@ function inputValue(line) {
   return practical(q.qty, q.unit, q.step);
 }
 
-function lineView(line) {
+function lineView(line, ctx) {
   const computed = line.manual ? null : computedQty(line);
   const titles = Object.values(line.sources ?? {}).map((s) => s.title);
   const uncertain = Object.values(line.sources ?? {}).some((s) => s.uncertain);
@@ -113,7 +115,10 @@ function lineView(line) {
             ${line.override && !line.conflict ? html` · <span class="edited">edited</span>
               <button class="btn btn--quiet line-reset" data-action="list-resolve" data-line="${id}" data-choice="recipe">Use recipe amount</button>` : ""}
           </span>
-          ${uncertain ? html`<span class="line-meta small warn">You marked some at home in a different unit. Check before buying.</span>` : ""}
+          ${uncertain ? html`<span class="line-meta small warn">Your pantry amount couldn't be counted here. Check before buying.</span>` : ""}
+          ${line.checked ? (ctx.ui.bought[id]
+            ? html`<span class="line-meta small">${icon("check")} Added to your pantry</span>`
+            : html`<button class="btn btn--quiet line-to-pantry" data-action="list-to-pantry" data-line="${id}">Add to pantry</button>`) : ""}
         </div>
         <label class="line-qty">
           <span class="visually-hidden">Amount of ${line.name}${computed?.unit ? ` in ${computed.unit}` : ""}</span>

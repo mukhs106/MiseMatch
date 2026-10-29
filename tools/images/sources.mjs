@@ -23,7 +23,7 @@ const credit = (e) => {
 const used = (e) => ({
   "recipe:chana-masala": "Chana masala card and recipe hero",
   "brand:recipes": "Recipes screen, supporting image",
-  "header:pantry": "Pantry header (when built)",
+  "header:pantry": "Pantry screen, supporting image",
   held: "Held for a future matching recipe",
   "near-duplicate": `Not processed; near-duplicate of ${e.nearDuplicateOf}`,
   excluded: "Never used",

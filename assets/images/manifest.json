@@ -368,7 +368,7 @@
       "focal": {
         "header": "50% 50%"
       },
-      "notes": "Reserved for the Pantry header when T05 builds it. Supporting image, empty alt."
+      "notes": "Pantry header, the one supporting image on that screen. Empty alt."
     },
     {
       "file": "thali-02.jpg",

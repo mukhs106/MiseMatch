@@ -7,7 +7,7 @@ To add work: create `docs/queue/TNN-short-name.md` from `_template.md` and add a
 | ID | Task | Status | Notes |
 | --- | --- | --- | --- |
 | T04 | [Align build with decision record](T04-align-record.md) | done | Resolves C1 to C10. Its C8 (per-recipe partial amounts) is replaced by T05's pantry model |
-| T05 | [Navigation and Pantry](T05-navigation-recipes-pantry.md) | todo | Supersedes C8: Pantry holds optional quantities as the single ingredient state. Recipes part done in the photography and discovery pass (Oct 29) |
+| T05 | [Navigation and Pantry](T05-navigation-recipes-pantry.md) | done | Supersedes C8: Pantry holds optional quantities as the single ingredient state. Its Recipes part was replaced by the photography and discovery pass (Oct 29) |
 | T06 | [Profile and Settings](T06-profile.md) | todo | |
 | T01 | [Revision evidence and decision log](T01-revision-evidence.md) | todo | Runs after T05 and T06 so its screenshots show the new structure. Needs Figma "before" exports in docs/revisions/2026-10-29/before/ |
 | T02 | [Usability test kit for the next question](T02-test-kit.md) | todo | |

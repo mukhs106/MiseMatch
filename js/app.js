@@ -7,9 +7,12 @@ import { ITEMS } from "./data/items.js";
 import { load, save, clear } from "./store.js";
 import { defaultAdaptation, deriveRecipe, applySwap, removeSwap, setServings } from "./core/adapt.js";
 import * as shop from "./core/shopping.js";
+import * as pantryCore from "./core/pantry.js";
 import { html, plural } from "./ui/html.js";
 import { icon } from "./ui/icons.js";
 import { homeView, resultsView, resultsStatus } from "./ui/home.js";
+import { pantryView } from "./ui/pantry.js";
+import { profileView } from "./ui/profile.js";
 import { recipeView } from "./ui/recipe.js";
 import { listView } from "./ui/list.js";
 import { sheetView } from "./ui/swapSheet.js";
@@ -17,10 +20,12 @@ import { sheetView } from "./ui/swapSheet.js";
 let state = load();
 const ui = {
   route: { name: "home" },
-  recipesView: "all", // Recipes: "all" | "have" | "saved", for this session
-  query: "", // Recipes search, for this session
   view: {}, // recipeId -> "mine" | "original"
   open: {}, // disclosure open state by data-open-key, for this session
+  query: "", // Recipes search
+  mode: "all", // Recipes: "all" | "have" | "saved"
+  pantryQuery: "", // Pantry add-by-search
+  bought: {}, // list line id -> true once "Add to pantry" was used, for this session
   undo: {}, // recipeId -> [previous adaptation], in-memory only
   dialog: null,
   toast: null,
@@ -40,8 +45,26 @@ const ctx = {
   recipe: getRecipe,
   adaptation: (id) => state.adaptations[id] ?? defaultAdaptation(getRecipe(id)),
   derived: (id) => deriveRecipe(getRecipe(id), ctx.adaptation(id)),
-  needs: (id) => shop.needsFor(ctx.derived(id), state.pantry, ctx.adaptation(id).partial),
+  // Pantry amounts are allocated once across the list, in list order. A recipe not on
+  // the list is costed as if added after the ones that are.
+  needs: (id) => {
+    const order = listOrder();
+    return allocation(order.includes(id) ? order : [...order, id]).get(id);
+  },
 };
+
+function listOrder() {
+  return Object.keys(state.list.synced).filter((id) => getRecipe(id));
+}
+
+let allocCache = { key: null, map: null };
+function allocation(order) {
+  const key = order.join(",");
+  if (allocCache.state === state && allocCache.key === key) return allocCache.map;
+  const map = shop.allocateNeeds(order.map((id) => ({ id, derived: ctx.derived(id) })), state.pantry);
+  allocCache = { state, key, map };
+  return map;
+}
 
 // ---------- state changes ----------
 
@@ -62,41 +85,30 @@ function undo(id) {
   const stack = ui.undo[id] ?? [];
   if (!stack.length) return;
   const prev = stack.pop();
-  // Undo covers servings and swaps; partial amounts aren't part of the undo history.
-  const partial = ctx.adaptation(id).partial;
-  commit({ ...state, adaptations: { ...state.adaptations, [id]: { ...prev, partial } } });
+  commit({ ...state, adaptations: { ...state.adaptations, [id]: prev } });
   toast("Change undone");
 }
 
-/** Shared presence only: "have", "need", or null to unmark. */
-function setPantry(item, status) {
-  const pantry = { ...state.pantry };
-  if (status) pantry[item] = { status };
-  else delete pantry[item];
-  commit({ ...state, pantry });
+/** Every availability mark, from a recipe or the Pantry screen, writes to the one pantry. */
+function setAvailability(item, status, amount) {
+  commit({ ...state, pantry: pantryCore.setAvailability(state.pantry, item, status, amount) });
 }
 
 /**
- * Availability from inside a recipe. "have" / "need" are shared presence;
- * "some" is a partial amount that belongs to this recipe only.
+ * Update the list for one recipe. Because pantry amounts are shared out in list
+ * order, every recipe already on the list is recalculated with it.
  */
-function setAvailability(id, item, status, amount = {}) {
-  const a = ctx.adaptation(id);
-  const partial = { ...(a.partial ?? {}) };
-  const pantry = { ...state.pantry };
-  if (status === "some") {
-    partial[item] = { ...(partial[item] ?? {}), ...amount };
-  } else {
-    delete partial[item];
-    if (status) pantry[item] = { status };
-    else delete pantry[item];
-  }
-  commit({ ...state, pantry, adaptations: { ...state.adaptations, [id]: { ...a, partial } } });
-}
-
 function syncList(id) {
-  const recipe = getRecipe(id);
-  const { list, report } = shop.syncRecipe(state.list, recipe, ctx.needs(id));
+  const order = listOrder();
+  if (id && !order.includes(id)) order.push(id);
+  const map = allocation(order);
+  let list = state.list;
+  const report = { added: 0, updated: 0, conflicts: 0 };
+  for (const rid of order) {
+    const r = shop.syncRecipe(list, getRecipe(rid), map.get(rid));
+    list = r.list;
+    for (const k of Object.keys(report)) report[k] += r.report[k];
+  }
   commit({ ...state, list });
   const parts = [];
   if (report.added) parts.push(`${plural(report.added, "item")} added`);
@@ -138,8 +150,7 @@ const actions = {
     if (close) closeDialog();
     changeAdaptation(id, removeSwap(ctx.adaptation(id), swap), `Undid: ${getSwap(swap).label}`);
   },
-  "restore-original": ({ id }) =>
-    changeAdaptation(id, { ...defaultAdaptation(getRecipe(id)), partial: ctx.adaptation(id).partial }, "Back to the original recipe"),
+  "restore-original": ({ id }) => changeAdaptation(id, defaultAdaptation(getRecipe(id)), "Back to the original recipe"),
   undo: ({ id }) => undo(id),
   // In-page jump. Hash links would be read as routes, so this scrolls and moves focus instead.
   jump: ({ target }) => {
@@ -151,26 +162,55 @@ const actions = {
     const goals = state.goals.includes(goal) ? state.goals.filter((g) => g !== goal) : [...state.goals, goal];
     commit({ ...state, goals });
   },
-  "pantry-toggle": ({ item }) => {
-    setPantry(item, state.pantry[item]?.status === "have" ? null : "have");
+  "clear-search": () => {
+    ui.query = "";
+    render({ keepFocus: false });
+    document.querySelector('[data-action="recipe-search"]')?.focus();
   },
-  "pantry-clear": () => {
-    const pantry = state.pantry;
-    commit({ ...state, pantry: {} });
-    toast("Cleared what's on hand", { label: "Undo", run: () => commit({ ...state, pantry }) });
+  "set-mode": ({ mode }) => {
+    ui.mode = mode;
+    render();
+  },
+  // Quick chips on the Pantry screen: in the pantry (amount unknown) or not.
+  "pantry-toggle": ({ item }) => setAvailability(item, state.pantry[item] ? "need" : "have"),
+  "pantry-add": ({ item }) => {
+    ui.pantryQuery = "";
+    commit({ ...state, pantry: { ...state.pantry, [item]: state.pantry[item] ?? {} } }, { keepFocus: false });
+    document.querySelector('[data-action="pantry-search"]')?.focus();
+    toast(`Added ${ITEMS[item].name}`);
+  },
+  "pantry-add-free": ({ name }) => {
+    ui.pantryQuery = "";
+    commit({ ...state, pantry: pantryCore.addFree(state.pantry, name) }, { keepFocus: false });
+    document.querySelector('[data-action="pantry-search"]')?.focus();
+    toast(`Added ${name}. Not matched to recipes yet.`);
+  },
+  "pantry-remove": ({ key }) => {
+    const before = state.pantry;
+    const name = pantryCore.displayName(key, before[key]);
+    commit({ ...state, pantry: pantryCore.remove(before, key) }, { keepFocus: false });
+    toast(`Removed ${name}`, { label: "Undo", run: () => commit({ ...state, pantry: before }) });
   },
   "group-have": ({ id, group }) => {
-    const pantry = { ...state.pantry };
-    const a = ctx.adaptation(id);
-    const partial = { ...(a.partial ?? {}) };
+    let pantry = state.pantry;
     for (const line of ctx.derived(id).ingredients.filter((l) => l.group === group)) {
-      for (const e of line.entries) {
-        if (ITEMS[e.item].noShop) continue;
-        pantry[e.item] = { status: "have" };
-        delete partial[e.item];
-      }
+      for (const e of line.entries) if (!ITEMS[e.item].noShop) pantry = pantryCore.setAvailability(pantry, e.item, "have");
     }
-    commit({ ...state, pantry, adaptations: { ...state.adaptations, [id]: { ...a, partial } } });
+    commit({ ...state, pantry });
+  },
+  // Offered on a checked-off list item; never automatic.
+  "list-to-pantry": ({ line }) => {
+    const l = state.list.lines.find((x) => x.id === line);
+    if (!l) return;
+    let pantry;
+    if (l.manual) pantry = pantryCore.addFree(state.pantry, l.name, l.qtyText ?? "");
+    else {
+      const q = l.override ?? shop.computedQty(l);
+      pantry = pantryCore.addBought(state.pantry, l.item, q?.qty, q?.unit);
+    }
+    ui.bought[line] = true;
+    commit({ ...state, pantry });
+    toast(`Added ${l.name} to your pantry`, { label: "View pantry", href: "#/pantry" });
   },
   "sync-list": ({ id }) => syncList(id),
   "list-delete": ({ line }) => {
@@ -197,40 +237,44 @@ const actions = {
     ui.view = {};
     state = clear();
     save(state);
+    ui.query = "";
+    ui.mode = "all";
+    ui.bought = {};
     location.hash = "#/";
     render({ keepFocus: false });
     toast("Demo reset");
   },
   "close-dialog": () => closeDialog(),
-  "recipes-view": ({ view }) => {
-    ui.recipesView = view;
-    render();
-  },
-  // From Use what you have with nothing marked: open the "What you have" row and focus it.
-  "open-kitchen": () => {
-    ui.open.kitchen = true;
-    render({ keepFocus: false });
-    const summary = root.querySelector("#kitchen summary");
-    summary?.scrollIntoView({ block: "start" });
-    summary?.focus({ preventScroll: true });
-  },
 };
 
 // Inputs that commit on change (not on every keystroke, so typing isn't interrupted).
 const changeActions = {
-  avail: ({ id, item }, el) => setAvailability(id, item, el.value),
-  "avail-toggle": ({ id, item }, el) => setAvailability(id, item, el.checked ? "have" : null),
-  "avail-qty": ({ id, item, unit }, el) => {
+  avail: ({ item }, el) => setAvailability(item, el.value),
+  "avail-toggle": ({ item }, el) => setAvailability(item, el.checked ? "have" : "need"),
+  // Amounts (recipe "Some" rows and Pantry rows): empty means amount unknown.
+  "avail-qty": ({ item, unit }, el) => {
     const n = parseFloat(el.value);
     const valid = Number.isFinite(n) && n > 0;
-    setAvailability(id, item, "some", { qty: valid ? n : undefined, unit: valid ? unit : undefined });
+    setAvailability(item, "some", { qty: valid ? n : undefined, unit });
   },
-  "avail-unit": ({ id, item }, el) => {
-    const current = ctx.adaptation(id).partial?.[item] ?? {};
-    setAvailability(id, item, "some", { unit: current.qty != null ? el.value : undefined });
-    // Keep the selected unit for the qty input even before an amount is entered.
-    const input = document.querySelector(`[data-action="avail-qty"][data-item="${item}"]`);
-    if (input) input.dataset.unit = el.value;
+  "avail-unit": ({ item }, el) => {
+    setAvailability(item, "some", { unit: el.value });
+    // Keep the chosen unit on the amount input too.
+    document.querySelectorAll(`[data-action="avail-qty"][data-item="${CSS.escape(item)}"]`).forEach((i) => (i.dataset.unit = el.value));
+  },
+  "pantry-qty": ({ key }, el) => {
+    // Pantry rows: an empty amount means "have it, amount unknown".
+    const n = parseFloat(el.value);
+    const unit = el.dataset.unit;
+    setAvailability(key, Number.isFinite(n) && n > 0 ? "some" : "have", Number.isFinite(n) && n > 0 ? { qty: n, unit } : undefined);
+  },
+  "pantry-unit": ({ key }, el) => {
+    const e = state.pantry[key];
+    if (e) commit({ ...state, pantry: { ...state.pantry, [key]: { ...e, unit: el.value } } });
+  },
+  "pantry-free-qty": ({ key }, el) => {
+    const e = state.pantry[key];
+    if (e) commit({ ...state, pantry: { ...state.pantry, [key]: { ...e, qtyText: el.value.trim() || undefined } } });
   },
   "list-qty": ({ line }, el) => commit({ ...state, list: shop.setOverride(state.list, line, el.value) }),
   "list-name": ({ line }, el) => commit({ ...state, list: shop.renameManual(state.list, line, el.value) }),
@@ -303,18 +347,24 @@ toastRegion.addEventListener("click", (e) => {
 
 // ---------- routing and rendering ----------
 
+// Primary screens have the tab bar; recipe detail and profile are pushed screens with a back link.
+const PUSHED = new Set(["recipe", "profile"]);
+const TITLES = { home: "Recipes", list: "Grocery list", pantry: "Pantry", profile: "Profile and settings" };
+
 function parseRoute() {
   const hash = location.hash.replace(/^#\/?/, "");
   const [name, id] = hash.split("/");
   if (name === "recipe" && getRecipe(id)) return { name: "recipe", id };
-  if (name === "list") return { name: "list" };
+  if (name === "list" || name === "pantry" || name === "profile") return { name };
   return { name: "home" };
 }
 
 function focusSignature(el) {
   if (!el || el === document.body || !root.contains(el)) return null;
-  const attrs = ["data-action", "data-id", "data-item", "data-line", "data-slot", "data-swap", "data-delta", "data-goal", "data-view", "data-group", "data-place", "value"];
-  return attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a))}"]`).join("");
+  const attrs = ["data-action", "data-id", "data-item", "data-key", "data-line", "data-slot", "data-swap", "data-delta", "data-goal", "data-view", "data-mode", "data-group", "data-place", "value"];
+  // `value` identifies a radio or checkbox option; on text fields it changes as you type.
+  const choice = el.type === "radio" || el.type === "checkbox";
+  return attrs.filter((a) => el.hasAttribute(a) && (a !== "value" || choice)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a))}"]`).join("");
 }
 
 /**
@@ -323,33 +373,46 @@ function focusSignature(el) {
  * document, where the skip link is). See the focus-target rules in base.css.
  */
 function render({ keepFocus = true, routeChanged = false, initial = false } = {}) {
-  const sig = keepFocus ? focusSignature(document.activeElement) : null;
+  const active = document.activeElement;
+  const sig = keepFocus ? focusSignature(active) : null;
+  // Typing in a search field re-renders; keep the caret where it was.
+  const caret = sig && active.selectionStart != null ? [active.selectionStart, active.selectionEnd] : null;
   const r = ui.route;
   let view;
   if (r.name === "recipe") view = recipeView(ctx, getRecipe(r.id));
   else if (r.name === "list") view = listView(ctx);
+  else if (r.name === "pantry") view = pantryView(ctx);
+  else if (r.name === "profile") view = profileView(ctx);
   else view = homeView(ctx);
   root.innerHTML = String(view);
   checkImages(root);
+  document.body.dataset.screen = PUSHED.has(r.name) ? "pushed" : "primary";
+  document.body.dataset.route = r.name;
   renderNav();
   if (ui.dialog && sheet.open) renderSheet();
 
   if (routeChanged) {
     window.scrollTo(0, 0);
     if (!initial) root.querySelector("[data-route-focus]")?.focus({ preventScroll: true });
-    document.title = r.name === "recipe" ? `${getRecipe(r.id).title} · mise & match` : r.name === "list" ? "Grocery list · mise & match" : "Recipes · mise & match";
+    const title = r.name === "recipe" ? getRecipe(r.id).title : TITLES[r.name];
+    document.title = r.name === "home" ? "mise & match" : `${title} · mise & match`;
   } else if (sig) {
-    root.querySelector(sig)?.focus({ preventScroll: true });
+    const el = root.querySelector(sig);
+    el?.focus({ preventScroll: true });
+    if (caret && el?.setSelectionRange) el.setSelectionRange(...caret);
   }
 }
 
+// Current tab: aria-current plus an indicator bar and heavier label, not color alone.
 function renderNav() {
   const open = state.list.lines.filter((l) => !l.checked).length;
   const r = ui.route.name;
+  const tab = (href, name, iconName, label, extra = "") => html`
+    <a href="${href}" ${r === name ? html`aria-current="page"` : ""}>${icon(iconName)}<span class="tab-label">${label}</span>${extra}</a>`;
   nav.innerHTML = String(html`
-    <a href="#/" ${r !== "list" ? html`aria-current="page"` : ""}>${icon("book")} Recipes</a>
-    <a href="#/list" ${r === "list" ? html`aria-current="page"` : ""}>${icon("list")} Grocery list
-      ${open ? html`<span class="count" aria-label="${plural(open, "item")}">${open}</span>` : ""}</a>`);
+    ${tab("#/", "home", "book", "Recipes")}
+    ${tab("#/list", "list", "list", "Grocery list", open ? html`<span class="count" aria-label="${plural(open, "item")} to get">${open}</span>` : "")}
+    ${tab("#/pantry", "pantry", "jar", "Pantry")}`);
 }
 
 window.addEventListener("hashchange", () => {
@@ -382,7 +445,35 @@ document.addEventListener("change", (e) => {
   if (fn) fn({ ...el.dataset }, el);
 });
 
+// Search fields filter as you type. Recipe search updates only the results and
+// their count, so the field and the photos above it are left alone.
+document.addEventListener("input", (e) => {
+  const el = e.target;
+  if (el.dataset?.action === "recipe-search") {
+    ui.query = el.value;
+    const results = root.querySelector("#recipe-results");
+    if (!results) return render();
+    results.innerHTML = String(resultsView(ctx));
+    root.querySelector("#results-status").textContent = resultsStatus(ctx);
+    checkImages(results);
+  } else if (el.dataset?.action === "pantry-search") {
+    ui.pantryQuery = el.value;
+    render();
+  }
+});
+
 document.addEventListener("submit", (e) => {
+  const pantryForm = e.target.closest('[data-action="pantry-add-form"]');
+  if (pantryForm) {
+    // Enter adds the best catalog match, or the text as a free-text item.
+    e.preventDefault();
+    const q = ui.pantryQuery.trim();
+    if (!q) return;
+    const [match] = pantryCore.searchCatalog(q, 1);
+    if (match) actions["pantry-add"]({ item: match });
+    else actions["pantry-add-free"]({ name: q });
+    return;
+  }
   const form = e.target.closest('[data-action="list-add"]');
   if (!form) return;
   e.preventDefault();
@@ -391,17 +482,6 @@ document.addEventListener("submit", (e) => {
   if (list === state.list) return;
   commit({ ...state, list }, { keepFocus: false });
   document.querySelector('.add-item [name="name"]')?.focus();
-});
-
-// Search updates only the results, so typing is never interrupted by a full render.
-document.addEventListener("input", (e) => {
-  if (!e.target.matches?.('[data-action="recipe-search"]')) return;
-  ui.query = e.target.value;
-  const results = root.querySelector("#recipe-results");
-  if (!results) return;
-  results.innerHTML = String(resultsView(ctx));
-  root.querySelector("#results-status").textContent = resultsStatus(ctx);
-  checkImages(results);
 });
 
 // A recipe photo that fails shows its designed tile instead; a supporting image just goes away.

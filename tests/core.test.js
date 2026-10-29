@@ -8,12 +8,13 @@ import { convert, formatQty } from "../js/core/units.js";
 import { deriveRecipe, defaultAdaptation, applySwap, removeSwap, setServings, checkSwap } from "../js/core/adapt.js";
 import { estimate, direction, formatRange } from "../js/core/nutrition.js";
 import {
-  needsFor, syncRecipe, emptyList, setOverride, deleteLine, addManual, resolveConflict,
+  needsFor, allocateNeeds, syncRecipe, emptyList, setOverride, deleteLine, addManual, resolveConflict,
   isListCurrent, displayQty, clearChecked, toggleChecked, undismiss,
 } from "../js/core/shopping.js";
 import { suggest } from "../js/core/suggest.js";
 import { matchesQuery } from "../js/core/search.js";
 import { existsSync, readFileSync } from "node:fs";
+import * as pantryCore from "../js/core/pantry.js";
 
 const chana = getRecipe("chana-palak");
 const dal = getRecipe("masoor-dal");
@@ -138,20 +139,24 @@ test("nutrition: ranges move with nutrition swaps; missing data is reported, not
   assert.equal(Math.round(half.protein.mid), Math.round(base.protein.mid));
 });
 
-test("shopping needs subtract partial amounts and flag incompatible units", () => {
+test("shopping needs subtract pantry amounts and flag incompatible units", () => {
   const d = deriveRecipe(chana, defaultAdaptation(chana));
-  const pantry = { chickpeas: { status: "have" } };
-  const partial = {
+  const pantry = {
+    chickpeas: {}, // have it, amount unknown
     "spinach-fresh": { qty: 120, unit: "g" },
     garlic: { qty: 1, unit: "head" },
   };
-  const needs = needsFor(d, pantry, partial);
+  const needs = needsFor(d, pantry);
   const spinach = needs.find((n) => n.item === "spinach-fresh");
   assert.equal(spinach.qty, 80);
   assert.ok(!needs.some((n) => n.item === "chickpeas"));
   assert.equal(needs.find((n) => n.item === "garlic").uncertain, true);
   // more than enough means nothing to buy
-  assert.ok(!needsFor(d, {}, { "spinach-fresh": { qty: 0.5, unit: "kg" } }).some((n) => n.item === "spinach-fresh"));
+  assert.ok(!needsFor(d, { "spinach-fresh": { qty: 0.5, unit: "kg" } }).some((n) => n.item === "spinach-fresh"));
+  // "Some" with no amount yet: buy the full amount, flagged
+  assert.equal(needsFor(d, { onion: { some: true } }).find((n) => n.item === "onion").uncertain, true);
+  // free-text pantry items never feed calculations
+  assert.ok(needsFor(d, { "free:onion": { free: true, name: "onion" } }).some((n) => n.item === "onion"));
   // water is never shopped for
   assert.ok(!needsFor(deriveRecipe(dal, defaultAdaptation(dal)), {}).some((n) => n.item === "water"));
 });
@@ -210,7 +215,7 @@ test("list: removed ingredients disappear unless edited or checked; recipes merg
   list = toggleChecked(list, onion.id);
   const swapped = applySwap(base, "cp-frozen-spinach");
   let report;
-  ({ list, report } = syncRecipe(list, chana, needsFor(deriveRecipe(chana, swapped), { onion: { status: "have" } })));
+  ({ list, report } = syncRecipe(list, chana, needsFor(deriveRecipe(chana, swapped), { onion: {} })));
   assert.ok(!list.lines.some((l) => l.item === "spinach-fresh"));
   assert.ok(list.lines.some((l) => l.item === "spinach-frozen"));
   assert.equal(list.lines.find((l) => l.item === "onion").conflict.type, "orphan");
@@ -222,17 +227,22 @@ test("list: removed ingredients disappear unless edited or checked; recipes merg
 
 test("suggestions use on-hand items and supported swaps", () => {
   const pantry = {
-    chickpeas: { status: "have" },
-    "spinach-frozen": { status: "have" },
-    "canned-tomatoes": { status: "have" },
-    onion: { status: "have" },
+    chickpeas: {},
+    "spinach-frozen": {},
+    "canned-tomatoes": {},
+    onion: {},
+    basmati: { qty: 200, unit: "g" },
   };
-  // Rice is covered by a partial amount entered in chana palak only.
-  const results = suggest(RECIPES, pantry, { "chana-palak": { servings: 4, applied: [], partial: { basmati: { qty: 200, unit: "g" } } } });
-  const top = results[0];
-  assert.equal(top.recipe.id, "chana-palak");
-  assert.equal(top.ready, true);
-  assert.equal(top.missing[0].fix.id, "cp-frozen-spinach");
+  const results = suggest(RECIPES, pantry);
+  // Chana masala (fresh tomatoes → canned) and chana palak (fresh spinach → frozen) are each one swap away.
+  assert.deepEqual(results.slice(0, 2).map((r) => r.rank), [1, 1]);
+  const palak = results.find((r) => r.recipe.id === "chana-palak");
+  assert.equal(palak.ready, true);
+  assert.equal(palak.missing[0].fix.id, "cp-frozen-spinach");
+  // Can make now ranks above one swap away
+  const now = suggest(RECIPES, { ...pantry, "spinach-fresh": {} });
+  assert.equal(now[0].recipe.id, "chana-palak");
+  assert.equal(now[0].rank, 0);
 });
 
 test("state survives a save and reload", async () => {
@@ -245,7 +255,8 @@ test("state survives a save and reload", async () => {
   const { load, save, clear, initialState } = await import("../js/store.js");
   const s = initialState();
   s.adaptations["chana-palak"] = applySwap(setServings(defaultAdaptation(chana), 2), "cp-frozen-spinach");
-  s.pantry.onion = { status: "have" };
+  s.pantry.onion = {};
+  s.pantry.basmati = { qty: 100, unit: "g" };
   s.list = addManual(s.list, "Mango");
   save(s);
   const reloaded = load();
@@ -267,34 +278,88 @@ test("chana masala: dried chickpeas add a first step; swaps compose at 2 serving
   assert.equal(line(d, "chickpeas").entries[0].qty, 100);
   assert.equal(line(d, "tomatoes").entries[0].qty, 200);
   assert.equal(line(d, "spinach-frozen").entries[0].qty, 65);
-  const needs = needsFor(d, {}, { "canned-tomatoes": { qty: 150, unit: "g" } });
+  const needs = needsFor(d, { "canned-tomatoes": { qty: 150, unit: "g" } });
   assert.equal(needs.find((n) => n.item === "canned-tomatoes").qty, 50);
   assert.equal(checkSwap(masala, applySwap(a, "cm-paneer"), "cm-tofu").ok, false);
   assert.ok(masala.unsupported.chickpeas[0].reason.length > 0);
 });
 
-test("partial amounts belong to one recipe, so two recipes don't double count", () => {
-  const masala = getRecipe("chana-masala");
-  // 150 g rice for masala at 2 servings; 300 g for chana palak at 4. 100 g on hand, entered in masala.
-  const a = { ...setServings(defaultAdaptation(masala), 2), partial: { basmati: { qty: 100, unit: "g" } } };
-  const masalaNeeds = needsFor(deriveRecipe(masala, a), {}, a.partial);
-  const palakNeeds = needsFor(deriveRecipe(chana, defaultAdaptation(chana)), {}, {});
-  assert.equal(masalaNeeds.find((n) => n.item === "basmati").qty, 50);
-  assert.equal(palakNeeds.find((n) => n.item === "basmati").qty, 300);
-  let list = emptyList();
-  ({ list } = syncRecipe(list, masala, masalaNeeds));
-  ({ list } = syncRecipe(list, chana, palakNeeds));
-  assert.equal(displayQty(list.lines.find((l) => l.item === "basmati")), "350 g"); // 450 needed − 100 on hand, counted once
-  // Shared presence still applies everywhere; a recipe's partial overrides it for that recipe only.
-  assert.ok(!needsFor(deriveRecipe(chana, defaultAdaptation(chana)), { basmati: { status: "have" } }).some((n) => n.item === "basmati"));
-  assert.equal(needsFor(deriveRecipe(masala, a), { basmati: { status: "have" } }, a.partial).find((n) => n.item === "basmati").qty, 50);
+test("pantry is the single ingredient state: recipe marks read from it and write back to it", () => {
+  let pantry = {};
+  assert.equal(pantryCore.availability(pantry, "basmati").status, "need");
+  pantry = pantryCore.setAvailability(pantry, "basmati", "some");
+  assert.deepEqual(pantryCore.availability(pantry, "basmati"), { status: "some", qty: undefined, unit: undefined });
+  pantry = pantryCore.setAvailability(pantry, "basmati", "some", { qty: 100, unit: "g" });
+  assert.deepEqual(pantry.basmati, { qty: 100, unit: "g" });
+  // Any recipe reading the pantry sees the same amount
+  assert.deepEqual(pantryCore.availability(pantry, "basmati"), { status: "some", qty: 100, unit: "g" });
+  pantry = pantryCore.setAvailability(pantry, "basmati", "have");
+  assert.deepEqual(pantry.basmati, {}); // have it, amount unknown
+  assert.equal(pantryCore.availability(pantry, "basmati").status, "have");
+  pantry = pantryCore.setAvailability(pantry, "basmati", "need");
+  assert.ok(!("basmati" in pantry));
+  // Free text is kept but never counts as an ingredient
+  pantry = pantryCore.addFree(pantry, "Mango pickle", "1 jar");
+  assert.equal(pantryCore.availability(pantry, "free:mango pickle").status, "need");
+  // Add to pantry from a bought list item adds to a comparable amount
+  pantry = pantryCore.addBought({ basmati: { qty: 100, unit: "g" } }, "basmati", 0.5, "kg");
+  assert.deepEqual(pantry.basmati, { qty: 600, unit: "g" });
+  assert.deepEqual(pantryCore.addBought({}, "onion", 1, "").onion, { qty: 1, unit: "" });
+  assert.deepEqual(pantryCore.addBought({ onion: {} }, "onion", 1, "").onion, {});
 });
 
-test("stored partial amounts from the shared list are dropped on load", async () => {
-  const mem = new Map([["mise-match:v1", JSON.stringify({ version: 1, pantry: { onion: { status: "have" }, basmati: { status: "some", qty: 100, unit: "g" } } })]]);
+test("shopping subtracts each pantry amount once across the list, in list order", () => {
+  const masala = getRecipe("chana-masala");
+  const twoServings = setServings(defaultAdaptation(masala), 2); // 150 g rice
+  const entries = [
+    { id: "chana-masala", derived: deriveRecipe(masala, twoServings) },
+    { id: "chana-palak", derived: deriveRecipe(chana, defaultAdaptation(chana)) }, // 300 g rice
+  ];
+  const pantry = { basmati: { qty: 100, unit: "g" } };
+  const rice = (m, id) => m.get(id).find((n) => n.item === "basmati")?.qty;
+  const forward = allocateNeeds(entries, pantry);
+  assert.equal(rice(forward, "chana-masala"), 50);
+  assert.equal(rice(forward, "chana-palak"), 300);
+  const backward = allocateNeeds([...entries].reverse(), pantry);
+  assert.equal(rice(backward, "chana-palak"), 200);
+  assert.equal(rice(backward, "chana-masala"), 150);
+  // Either order: 450 needed − 100 on hand, counted once
+  let list = emptyList();
+  ({ list } = syncRecipe(list, masala, forward.get("chana-masala")));
+  ({ list } = syncRecipe(list, chana, forward.get("chana-palak")));
+  assert.equal(displayQty(list.lines.find((l) => l.item === "basmati")), "350 g");
+  // A large pantry amount covers both
+  const plenty = allocateNeeds(entries, { basmati: { qty: 1, unit: "kg" } });
+  assert.equal(rice(plenty, "chana-masala"), undefined);
+  assert.equal(rice(plenty, "chana-palak"), undefined);
+});
+
+test("unconvertible pantry units are amount unknown: flagged, never subtracted", () => {
+  const entries = [
+    { id: "chana-palak", derived: deriveRecipe(chana, defaultAdaptation(chana)) }, // 4 cloves garlic
+    { id: "masoor-dal", derived: deriveRecipe(dal, defaultAdaptation(dal)) }, // 4 cloves garlic
+  ];
+  const out = allocateNeeds(entries, { garlic: { qty: 1, unit: "head" } });
+  for (const id of ["chana-palak", "masoor-dal"]) {
+    const garlic = out.get(id).find((n) => n.item === "garlic");
+    assert.equal(garlic.qty, 4);
+    assert.equal(garlic.uncertain, true);
+    assert.match(garlic.note, /can't be compared/);
+  }
+});
+
+test("older saves migrate to the single pantry state", async () => {
+  const old = {
+    version: 1,
+    pantry: { onion: { status: "have" }, garlic: { status: "need" }, basmati: { status: "some", qty: 100, unit: "g" } },
+    adaptations: { "chana-masala": { servings: 2, applied: [], partial: { "canned-tomatoes": { qty: 150, unit: "g" } } } },
+  };
+  const mem = new Map([["mise-match:v1", JSON.stringify(old)]]);
   globalThis.localStorage = { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, v), removeItem: (k) => mem.delete(k) };
   const { load } = await import("../js/store.js");
-  assert.deepEqual(load().pantry, { onion: { status: "have" } });
+  const s = load();
+  assert.deepEqual(s.pantry, { onion: {}, "canned-tomatoes": { qty: 150, unit: "g" } });
+  assert.deepEqual(s.adaptations["chana-masala"], { servings: 2, applied: [] });
 });
 
 test("search matches names, ingredients and cuisine; every word must match", () => {

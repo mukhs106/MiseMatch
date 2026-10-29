@@ -1,7 +1,8 @@
 // Shopping needs and the grocery list.
 //
-// Needs = adapted, scaled quantities minus what you have: shared presence
-// ("have" / "need") plus this recipe's own partial amounts.
+// Needs = adapted, scaled quantities minus what's in the pantry. Pantry amounts
+// are allocated once across the recipes on the list, in list order, so two
+// recipes never subtract the same amount.
 // The list keeps, per line, how much each recipe contributed (`sources`), so a
 // recipe can be regenerated without touching manual items or other recipes.
 // A user edit (`override`) is never silently replaced: if the recipe's amount
@@ -16,15 +17,8 @@ export function itemKey(item, unit) {
   return `${item}|${unitFamily(unit)}`;
 }
 
-/**
- * @param derived  output of deriveRecipe
- * @param pantry   shared presence: { [itemId]: { status: "have" | "need" } }
- * @param partial  this recipe's partial amounts: { [itemId]: { qty?, unit? } }.
- *                 A partial entry overrides shared presence for this recipe only,
- *                 so two recipes never subtract the same amount.
- * @returns [{ key, item, name, qty, unit, aisle, note, uncertain }]
- */
-export function needsFor(derived, pantry = {}, partial = {}) {
+/** One recipe's requirements, merged per item and unit family. */
+function requirements(derived) {
   const required = new Map();
   for (const line of derived.ingredients) {
     for (const e of line.entries) {
@@ -36,25 +30,52 @@ export function needsFor(derived, pantry = {}, partial = {}) {
       else required.set(key, { key, item: e.item, name: item.name, qty: e.qty, unit: e.unit, aisle: item.aisle, step: e.step });
     }
   }
-  const needs = [];
-  for (const req of required.values()) {
-    const have = partial[req.item];
-    const status = have ? "some" : pantry[req.item]?.status ?? "need";
-    if (status === "have") continue;
-    if (status === "some") {
-      const owned = have.qty > 0 && have.unit != null ? convert(have.qty, have.unit, req.unit) : null;
-      if (owned == null) {
-        needs.push({ ...req, uncertain: true, note: "You have some, but the amounts can't be compared. Check before buying." });
+  return [...required.values()];
+}
+
+/**
+ * @param entries  [{ id, derived }] in list order
+ * @param pantry   { [itemId]: { qty?, unit?, some? } } (see core/pantry.js)
+ * @returns Map(id -> [{ key, item, name, qty, unit, aisle, note, uncertain }])
+ */
+export function allocateNeeds(entries, pantry = {}) {
+  const left = new Map(); // item -> { qty, unit } of the pantry amount not yet used
+  const out = new Map();
+  for (const { id, derived } of entries) {
+    const needs = [];
+    for (const req of requirements(derived)) {
+      const have = pantry[req.item];
+      if (!have || have.free) {
+        needs.push(req);
         continue;
       }
-      const rest = req.qty - owned;
+      if (have.qty == null) {
+        // Have it, amount unknown: nothing to buy. "Some" without an amount stays on the list, flagged.
+        if (have.some) needs.push({ ...req, uncertain: true, note: "You have some, but no amount is entered. Check before buying." });
+        continue;
+      }
+      if (!left.has(req.item)) left.set(req.item, { qty: have.qty, unit: have.unit });
+      const pool = left.get(req.item);
+      const available = convert(pool.qty, pool.unit, req.unit);
+      if (available == null) {
+        // Not comparable: treat as amount unknown and flag; never subtract.
+        needs.push({ ...req, uncertain: true, note: `Your pantry has ${formatQty(have.qty, have.unit)}, which can't be compared with ${req.unit || "a count"}. Check before buying.` });
+        continue;
+      }
+      const use = Math.min(Math.max(available, 0), req.qty);
+      pool.qty -= convert(use, req.unit, pool.unit);
+      const rest = req.qty - use;
       if (rest <= EPS) continue;
-      needs.push({ ...req, qty: rest, note: `After the ${formatQty(have.qty, have.unit)} you have` });
-      continue;
+      needs.push({ ...req, qty: rest, note: use > EPS ? `After ${formatQty(use, req.unit)} from your pantry` : "Your pantry amount is used by a recipe earlier on the list" });
     }
-    needs.push(req);
+    out.set(id, needs);
   }
-  return needs;
+  return out;
+}
+
+/** Needs for one recipe on its own (as if it were the only recipe on the list). */
+export function needsFor(derived, pantry = {}) {
+  return allocateNeeds([{ id: "_", derived }], pantry).get("_");
 }
 
 /** A stable fingerprint of needs, used to tell whether the list is out of date. */

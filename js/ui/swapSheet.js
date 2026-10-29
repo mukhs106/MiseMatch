@@ -38,10 +38,10 @@ function slotSheet(ctx, { recipeId, slot }) {
   const adaptation = ctx.adaptation(recipeId);
   const reason = recipe.noSwap?.[slot];
   return html`
-    ${head(`Swap ${name}`, recipe.title)}
+    ${head("Thyme for a swap.", recipe.title)}
     <div class="sheet-body">
       ${options.length ? html`
-        <p class="muted">Written for this dish only. Pick one to see what changes before applying it.</p>
+        <p class="muted">Options for ${name}, written for this dish only. Pick one to see what changes before applying it.</p>
         <ul class="option-list">
           ${options.map((s) => {
             const applied = adaptation.applied.includes(s.id);
