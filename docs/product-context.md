@@ -56,6 +56,10 @@ Not inspected by anyone working in the repository: the Figma file and its eight 
 | Oct 29 | Recipe page shows "Ways to adapt" (one entry per swappable ingredient, plus a jump to protein and fiber ideas) above the ingredient list | Confirmed (visual refresh) |
 | Oct 29 | Focus moved by script (page titles on navigation, dialog title, skip-link target) shows a ring only for keyboard users; nothing is focused on first load | Confirmed (bug fix) |
 | Oct 29 | Visual evidence (before/after PNGs, recorded walkthrough, noted viewport, revision, scenario, results, ZIP) is required for substantive UI reviews | Confirmed |
+| Oct 29 | "My Recipes" is renamed "Recipes" everywhere | Confirmed (T05) |
+| Oct 29 | Primary destinations are Recipes, Grocery list and Pantry (bottom tab bar on mobile, header at wide widths), plus an avatar entry at top right for Profile and Settings. Recipe detail and Profile are pushed screens with a back button and no tab bar; the swap sheet stays a modal dialog. Routes stay hash-based. | Confirmed (T05) |
+| Oct 29 | Pantry is the single ingredient state and holds optional quantities (no quantity = "have it, amount unknown"). Recipe availability reads from it and writes back to it. Shopping needs subtract each pantry amount once across all listed recipes, allocated in list order; unconvertible units count as amount unknown and are flagged. Supersedes the presence-only shared list and C8 (per-recipe partial amounts). | Confirmed (T05) |
+| Oct 29 | Copy rule: at most one line of wordplay per screen; navigation, buttons, quantities, consequences, errors and allergy text stay plain. Assigned lines: Recipes header "Blend the rules."; swap sheet title "Thyme for a swap."; Pantry header "Turn 'what's left?' into 'what's next.'"; empty grocery list "Nacho average grocery list."; all list items checked "Bean there, done that."; Use what you have with no matches "Dinner, off-script." followed by a plain next step. | Confirmed (T05) |
 
 ### October 22 testing: observations, revisions, and next question
 
