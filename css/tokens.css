@@ -68,6 +68,9 @@
   --fs-xl: 1.625rem;   /* 26 */
   --fs-2xl: 2.125rem;  /* 34 */
   --fs-3xl: 2.75rem;   /* 44 */
+  --fs-title: clamp(2.25rem, 1.6rem + 2.6vw, 2.75rem); /* page titles: 36 at 360px, 44 on wide */
+  --fs-wordmark: 1.375rem; /* 22 */
+  --measure: 60ch;     /* comfortable line length for prose */
   --lh-tight: 1.1;
   --lh-snug: 1.3;
   --lh-body: 1.5;
@@ -94,6 +97,7 @@
   --tap: 44px;           /* minimum touch target */
   --control-h: 48px;
   --border-w: 1.5px;
+  --rule: 1px solid var(--border-subtle); /* restrained section separator on white */
   --shadow-sheet: 0 -8px 32px rgb(31 26 23 / 0.14);
   --shadow-lift: 0 2px 0 var(--c-ink);
 
@@ -110,6 +114,7 @@
 @media (min-width: 720px) {
   :root {
     --gutter: 2rem;
+    --fs-wordmark: 1.5rem; /* 24 */
   }
 }
 

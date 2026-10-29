@@ -3,7 +3,7 @@
 
 import { html, plural } from "./html.js";
 import { icon, doodle } from "./icons.js";
-import { ITEMS } from "../data/items.js";
+import { ITEMS, shortName } from "../data/items.js";
 import { swapsForRecipe, getSwap } from "../data/swaps.js";
 import { formatQty, unitFamily } from "../core/units.js";
 import { estimate, formatRange, direction } from "../core/nutrition.js";
@@ -103,19 +103,22 @@ function adaptPanel(ctx, recipe, adaptation, d) {
   const adapted = isAdapted(recipe, adaptation);
   return html`
     <section class="panel adapt" aria-label="Adjust this recipe">
-      <div class="adapt-servings">
-      <div class="adapt-row">
-        <div>
-          <h2 class="adapt-label" id="servings-label">Servings</h2>
-          <p class="small muted">${adaptation.servings === recipe.servings ? "As written" : `Recipe makes ${recipe.servings}`}</p>
+      <div class="adapt-main">
+        <div class="adapt-servings">
+          <div class="adapt-row">
+            <div>
+              <h2 class="adapt-label" id="servings-label">Servings</h2>
+              <p class="small muted">${adaptation.servings === recipe.servings ? "As written" : `Recipe makes ${recipe.servings}`}</p>
+            </div>
+            <div class="stepper" role="group" aria-labelledby="servings-label">
+              <button data-action="servings" data-id="${recipe.id}" data-delta="-1" aria-label="Fewer servings" ${adaptation.servings <= 1 ? "disabled" : ""}>${icon("minus")}</button>
+              <output aria-live="polite" aria-label="${plural(adaptation.servings, "serving")}">${adaptation.servings}</output>
+              <button data-action="servings" data-id="${recipe.id}" data-delta="1" aria-label="More servings" ${adaptation.servings >= 12 ? "disabled" : ""}>${icon("plus")}</button>
+            </div>
+          </div>
+          ${adaptation.servings !== recipe.servings ? html`<p class="small scale-note">Cooking times, pan size and oil may need adjusting for ${plural(adaptation.servings, "serving")}.</p>` : ""}
         </div>
-        <div class="stepper" role="group" aria-labelledby="servings-label">
-          <button data-action="servings" data-id="${recipe.id}" data-delta="-1" aria-label="Fewer servings" ${adaptation.servings <= 1 ? "disabled" : ""}>${icon("minus")}</button>
-          <output aria-live="polite" aria-label="${plural(adaptation.servings, "serving")}">${adaptation.servings}</output>
-          <button data-action="servings" data-id="${recipe.id}" data-delta="1" aria-label="More servings" ${adaptation.servings >= 12 ? "disabled" : ""}>${icon("plus")}</button>
-        </div>
-      </div>
-      ${adaptation.servings !== recipe.servings ? html`<p class="small scale-note">Cooking times, pan size and oil may need adjusting for ${plural(adaptation.servings, "serving")}.</p>` : ""}
+        ${waysToAdapt(recipe)}
       </div>
 
       <div class="adapt-changes">
@@ -127,7 +130,7 @@ function adaptPanel(ctx, recipe, adaptation, d) {
                 <span class="change-text"><strong>${s.label}</strong> <span class="muted small">${s.summary}</span></span>
                 <button class="btn btn--quiet" data-action="remove-swap" data-id="${recipe.id}" data-swap="${s.id}" aria-label="Undo ${s.label}">Undo</button>
               </li>`)}</ul>`
-          : html`<p class="small muted">No swaps yet. Use <strong>Swap</strong> on an ingredient, or try an idea below.</p>`}
+          : html`<p class="small muted">Nothing changed yet. Changes you apply show here, each with its own Undo.</p>`}
         ${adapted || canUndo ? html`
           <div class="change-actions">
             ${canUndo ? html`<button class="btn btn--quiet" data-action="undo" data-id="${recipe.id}">${icon("undo")} Undo last change</button>` : ""}
@@ -135,6 +138,25 @@ function adaptPanel(ctx, recipe, adaptation, d) {
           </div>` : ""}
       </div>
     </section>`;
+}
+
+// Adaptation entry points up front, so nobody has to scan the ingredient list to find them.
+function waysToAdapt(recipe) {
+  const swaps = swapsForRecipe(recipe.id);
+  const slots = recipe.ingredients.filter((i) => swaps.some((s) => s.replace?.slot === i.slot || s.omit === i.slot));
+  const ideas = swaps.filter((s) => s.reasons.includes("protein") || s.reasons.includes("fiber")).length;
+  if (!slots.length && !ideas) return "";
+  return html`
+    <div class="adapt-ways">
+      <h2 class="adapt-label" id="ways-label">Ways to adapt</h2>
+      <p class="small muted">Missing something, or want it different? Each option shows what changes before you apply it.</p>
+      <div class="ways" role="group" aria-labelledby="ways-label">
+        ${slots.map((i) => html`
+          <button class="btn btn--secondary btn--small" data-action="open-swaps" data-id="${recipe.id}" data-slot="${i.slot}" data-place="ways"
+            aria-label="Swap options for ${shortName(i.item)}">${icon("swap")} ${capitalize(shortName(i.item))}</button>`)}
+      </div>
+      ${ideas ? html`<button class="btn btn--quiet ways-ideas" data-action="jump" data-target="ideas-h">More protein or fiber: ${plural(ideas, "idea")}</button>` : ""}
+    </div>`;
 }
 
 function goalChips(goals) {
@@ -313,7 +335,7 @@ function ideasSection(ctx, recipe, adaptation) {
   return html`
     <section class="ideas" aria-labelledby="ideas-h">
       <div class="section-head">
-        <h2 id="ideas-h">${doodle.spark} Ideas for this dish</h2>
+        <h2 id="ideas-h" tabindex="-1">${doodle.spark} Ideas for this dish</h2>
       </div>
       <p class="small muted">Ways to shift protein or fiber that keep the dish recognizable. Preview first; nothing changes until you apply.</p>
       ${goalChips(goals)}

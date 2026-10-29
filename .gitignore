@@ -1,2 +1,4 @@
 .DS_Store
 node_modules/
+# Review evidence: dated capture folders and ZIPs stay out of source commits.
+reviews/

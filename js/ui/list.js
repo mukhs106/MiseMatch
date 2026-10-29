@@ -20,7 +20,7 @@ export function listView(ctx) {
     <div class="page list-page">
       <header class="list-head">
         <h1 tabindex="-1" data-route-focus>Grocery list</h1>
-        <p class="muted">${list.lines.length ? `${plural(open, "item")} to get` : "Built from your recipes, editable by you."}</p>
+        <p class="muted">${list.lines.length ? `${plural(open, "item")} to get${checked ? `, ${checked} checked off` : ""}` : "Nothing to get yet."}</p>
       </header>
       ${listNotices(ctx)}
       <form class="add-item" data-action="list-add" aria-label="Add an item">
@@ -46,7 +46,7 @@ export function listView(ctx) {
       ` : html`
         <div class="empty">
           ${doodle.pot}
-          <p>Nothing on your list yet. Open a recipe, mark what you have, and add what you still need.</p>
+          <p>Open a recipe, mark what you have, and choose Add to list. Anything you add here yourself stays put.</p>
           <a class="btn btn--primary" href="#/">Go to My Recipes</a>
         </div>`}
     </div>`;

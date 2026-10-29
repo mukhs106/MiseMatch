@@ -33,7 +33,7 @@
   background: var(--action-hover);
 }
 
-/* Tonal, no outline: oat on white surfaces, white on oat (and brand) surfaces. */
+/* Tonal, no outline: oat on white. */
 .btn--secondary {
   background: var(--surface-support);
   color: var(--text);
@@ -43,18 +43,7 @@
   background: var(--border-subtle);
 }
 
-.panel .btn--secondary,
-.add-item .btn--secondary,
-.nutrition .btn--secondary,
-.hero .btn--secondary {
-  background: var(--surface);
-}
 
-.panel .btn--secondary:hover,
-.add-item .btn--secondary:hover,
-.nutrition .btn--secondary:hover {
-  background: var(--border-subtle);
-}
 
 .btn--quiet {
   background: transparent;
@@ -328,10 +317,11 @@ a.card:hover {
   box-shadow: 0 3px 0 var(--c-ink);
 }
 
+/* A grouped section on white: separated by rules and space, not a fill. */
 .panel {
-  padding: var(--s-4);
-  border-radius: var(--radius-lg);
-  background: var(--surface-support);
+  padding: var(--s-5) 0;
+  border-top: var(--rule);
+  border-bottom: var(--rule);
 }
 
 .notice {
@@ -502,6 +492,4 @@ body:has(.shop-bar) .toast-region {
   flex: none;
 }
 
-.hero .btn--secondary:hover {
-  background: var(--surface-support);
-}
+

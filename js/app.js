@@ -18,6 +18,7 @@ let state = load();
 const ui = {
   route: { name: "home" },
   view: {}, // recipeId -> "mine" | "original"
+  open: {}, // disclosure open state by data-open-key, for this session
   undo: {}, // recipeId -> [previous adaptation], in-memory only
   dialog: null,
   toast: null,
@@ -138,6 +139,12 @@ const actions = {
   "restore-original": ({ id }) =>
     changeAdaptation(id, { ...defaultAdaptation(getRecipe(id)), partial: ctx.adaptation(id).partial }, "Back to the original recipe"),
   undo: ({ id }) => undo(id),
+  // In-page jump. Hash links would be read as routes, so this scrolls and moves focus instead.
+  jump: ({ target }) => {
+    const el = document.getElementById(target);
+    el?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    el?.focus({ preventScroll: true });
+  },
   "goal-toggle": ({ goal }) => {
     const goals = state.goals.includes(goal) ? state.goals.filter((g) => g !== goal) : [...state.goals, goal];
     commit({ ...state, goals });
@@ -296,7 +303,12 @@ function focusSignature(el) {
   return attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a))}"]`).join("");
 }
 
-function render({ keepFocus = true, routeChanged = false } = {}) {
+/**
+ * routeChanged: scroll to top and move focus to the new page's heading so screen
+ * readers announce it. Not done on first load (focus starts at the top of the
+ * document, where the skip link is). See the focus-target rules in base.css.
+ */
+function render({ keepFocus = true, routeChanged = false, initial = false } = {}) {
   const sig = keepFocus ? focusSignature(document.activeElement) : null;
   const r = ui.route;
   let view;
@@ -309,7 +321,7 @@ function render({ keepFocus = true, routeChanged = false } = {}) {
 
   if (routeChanged) {
     window.scrollTo(0, 0);
-    root.querySelector("[data-route-focus]")?.focus({ preventScroll: true });
+    if (!initial) root.querySelector("[data-route-focus]")?.focus({ preventScroll: true });
     document.title = r.name === "recipe" ? `${getRecipe(r.id).title} · mise & match` : r.name === "list" ? "Grocery list · mise & match" : "mise & match";
   } else if (sig) {
     root.querySelector(sig)?.focus({ preventScroll: true });
@@ -360,5 +372,18 @@ document.addEventListener("submit", (e) => {
   document.querySelector('.add-item [name="name"]')?.focus();
 });
 
+// <details> elements survive re-renders by remembering their open state.
+document.addEventListener("toggle", (e) => {
+  const key = e.target.dataset?.openKey;
+  if (key) ui.open[key] = e.target.open;
+}, true);
+
+// Input modality, so focus moved by script is only drawn for keyboard users.
+const setInput = (mode) => () => (document.documentElement.dataset.input = mode);
+document.addEventListener("keydown", (e) => {
+  if (!e.metaKey && !e.ctrlKey && !e.altKey) setInput("keyboard")();
+}, true);
+document.addEventListener("pointerdown", setInput("pointer"), true);
+
 ui.route = parseRoute();
-render({ keepFocus: false, routeChanged: true });
+render({ keepFocus: false, routeChanged: true, initial: true });

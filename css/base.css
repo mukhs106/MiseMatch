@@ -112,6 +112,24 @@ small,
   border-radius: 4px;
 }
 
+/* Programmatic focus targets (page headings, the dialog title, main for the
+   skip link) are not controls. They receive focus so screen readers announce
+   them, but only show a ring when the person is using the keyboard. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+html[data-input="keyboard"] [tabindex="-1"]:not(main):focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+
+h1[tabindex="-1"],
+h2[tabindex="-1"] {
+  width: fit-content;
+  max-width: 100%;
+}
+
 .visually-hidden {
   position: absolute !important;
   width: 1px;
@@ -151,16 +169,25 @@ small,
   margin: 0 auto;
 }
 
+/* Working wordmark: interface type set tighter and heavier, with a lighter
+   ampersand so the two words read as one mark. */
 .wordmark {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   min-height: var(--tap);
+  padding-top: 0.55rem;
+  font-size: var(--fs-wordmark);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--action);
+  text-decoration: none;
 }
 
-/* Fixed height; the logo image sets its own width. */
-.wordmark img {
-  height: 32px;
-  width: auto;
+.wordmark-amp {
+  margin: 0 0.18em 0 0.16em;
+  font-weight: var(--fw-regular);
+  letter-spacing: 0;
 }
 
 main {

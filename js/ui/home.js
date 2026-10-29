@@ -1,4 +1,5 @@
-// My Recipes: what's in your kitchen, suggestions, saved recipes, demo collection.
+// My Recipes: a way in to the demo recipe, optional "cook from what you have"
+// suggestions, saved recipes, then the demo collection.
 
 import { html, plural } from "./html.js";
 import { icon, doodle } from "./icons.js";
@@ -17,7 +18,7 @@ export function homeView(ctx) {
         <h1 tabindex="-1" data-route-focus>My Recipes</h1>
         <p class="muted">Recipes that work with what you have and what you need.</p>
       </header>
-      ${heroSection(ctx)}
+      ${startCard(ctx)}
       ${kitchenSection(ctx)}
       <section class="home-section" aria-labelledby="saved-h">
         <div class="section-head">
@@ -51,17 +52,17 @@ export function homeView(ctx) {
     </div>`;
 }
 
-// The screen's one burgundy block: points first-time visitors to the demo recipe.
-function heroSection(ctx) {
+// A compact way in to the hero demo recipe. Deliberately quieter than the collection.
+function startCard(ctx) {
   const r = getRecipe(HERO_RECIPE_ID);
   const adapted = isAdapted(r, ctx.state.adaptations[r.id]);
   return html`
-    <section class="hero" aria-labelledby="hero-h">
-      <p class="eyebrow">${adapted ? "Pick up where you left off" : "Start here"} · Demo recipe</p>
-      <h2 id="hero-h">${r.title}</h2>
-      <p>${r.blurb}</p>
-      <a class="btn btn--secondary" href="#/recipe/${r.id}">${adapted ? "Open your version" : "Open and adapt it"}</a>
-    </section>`;
+    <a class="start-card" href="#/recipe/${r.id}">
+      <span class="eyebrow">${adapted ? "Pick up where you left off" : "Start here"} · Demo recipe</span>
+      <span class="start-title">${r.title}</span>
+      <span class="small muted">${adapted ? "Open your adapted version." : "Swap an ingredient and see what changes before you commit."}</span>
+      <span class="start-arrow" aria-hidden="true">${icon("next")}</span>
+    </a>`;
 }
 
 function kitchenSection(ctx) {
@@ -71,13 +72,16 @@ function kitchenSection(ctx) {
   const inRecipe = (id) => Object.values(state.adaptations).some((a) => a.partial?.[id]);
   const marked = chips.filter((id) => state.pantry[id]?.status === "have" || inRecipe(id));
   const results = suggest(RECIPES, state.pantry, state.adaptations).slice(0, 3);
+  // Optional: collapsed until used. Open state is remembered for the session.
+  const open = ctx.ui.open.kitchen ?? marked.length > 0;
   return html`
-    <section class="kitchen panel" aria-labelledby="kitchen-h">
-      <div class="section-head">
-        <h2 id="kitchen-h">What's in your kitchen?</h2>
-        ${marked.length ? html`<button class="btn btn--quiet" data-action="pantry-clear">Clear</button>` : ""}
-      </div>
-      <p class="small muted kitchen-hint">Tap what you have today. Suggestions and recipes both use it, and nothing needs upkeep.</p>
+    <details class="kitchen" data-open-key="kitchen" ${open ? "open" : ""}>
+      <summary>
+        <h2 id="kitchen-h">Cook from what you have</h2>
+        <span class="small muted">${marked.length ? `${marked.length} on hand · see what you could make` : "Optional · tap what's in your kitchen"}</span>
+      </summary>
+      <div class="kitchen-body">
+      <p class="small muted kitchen-hint">Mark what you have today. Suggestions and recipes both use it, and nothing needs upkeep.</p>
       <div class="chips" role="group" aria-label="Ingredients you have">
         ${chips.map((id) => {
           const on = state.pantry[id]?.status === "have";
@@ -87,8 +91,10 @@ function kitchenSection(ctx) {
           </button>`;
         })}
       </div>
+      ${marked.length ? html`<button class="btn btn--quiet kitchen-clear" data-action="pantry-clear">Clear all</button>` : ""}
       ${marked.length ? suggestions(results) : ""}
-    </section>`;
+      </div>
+    </details>`;
 }
 
 function suggestions(results) {

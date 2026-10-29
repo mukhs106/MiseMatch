@@ -50,6 +50,12 @@ Not inspected by anyone working in the repository: the Figma file and its eight 
 | Oct 29 | C7: swap entry points appear only where swaps exist; no dead-end buttons | Confirmed (T04) |
 | Oct 29 | C9: no generic "No change." text; a consequence dimension shows only when the data says something about it | Confirmed (T04) |
 | Oct 29 | C10: when servings differ from the original, one short note says cooking times, pan size and oil may need adjusting; no per-ingredient logic | Confirmed (T04) |
+| Oct 29 | Page and main content surfaces are pure white. The large `#F3F2E7` panels (adapt, kitchen, nutrition, add-item) are replaced by spacing, alignment and hairline rules; `#F3F2E7` stays only for small tonal controls (secondary buttons, tags, toggle track, before/after rows). Supersedes the earlier "`#F3F2E7` for adaptation controls and panels" split. | Confirmed (visual refresh) |
+| Oct 29 | Working wordmark is typographic: "mise & match" in Apfel Grotezk Bold with a regular-weight ampersand, in burgundy. Replaces the placeholder image and the yellow ampersand badge. Editable working identity, not a final logo; En Clair remains an unverified candidate. | Confirmed direction (visual refresh); details Provisional |
+| Oct 29 | Home hierarchy: a quiet "Start here" card instead of the burgundy banner, "Cook from what you have" as an optional disclosure, saved recipes on the first screen | Confirmed (visual refresh) |
+| Oct 29 | Recipe page shows "Ways to adapt" (one entry per swappable ingredient, plus a jump to protein and fiber ideas) above the ingredient list | Confirmed (visual refresh) |
+| Oct 29 | Focus moved by script (page titles on navigation, dialog title, skip-link target) shows a ring only for keyboard users; nothing is focused on first load | Confirmed (bug fix) |
+| Oct 29 | Visual evidence (before/after PNGs, recorded walkthrough, noted viewport, revision, scenario, results, ZIP) is required for substantive UI reviews | Confirmed |
 
 ### October 22 testing: observations, revisions, and next question
 
@@ -149,7 +155,7 @@ Strengths (interpretation): it joins preparation (mise en place) and adaptation 
 
 Risks to test (not findings): whether the audience reads "mise" correctly ("meez") and can spell it after hearing it once. Spoken aloud it sounds like "mix and match," which helps recall but hurts search. Handles and domains will likely need "miseandmatch." Domain, app store, and trademark availability have not been checked. A five-person hear-it, spell-it, explain-it test is recommended before public use.
 
-Open: casing. The wordmark reference uses "Mise & Match"; the project has written "mise & match" in running text. Proposed: title case in the script wordmark, lowercase in running text and the browser title. (The current placeholder wordmark image is lowercase.)
+Open: casing. The wordmark reference uses "Mise & Match"; the project has written "mise & match" in running text. The working typographic wordmark is lowercase, matching running text and the browser title.
 
 Rejected naming territory: names implying portions or abundance (Feast, Potluck, Helpings, Little Feast, Another Helping). Individual rejection reasons were not recorded. Earlier assistant candidates (Stirnote, Stirfolk, Cookleaf, Pantrykin, Mingle, Tinker) were never selected.
 
@@ -157,7 +163,7 @@ Rejected naming territory: names implying portions or abundance (Feast, Potluck,
 
 **Apfel Grotezk (Working)** for all interface text and headings. Rationale (interpretation): a grotesk with quirks gives energy and warmth without decoration, and keeps the system small. Build check results are in Part 7: license verified (SIL OFL 1.1), fraction and arrow glyphs present, tabular figures used for quantities. Small annotations (13 px) and long titles have been seen in the build but not formally reviewed.
 
-**En Clair Regular (Working, wordmark only).** Use as an SVG or image wordmark, not a loaded web font in the interface. Its foundry and commercial license have not been verified; the project requires commercially free fonts, so confirm before any public use. The build has an image slot for it (`assets/brand/wordmark.svg`, currently a placeholder).
+**En Clair Regular (Working, wordmark only).** Use as an SVG or image wordmark, not a loaded web font in the interface. Its foundry and commercial license have not been verified; the project requires commercially free fonts, so confirm before any public use. The image slot was removed on Oct 29 in favor of a typographic working wordmark; an En Clair image can replace it later if the license checks out.
 
 Earlier explorations (Source Serif, Lastik, Instrument Serif) were references, not an approved pairing.
 
@@ -168,7 +174,7 @@ The build prompt's defaults, as implemented in `css/tokens.css`. They are not fi
 | Role | Color | Use | Contrast |
 | --- | --- | --- | --- |
 | Working surface | `#FFFFFF` | Page background, recipe body, lists, cards, inputs | Base |
-| Supporting surface | `#F3F2E7` | Adaptation controls and panels (adapt panel, kitchen panel, nutrition, add-item form, before/after rows); secondary button fill on white | Ink on it 15.3:1 |
+| Supporting surface | `#F3F2E7` | Small tonal controls only: secondary button fill, tags, view-toggle track, before/after rows, active tab. Not used for large panels (Oct 29). | Ink on it 15.3:1 |
 | Text | `#1F1A17` ink | Body and headings | 17.2:1 on white |
 | Muted text | `#5E5650` | Secondary text | 7.2:1 on white, 6.4:1 on `#F3F2E7` |
 | Brand and primary action | `#59000E` burgundy | Primary buttons with white text, links, recipe titles, focus ring, one color block per screen | 14.7:1 with white |
@@ -277,7 +283,7 @@ Build note (C8, confirmed Oct 29): implemented this way. The shared list stores 
 
 ## 6. Next priorities
 
-Queued work lives in `docs/queue/QUEUE.md` (T01 revision evidence, T02 test kit, T03 review and pull request). Beyond the queue:
+Queued work lives in `docs/queue/QUEUE.md` (T01 revision evidence, T02 test kit, T03 review and pull request). T01's "after" screenshots should be retaken after this visual refresh. Beyond the queue:
 
 1. Later: Safari and phone check, hand-drawn icon swap-in, En Clair license, name test.
 
@@ -292,7 +298,7 @@ All values live in `css/tokens.css`.
 | Role | Value | Use |
 | --- | --- | --- |
 | Working surface | `#FFFFFF` | Page background, cards, inputs. |
-| Supporting surface | `#F3F2E7` | Adapt panel, kitchen panel, nutrition, add-item form, before/after rows. |
+| Supporting surface | `#F3F2E7` | Secondary buttons, tags, view-toggle track, before/after rows, active tab, start-card hover. Large sections are white with `--rule` hairlines. |
 | Brand / action | `#59000E` | Primary buttons, links, recipe titles, focus ring, and the one color block on My Recipes (the chana masala hero). |
 | Highlight | `#FEBD02` | Selected chips, "changed by you" dots and step numbers, the ampersand in the placeholder wordmark. Fill only. |
 | Highlight soft | `#FFF3C4` | Changed ingredient rows, applied ideas, notices. |
@@ -323,24 +329,25 @@ Selected and changed states always pair color with a check icon, a text label, a
 
 ### Typography as built
 
-Apfel Grotezk by Collletttivo, SIL Open Font License 1.1 (license verified in the downloaded package; copy in `fonts/OFL-ApfelGrotezk.txt`). Bundled weights: Regular 400, Mittel 500, Fett 700. The stack falls back to Helvetica Neue / Arial / system sans if the files fail to load. Checked in the browser: the font has its own glyphs for ½ ¼ ¾ → – · and curly quotes. Scale: 13 / 15 / 17 (body) / 20 / 26 / 34 / 44 px. Quantities use tabular figures.
+Apfel Grotezk by Collletttivo, SIL Open Font License 1.1 (license verified in the downloaded package; copy in `fonts/OFL-ApfelGrotezk.txt`). Bundled weights: Regular 400, Mittel 500, Fett 700. The stack falls back to Helvetica Neue / Arial / system sans if the files fail to load. Checked in the browser: the font has its own glyphs for ½ ¼ ¾ → – · and curly quotes. Scale: 13 / 15 / 17 (body) / 20 / 26 / 34 / 44 px; page titles use `--fs-title` (36 px at 360 wide, up to 44 px); prose is capped at `--measure` (60ch). Quantities use tabular figures. Loading is checked by the review script (`document.fonts`), and passed at every captured viewport.
 
 ### Spacing, controls, wordmark, icons, color blocks
 
 - 4px base scale (4–64px). Touch targets at least 44px; primary controls 48px. Buttons: primary (burgundy fill, white text), secondary (tonal fill with ink text and no outline: `#F3F2E7` on white surfaces, white on `#F3F2E7` panels and on the burgundy hero) and quiet (underlined link style). The servings control is a "– 2 +" stepper.
-- **Wordmark slot:** the header shows `assets/brand/wordmark.svg` at a fixed 32px height. It is a placeholder; replace it with the En Clair logo image. No script web font is loaded.
+- **Wordmark:** typographic, in the header link: "mise", a regular-weight "&", "match", Apfel Grotezk Bold at 22 px (24 px from 720 px wide), tracking −0.035em, burgundy. Its accessible name is "mise & match, My Recipes". No script web font is loaded.
+- **Focus:** controls keep the 3 px `:focus-visible` ring. Elements focused by script (`[tabindex="-1"]`: page titles, dialog title, `main`) show no ring for pointer users and a 2 px ring, sized to the text, for keyboard users (`html[data-input="keyboard"]`, set by keydown/pointerdown listeners). Nothing is focused on first load; in-app navigation focuses the new title for screen readers.
 - **Icons:** 14 plain black stroke SVGs in `assets/icons/<name>.svg`, all rendered at 20 × 20 px through `icon(name)` in `js/ui/icons.js`. Replace any file with an ink drawing of the same name. No icon sits on a burgundy fill.
-- **Color blocks:** My Recipes has one (the burgundy chana masala hero). The recipe page, list and sheet have none. Each screen has at most one burgundy action button.
+- **Color blocks:** none at the moment; the burgundy hero became a quiet white "Start here" card. Each screen has at most one burgundy action button.
 - **Drawn accents (temporary placeholders):** `assets/accents/squiggle.svg` under recipe titles, `arrow.svg` in comparisons, `pot.svg` for empty states, `spark.svg` next to Ideas. Each loads as an image with its colors baked in; replace a file with a drawing of the same name.
 
 ### Screens as built
 
 | Screen | What it does |
 | --- | --- |
-| My Recipes (`#/`) | "Start here" chana masala block (becomes "Pick up where you left off" once adapted), on-hand chips with suggestions (including "one swap away"), saved recipe cards with adapted and list status, demo collection with Save, About and Reset demo. |
-| Recipe (`#/recipe/:id`) | Servings stepper with a scaling note when servings differ, your changes (undo each, undo last, restore original), Have / Some (amount for this recipe) / Need per ingredient with staples as a single check, Swap where swaps exist and an inline "No tested swap" note where a reason is recorded, "Contains dairy." on paneer, Ideas with optional protein/fiber goals, rough nutrition, method with changed steps marked, shopping bar, My version / Original toggle. |
+| My Recipes (`#/`) | Title and one-line purpose, a quiet "Start here" card for chana masala ("Pick up where you left off" once adapted), "Cook from what you have" as an optional disclosure (collapsed until something is marked; holds the on-hand chips and suggestions, including "one swap away"), saved recipe cards with adapted and list status, demo collection with Save, About and Reset demo. |
+| Recipe (`#/recipe/:id`) | Servings stepper with a scaling note when servings differ, "Ways to adapt" (a button per swappable ingredient that opens its swap sheet, plus a jump to the protein and fiber ideas), your changes (undo each, undo last, restore original), Have / Some (amount for this recipe) / Need per ingredient with staples as a single check, Swap where swaps exist and an inline "No tested swap" note where a reason is recorded, "Contains dairy." on paneer, Ideas with optional protein/fiber goals, rough nutrition, method with changed steps marked, shopping bar, My version / Original toggle. |
 | Swap sheet (dialog) | Options for one ingredient plus any explained unsupported requests, then a before/after preview: quantity diff at current servings, notes on added ingredients ("Paneer: contains dairy."), only the effect dimensions the data covers (flavor, texture, quantities, prep, nutrition with ranges), method changes with old text struck through, cautions, conflict handling. Bottom sheet on mobile, side panel at 720px and up. |
-| Grocery list (`#/list`) | Grouped by aisle; check off, edit amounts, remove, add your own, resolve conflicts, add back removed items, update when a recipe changed. |
+| Grocery list (`#/list`) | Same header and add form in both states. Populated: grouped by aisle; check off, edit amounts, remove, add your own, resolve conflicts, add back removed items, update when a recipe changed. Empty: "Nothing to get yet", one sentence on how items arrive, and a way back to My Recipes. |
 
 ### Behavior as built
 
@@ -368,7 +375,7 @@ Five recipes written for the prototype from common home-style versions, not test
 - Nutrition covers only protein and fiber, and the catalog is small.
 - Swaps are hand-written per recipe, which is slow but credible.
 - The placeholder wordmark SVG uses Helvetica/Arial (images can't use the page's web font).
-- Verified in a Chromium-based browser pane at 430 × 932 and 1280 × 860. Not checked in Safari or Firefox, on a physical phone, or with a screen reader. The UI relies on `:has()` and `<dialog>`.
+- Verified in Chrome (Playwright, and the in-app browser) at 430 × 932, 360 × 740 and 1280 × 860. Not checked in Safari or Firefox, on a physical phone, or with a screen reader. The UI relies on `:has()` and `<dialog>`.
 
 ### Verification log
 

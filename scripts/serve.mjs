@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { networkInterfaces } from "node:os";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const port = Number(process.env.PORT) || 8080;
@@ -32,4 +33,12 @@ createServer(async (req, res) => {
   } catch {
     res.writeHead(404).end("Not found");
   }
-}).listen(port, () => console.log(`mise & match running at http://localhost:${port}`));
+}).listen(port, () => {
+  console.log(`mise & match running at http://localhost:${port}`);
+  // Same Wi-Fi as this computer? Open one of these on a phone to test on a real device.
+  for (const addrs of Object.values(networkInterfaces())) {
+    for (const a of addrs ?? []) {
+      if (a.family === "IPv4" && !a.internal) console.log(`  on your network:  http://${a.address}:${port}`);
+    }
+  }
+});

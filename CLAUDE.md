@@ -6,8 +6,9 @@ Queued work lives in docs/queue/QUEUE.md; run one task per session with /next an
 
 ## Commands (verified)
 
-- `npm start` serves the app at http://localhost:8080 (Node 18+, no dependencies). Opening `index.html` directly from disk does not work because of ES modules.
+- `npm start` serves the app at http://localhost:8080 and prints a LAN address for testing on a phone on the same Wi-Fi (Node 18+, no dependencies). Opening `index.html` directly from disk does not work because of ES modules.
 - `npm test` runs the core tests (`node --test`, no dependencies).
+- Review evidence: `cd tools/review && npm install` once, then `node capture.mjs --label before|after [--video] --out ../../reviews/YYYY-MM-DD-topic`. Uses installed Chrome; its dependencies live only in `tools/review/`.
 
 ## Structure
 
@@ -16,7 +17,7 @@ Queued work lives in docs/queue/QUEUE.md; run one task per session with /next an
 - `js/store.js` localStorage persistence (one key, `mise-match:v1`).
 - `js/ui/` views as functions of state returning escaped HTML via `html```; `js/app.js` owns state, actions, routing, focus and the dialog.
 - `css/tokens.css` is the only place for raw colors, type, spacing and control sizes.
-- `assets/brand/wordmark.svg` is the logo slot; `assets/icons/*.svg` are placeholder icons for Suhani's drawings, used via `icon(name)` at one size (20px); `assets/accents/*.svg` are temporary placeholder accents. Don't inline new SVGs or add per-context icon sizes.
+- The wordmark is typographic (`.wordmark` in `index.html` and `css/base.css`), a working identity, not a final logo. `assets/icons/*.svg` are placeholder icons for Suhani's drawings, used via `icon(name)` at one size (20px); `assets/accents/*.svg` are temporary placeholder accents. Don't inline new SVGs or add per-context icon sizes.
 
 ## Rules
 
@@ -30,6 +31,8 @@ Queued work lives in docs/queue/QUEUE.md; run one task per session with /next an
 - `#FEBD02` and `#A0B9C4` are fills behind dark text only; they fail as text on white. Meaning is never carried by color alone.
 - At most one large burgundy or yellow color block per screen. No outlined buttons; reuse `.btn--primary/--secondary/--quiet` (secondary is a tonal fill).
 - Chana masala (`HERO_RECIPE_ID`) is the demo's hero recipe; keep the demo path in README working.
-- Touch targets ≥ 44px, visible focus, labeled controls. Mobile first around 430px; check 960px+ too.
+- Touch targets ≥ 44px, visible focus, labeled controls. Mobile first around 430px; check 360px and 960px+ too. Page and content surfaces are white; `#F3F2E7` only for small tonal controls.
+- Focus: script-moved focus (page titles, dialog title, `main`) shows a ring only for keyboard users (`html[data-input]`); never remove `:focus-visible` from controls.
+- Visual evidence is required for any substantive UI review: before/after PNGs and a recorded walkthrough (passing runs too) via `tools/review`, saved in a dated `reviews/` folder (git-ignored), with viewport, revision, scenario and results noted, zipped for sharing. If capture is unavailable, say so; never claim evidence that wasn't captured.
 - Add a test in `tests/core.test.js` for any change to `js/core/` or the seed data.
 - Prose style for docs and copy: concise, no em dashes in product copy.
