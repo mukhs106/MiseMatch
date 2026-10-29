@@ -37,7 +37,7 @@ const ctx = {
   recipe: getRecipe,
   adaptation: (id) => state.adaptations[id] ?? defaultAdaptation(getRecipe(id)),
   derived: (id) => deriveRecipe(getRecipe(id), ctx.adaptation(id)),
-  needs: (id) => shop.needsFor(ctx.derived(id), state.pantry),
+  needs: (id) => shop.needsFor(ctx.derived(id), state.pantry, ctx.adaptation(id).partial),
 };
 
 // ---------- state changes ----------
@@ -59,17 +59,36 @@ function undo(id) {
   const stack = ui.undo[id] ?? [];
   if (!stack.length) return;
   const prev = stack.pop();
-  commit({ ...state, adaptations: { ...state.adaptations, [id]: prev } });
+  // Undo covers servings and swaps; partial amounts aren't part of the undo history.
+  const partial = ctx.adaptation(id).partial;
+  commit({ ...state, adaptations: { ...state.adaptations, [id]: { ...prev, partial } } });
   toast("Change undone");
 }
 
-function setPantry(item, patch) {
-  const current = state.pantry[item] ?? {};
-  const nextEntry = patch === null ? null : { ...current, ...patch };
+/** Shared presence only: "have", "need", or null to unmark. */
+function setPantry(item, status) {
   const pantry = { ...state.pantry };
-  if (nextEntry && nextEntry.status) pantry[item] = nextEntry;
+  if (status) pantry[item] = { status };
   else delete pantry[item];
   commit({ ...state, pantry });
+}
+
+/**
+ * Availability from inside a recipe. "have" / "need" are shared presence;
+ * "some" is a partial amount that belongs to this recipe only.
+ */
+function setAvailability(id, item, status, amount = {}) {
+  const a = ctx.adaptation(id);
+  const partial = { ...(a.partial ?? {}) };
+  const pantry = { ...state.pantry };
+  if (status === "some") {
+    partial[item] = { ...(partial[item] ?? {}), ...amount };
+  } else {
+    delete partial[item];
+    if (status) pantry[item] = { status };
+    else delete pantry[item];
+  }
+  commit({ ...state, pantry, adaptations: { ...state.adaptations, [id]: { ...a, partial } } });
 }
 
 function syncList(id) {
@@ -116,15 +135,15 @@ const actions = {
     if (close) closeDialog();
     changeAdaptation(id, removeSwap(ctx.adaptation(id), swap), `Undid: ${getSwap(swap).label}`);
   },
-  "restore-original": ({ id }) => changeAdaptation(id, defaultAdaptation(getRecipe(id)), "Back to the original recipe"),
+  "restore-original": ({ id }) =>
+    changeAdaptation(id, { ...defaultAdaptation(getRecipe(id)), partial: ctx.adaptation(id).partial }, "Back to the original recipe"),
   undo: ({ id }) => undo(id),
   "goal-toggle": ({ goal }) => {
     const goals = state.goals.includes(goal) ? state.goals.filter((g) => g !== goal) : [...state.goals, goal];
     commit({ ...state, goals });
   },
   "pantry-toggle": ({ item }) => {
-    const s = state.pantry[item]?.status;
-    setPantry(item, s === "have" || s === "some" ? null : { status: "have", qty: undefined, unit: undefined });
+    setPantry(item, state.pantry[item]?.status === "have" ? null : "have");
   },
   "pantry-clear": () => {
     const pantry = state.pantry;
@@ -133,10 +152,16 @@ const actions = {
   },
   "group-have": ({ id, group }) => {
     const pantry = { ...state.pantry };
+    const a = ctx.adaptation(id);
+    const partial = { ...(a.partial ?? {}) };
     for (const line of ctx.derived(id).ingredients.filter((l) => l.group === group)) {
-      for (const e of line.entries) if (!ITEMS[e.item].noShop) pantry[e.item] = { status: "have" };
+      for (const e of line.entries) {
+        if (ITEMS[e.item].noShop) continue;
+        pantry[e.item] = { status: "have" };
+        delete partial[e.item];
+      }
     }
-    commit({ ...state, pantry });
+    commit({ ...state, pantry, adaptations: { ...state.adaptations, [id]: { ...a, partial } } });
   },
   "sync-list": ({ id }) => syncList(id),
   "list-delete": ({ line }) => {
@@ -172,15 +197,16 @@ const actions = {
 
 // Inputs that commit on change (not on every keystroke, so typing isn't interrupted).
 const changeActions = {
-  avail: ({ item }, el) => setPantry(item, el.value === "some" ? { status: "some" } : { status: el.value, qty: undefined, unit: undefined }),
-  "avail-toggle": ({ item }, el) => setPantry(item, el.checked ? { status: "have" } : null),
-  "avail-qty": ({ item, unit }, el) => {
+  avail: ({ id, item }, el) => setAvailability(id, item, el.value),
+  "avail-toggle": ({ id, item }, el) => setAvailability(id, item, el.checked ? "have" : null),
+  "avail-qty": ({ id, item, unit }, el) => {
     const n = parseFloat(el.value);
-    setPantry(item, { status: "some", qty: Number.isFinite(n) && n > 0 ? n : undefined, unit: Number.isFinite(n) && n > 0 ? unit : undefined });
+    const valid = Number.isFinite(n) && n > 0;
+    setAvailability(id, item, "some", { qty: valid ? n : undefined, unit: valid ? unit : undefined });
   },
-  "avail-unit": ({ item }, el) => {
-    const current = state.pantry[item] ?? {};
-    setPantry(item, { status: "some", unit: current.qty != null ? el.value : undefined });
+  "avail-unit": ({ id, item }, el) => {
+    const current = ctx.adaptation(id).partial?.[item] ?? {};
+    setAvailability(id, item, "some", { unit: current.qty != null ? el.value : undefined });
     // Keep the selected unit for the qty input even before an amount is entered.
     const input = document.querySelector(`[data-action="avail-qty"][data-item="${item}"]`);
     if (input) input.dataset.unit = el.value;

@@ -4,10 +4,8 @@
 import { ITEMS } from "../data/items.js";
 import { swapsForRecipe } from "../data/swaps.js";
 
-const onHand = (pantry, item) => {
-  const s = pantry[item]?.status;
-  return s === "have" || s === "some";
-};
+// On hand for a recipe: shared presence, or a partial amount entered in that recipe.
+const onHand = (pantry, partial, item) => pantry[item]?.status === "have" || partial[item] != null;
 
 /** Key ingredients: the main things you'd shop for, not spices or staples. */
 export function keyLines(recipe) {
@@ -18,20 +16,21 @@ export function keyLines(recipe) {
  * @returns [{ recipe, have, total, missing: [{ slot, item, fix }], ready }]
  * `fix` is a supported "missing" swap whose replacement is on hand, if one exists.
  */
-export function suggest(recipes, pantry) {
+export function suggest(recipes, pantry, adaptations = {}) {
   const results = [];
   for (const recipe of recipes) {
+    const partial = adaptations[recipe.id]?.partial ?? {};
     const lines = keyLines(recipe);
     const swaps = swapsForRecipe(recipe.id).filter((s) => s.reasons.includes("missing"));
     let have = 0;
     const missing = [];
     for (const line of lines) {
-      if (onHand(pantry, line.item)) {
+      if (onHand(pantry, partial, line.item)) {
         have++;
         continue;
       }
       const fix = swaps.find((s) =>
-        (s.replace?.slot === line.slot && s.replace.with.every((w) => onHand(pantry, w.item)))
+        (s.replace?.slot === line.slot && s.replace.with.every((w) => onHand(pantry, partial, w.item)))
         || s.omit === line.slot);
       missing.push({ slot: line.slot, item: line.item, fix: fix ?? null });
     }

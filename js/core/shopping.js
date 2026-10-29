@@ -1,6 +1,7 @@
 // Shopping needs and the grocery list.
 //
-// Needs = adapted, scaled quantities minus what the pantry says you have.
+// Needs = adapted, scaled quantities minus what you have: shared presence
+// ("have" / "need") plus this recipe's own partial amounts.
 // The list keeps, per line, how much each recipe contributed (`sources`), so a
 // recipe can be regenerated without touching manual items or other recipes.
 // A user edit (`override`) is never silently replaced: if the recipe's amount
@@ -17,10 +18,13 @@ export function itemKey(item, unit) {
 
 /**
  * @param derived  output of deriveRecipe
- * @param pantry   { [itemId]: { status: "have" | "some" | "need", qty?, unit? } }
+ * @param pantry   shared presence: { [itemId]: { status: "have" | "need" } }
+ * @param partial  this recipe's partial amounts: { [itemId]: { qty?, unit? } }.
+ *                 A partial entry overrides shared presence for this recipe only,
+ *                 so two recipes never subtract the same amount.
  * @returns [{ key, item, name, qty, unit, aisle, note, uncertain }]
  */
-export function needsFor(derived, pantry = {}) {
+export function needsFor(derived, pantry = {}, partial = {}) {
   const required = new Map();
   for (const line of derived.ingredients) {
     for (const e of line.entries) {
@@ -34,8 +38,8 @@ export function needsFor(derived, pantry = {}) {
   }
   const needs = [];
   for (const req of required.values()) {
-    const have = pantry[req.item];
-    const status = have?.status ?? "need";
+    const have = partial[req.item];
+    const status = have ? "some" : pantry[req.item]?.status ?? "need";
     if (status === "have") continue;
     if (status === "some") {
       const owned = have.qty > 0 && have.unit != null ? convert(have.qty, have.unit, req.unit) : null;

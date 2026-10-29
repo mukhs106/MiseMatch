@@ -49,7 +49,8 @@ export const ITEMS = {
   "jasmine": { name: "Jasmine rice", short: "jasmine rice", aisle: "Pantry", nutrition: { protein: 7, fiber: 1 }, key: true },
   "roti": { name: "Whole wheat rotis", short: "rotis", aisle: "Bakery", nutrition: { protein: 9, fiber: 6 }, gPerUnit: 40, key: true },
 
-  "paneer": { name: "Paneer", aisle: "Dairy & eggs", nutrition: { protein: 18, fiber: 0 }, key: true },
+  // note: a plain fact shown wherever the item appears. Not allergy guidance.
+  "paneer": { name: "Paneer", aisle: "Dairy & eggs", nutrition: { protein: 18, fiber: 0 }, key: true, note: "Contains dairy." },
   "eggs": { name: "Eggs, large", short: "eggs", aisle: "Dairy & eggs", nutrition: { protein: 12.6, fiber: 0 }, gPerUnit: 50, key: true },
   // Tofu protein varies a lot by brand and firmness; ranges absorb some of that.
   "tofu": { name: "Extra-firm tofu", short: "tofu", aisle: "Refrigerated", nutrition: { protein: 14, fiber: 2 }, key: true },

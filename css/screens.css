@@ -231,7 +231,6 @@
 }
 
 .recipe-head .doodle {
-  color: var(--highlight);
   margin: -2px 0 var(--s-1);
 }
 
@@ -568,10 +567,6 @@
   gap: var(--s-2);
 }
 
-.ideas .doodle {
-  color: var(--highlight);
-}
-
 .ideas > p {
   margin: calc(-1 * var(--s-2)) 0 var(--s-4);
 }
@@ -843,9 +838,6 @@
   font-weight: var(--fw-bold);
 }
 
-.diff-arrow .doodle {
-  color: var(--action);
-}
 
 .effects {
   display: grid;
@@ -1031,4 +1023,52 @@ input.line-name:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: var(--s-2);
+}
+
+/* T04 additions */
+
+.adapt-servings {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.scale-note {
+  color: var(--warn-text);
+}
+
+@media (min-width: 960px) {
+  .scale-note {
+    max-width: 16rem;
+  }
+}
+
+.item-note {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.no-swap {
+  padding-left: calc(5.25rem + var(--s-3));
+  color: var(--text-muted);
+}
+
+.no-swap summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.ing--compact .no-swap {
+  grid-column: 1 / -1;
+  padding-left: 0;
+}
+
+@media (max-width: 400px) {
+  .no-swap {
+    padding-left: 0;
+  }
 }

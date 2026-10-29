@@ -7,7 +7,7 @@ Status: living document. Provisional decisions are expected to change.
 
 ## How to use this file
 
-Read this before changing product behavior, data structure, copy, or visual styling. Parts 1 to 6 are the decision record (from v0.4): what the product is for, which decisions are confirmed versus provisional, and the behavior rules that keep adaptation trustworthy. Part 7 records what is actually built, including contrast checks, limitations and verification. Part 8 lists places where the build and the decision record disagree; those are for the owner to resolve, and the code has not been changed to match either way.
+Read this before changing product behavior, data structure, copy, or visual styling. Parts 1 to 6 are the decision record (from v0.4): what the product is for, which decisions are confirmed versus provisional, and the behavior rules that keep adaptation trustworthy. Part 7 records what is actually built, including contrast checks, limitations and verification. Part 8 records how the contradictions found during the v0.4 merge (C1 to C10) were resolved by T04.
 
 Statuses used throughout: **Confirmed** (explicit owner decision), **Working** (accepted, still refinable), **Provisional** (a default chosen so the build can proceed; expect revision), **Proposed** (a recommendation awaiting owner approval), **Superseded** or **Rejected** (kept so the project does not loop back), **Open** (unresolved).
 
@@ -28,7 +28,7 @@ Not inspected by anyone working in the repository: the Figma file and its eight 
 | Oct 29 | Pantry model: light shared "on hand" list, no maintained inventory | Confirmed |
 | Oct 29 | Visual personality drawn from four owner references (Section 2) | Confirmed direction |
 | Oct 29 | En Clair Regular script as wordmark candidate | Working, license unverified |
-| Oct 29 | Outlined pill buttons from the We Spirit reference dropped | Confirmed (see contradiction C1) |
+| Oct 29 | Outlined pill buttons from the We Spirit reference dropped | Confirmed; secondary button restyled as a tonal fill (C1) |
 | Oct 29 | Build efficiently: prioritize the demo path over breadth | Confirmed |
 | Oct 29 | Pantry stays a light shared list; no lasting pantry or review prompt for the MVP | Confirmed (answers Claude Code question 1) |
 | Oct 29 | One adapted version per recipe is enough for the MVP; named versions deferred | Confirmed (answers question 2; v0.4 listed it as Proposed, the owner confirmed it in the Claude Code session) |
@@ -72,7 +72,7 @@ Revision: every ingredient on the recipe page has a swap entry point. Swapping o
 **Issue 2: The recipe did not respond to the person's situation, meaning portions and pantry.**
 Revision: a servings control scales quantities with practical rounding and notes for ingredients that do not scale linearly. Each ingredient can be marked Have, Some (with an amount), or Need. On My Recipes, tapping what is on hand produces suggestions, including recipes that are "one swap away." Protein and fiber Ideas offer goal-based adjustments without making tracking mandatory. The grocery list is derived from the adapted amounts minus what you have, and preserves manual edits.
 
-Build note: "every ingredient has a swap entry point" is not literally true in the build. Ingredients with written swaps show **Swap**; ingredients with a recorded reason show **No swap** and explain it; others (onion, garlic, most spices) show neither. See C7.
+Build note (C7, confirmed Oct 29): swap entry points appear only on ingredients that have written swaps. Ingredients with a recorded reason show an inline "No tested swap" disclosure; others show nothing. There are no dead-end buttons.
 
 #### Next question to test
 
@@ -161,18 +161,22 @@ Rejected naming territory: names implying portions or abundance (Feast, Potluck,
 
 Earlier explorations (Source Serif, Lastik, Instrument Serif) were references, not an approved pairing.
 
-### Color (Provisional, from the build prompt)
+### Color (Provisional; the build's tokens are the record, C2)
 
-The build prompt sets these implementation defaults for the first iteration. They are not final brand approvals. The roles as actually built, with measured contrast, are in Part 7; where this table and the build differ, see C2.
+The build prompt's defaults, as implemented in `css/tokens.css`. They are not final brand approvals. Measured contrast for every pair in use is in Part 7.
 
 | Role | Color | Use | Contrast |
 | --- | --- | --- | --- |
-| Working surface | `#FFFFFF` | Recipe body, lists, panels | Base |
-| Supporting surface | `#F3F2E7` | Page canvas, secondary areas | Ink on it 15.5:1 |
-| Text (proposed) | `#1A1A1A` ink | Body and headings | 17.4:1 on white |
-| Brand and primary action | `#59000E` burgundy | Primary buttons with white text, focus ring, wordmark color option | 14.7:1 with white |
-| Highlight | `#FEBD02` yellow | Restrained fills: adapted markers, estimate notes, one color block per screen | Ink on it 10.4:1; burgundy on it 8.7:1; never as text or thin lines on white (1.7:1) |
-| Cool counterpoint | `#A0B9C4` blue | Optional calm fill, for example the consequence panel | Ink on it 8.5:1; never white text on it (2.1:1); not for borders that must be seen (2.1:1 on white) |
+| Working surface | `#FFFFFF` | Page background, recipe body, lists, cards, inputs | Base |
+| Supporting surface | `#F3F2E7` | Adaptation controls and panels (adapt panel, kitchen panel, nutrition, add-item form, before/after rows); secondary button fill on white | Ink on it 15.3:1 |
+| Text | `#1F1A17` ink | Body and headings | 17.2:1 on white |
+| Muted text | `#5E5650` | Secondary text | 7.2:1 on white, 6.4:1 on `#F3F2E7` |
+| Brand and primary action | `#59000E` burgundy | Primary buttons with white text, links, recipe titles, focus ring, one color block per screen | 14.7:1 with white |
+| Highlight | `#FEBD02` yellow | Fills only: selected chips, adapted markers, changed step numbers | Ink on it 10.3:1; never as text or thin lines on white (1.7:1) |
+| Highlight soft | `#FFF3C4` | Changed rows, applied ideas, notices | Warning text `#7A5200` on it 6.2:1 |
+| Cool counterpoint | `#A0B9C4` blue | Fill only: selected availability segment | Ink on it 8.4:1; never text on white (2.1:1) |
+| Cool soft | `#E6EEF1` | Partial-amount panel, informational notices, tags | |
+| Control border | `#8A8178` | Inputs, chips, segments | 3.8:1 on white |
 
 Rationale: burgundy carries brand and action and connects directly to the Feastio reference; yellow is the energy, used sparingly so it stays meaningful; blue gives the eye a cool place to rest, matching the owner's preference for warm accents balanced by cooler color. Color never carries meaning alone: adapted items also carry a label or icon.
 
@@ -182,7 +186,7 @@ Superseded: warm ivory `#FAF7F0` main background; the October 29 assistant palet
 
 ### Illustration
 
-**Confirmed direction.** The owner draws icons, shapes, and patterns by hand, in two modes: black ink for everyday interface use, and color pastel for rare expressive moments. For the MVP, use simple placeholder SVGs with consistent size and stroke so hand-drawn replacements drop in without layout changes. Do not generate imitation hand-drawn art or trace the references. (The build still contains four drawn-style accents; see C3.)
+**Confirmed direction.** The owner draws icons, shapes, and patterns by hand, in two modes: black ink for everyday interface use, and color pastel for rare expressive moments. For the MVP, use simple placeholder SVGs with consistent size and stroke so hand-drawn replacements drop in without layout changes. Do not generate imitation hand-drawn art or trace the references. Placeholder accents are allowed if they are swappable and recorded as temporary (C3, confirmed Oct 29): the four current accents (squiggle, arrow, pot, spark) are temporary placeholders, each its own file in `assets/accents/`.
 
 ### Directions moved away from
 
@@ -214,10 +218,10 @@ Chana masala is the hero recipe and the scenario used to judge whether adaptatio
 
 Candidate swaps from v0.4, all demonstration content to be labeled as such and written with honest, non-precise consequences. How each was built is noted in brackets; disagreements are in Part 8.
 
-- Fresh tomatoes to canned crushed tomatoes: a little brighter and more acidic, cooks down faster, less chopping. [Built, but the written flavor says "deeper and more cooked, a little less fresh". See C4.]
+- Fresh tomatoes to canned crushed tomatoes: more concentrated, cooked flavor, can be slightly more acidic, less fresh brightness; less chopping. [Built. The earlier record wording, "brighter", was wrong (C4).]
 - Canned chickpeas to dried: same dish, but adds overnight soaking and longer cooking; a preparation consequence, not a flavor one. [Built: 200 g dried, a soaking and simmering step inserted first. The written flavor note mentions a nuttier taste and a fuller sauce, so it is not purely a preparation consequence.]
-- Fresh ginger to ground ginger: milder and less bright, added with the dry spices instead of with the onions. [Built, but added with the garlic and chili step, not with the dry spices. See C5.]
-- More protein: add paneer or firm tofu; changes texture, adds a step, and paneer adds dairy. [Built as two additions that can't be combined. The paneer option does not mention dairy. See C6.]
+- Fresh ginger to ground ginger: milder and less bright, added with the garlic and chili for about 30 seconds so it doesn't scorch. [Built (C5).]
+- More protein: add paneer or firm tofu; changes texture, adds a step, and paneer contains dairy. [Built as two additions that can't be combined. Paneer carries a plain "Contains dairy." note wherever it appears (C6).]
 - More fiber: stir in spinach (fresh or frozen; frozen must be thawed and squeezed); changes color and adds a leafy note. [Built with frozen spinach only, per the build instruction.]
 - An unsupported request (for example swapping chickpeas for lentils) should explain that the dish changes too much to adapt reliably rather than produce an answer. [Built: shown in the chickpeas swap sheet with a reason.]
 
@@ -225,7 +229,7 @@ Candidate swaps from v0.4, all demonstration content to be labeled as such and w
 
 A light shared "on hand" list across recipes, with no maintained inventory. Each ingredient is either on hand or not, and that presence powers the "can make now" and "one change away" suggestions in My Recipes. When a specific recipe needs a quantity, the user can optionally enter a partial amount in that recipe ("I have 1 of 2 cans"), which reduces that recipe's shopping need. Partial amounts belong to the recipe and do not become inventory. Buying something on the list does not mark it as permanently on hand unless the user says so.
 
-Build note: partial amounts are currently stored in the shared list, not per recipe. See C8, the most consequential contradiction.
+Build note (C8, confirmed Oct 29): implemented this way. The shared list stores presence only (`have` / `need`); "Some" with an amount is stored in that recipe's adaptation state, so two recipes never subtract the same amount.
 
 ### Screen purposes (from the build prompt's compact flow, Proposed detail)
 
@@ -240,11 +244,11 @@ Build note: partial amounts are currently stored in the shared list, not per rec
 
 **One adaptation state.** The displayed recipe, the consequence summary, and shopping quantities all derive from the same state. Nothing is calculated twice in different places.
 
-**Consequences come before commitment.** Every swap shows its effect before Apply. If the data has no consequence for a dimension, say nothing rather than implying "no change." (See C9.)
+**Consequences come before commitment.** Every swap shows its effect before Apply. If the data has no consequence for a dimension, say nothing rather than implying "no change." Generic "No change." text is not used (C9).
 
 **Unknown is not zero.** Missing nutrition data displays as unknown. Estimates are labeled. Nutrition is per serving with the basis stated, and never presented with false precision.
 
-**Scaling is practical.** Round to kitchen-friendly amounts. Ingredients flagged as scaling poorly (whole spices, salt, chiles, cooking times, pan size) get a short note instead of a silent linear result. (See C10.)
+**Scaling is practical.** Round to kitchen-friendly amounts. Spices, salt and chiles are marked "to taste" when servings change, and one short note says cooking times, pan size and oil may need adjusting. There is no further per-ingredient logic (C10).
 
 **Swaps can touch instructions.** If a swap changes a step, the step updates and is marked as adapted.
 
@@ -254,6 +258,8 @@ Build note: partial amounts are currently stored in the shared list, not per rec
 
 **Unsupported means say so.** When the data cannot support a swap or a combination of swaps, explain the limitation.
 
+**Swap entry points only where swaps exist.** No dead-end buttons. Where an ingredient has a recorded reason for having no swap, show it inline (C7).
+
 **Meaning never rests on color alone.** Adapted items carry a label or icon. Controls have visible focus, at least 44 px touch targets, labels, and keyboard support.
 
 **Nutrition stays optional and kind.** No mandatory tracking, no moralizing labels, no streaks or scores. When in doubt, show less nutrition, not more.
@@ -261,21 +267,19 @@ Build note: partial amounts are currently stored in the shared list, not per rec
 ## 5. Unresolved questions
 
 1. How combined consequences are summarized when several swaps are applied.
-2. Combining the same ingredient across recipes on one list (built: merged per item and unit family; partial amounts are double counted, see Part 7).
+2. Combining the same ingredient across recipes on one list (built: merged per item and unit family; partial amounts are per recipe, so nothing is double counted).
 3. Nutrition depth: goal-ranked swaps only, or per-serving estimates too (built: both, estimates collapsed unless a goal is on).
 4. Whether Apfel Grotezk holds up on small text; En Clair's license.
 5. Whether headlines need a display serif (see Visual personality).
 6. Wordmark casing.
 7. Name testing: pronunciation, spelling, availability.
 8. Whether forest green joins the palette in a later iteration.
-9. The contradictions in Part 8.
 
 ## 6. Next priorities
 
 Queued work lives in `docs/queue/QUEUE.md` (T01 revision evidence, T02 test kit, T03 review and pull request). Beyond the queue:
 
-1. Resolve the Part 8 contradictions, starting with C8 (partial amounts per recipe), which would also remove the double-counting limitation.
-2. Later: Safari and phone check, hand-drawn icon swap-in, En Clair license, name test.
+1. Later: Safari and phone check, hand-drawn icon swap-in, En Clair license, name test.
 
 ## 7. Implementation record (as built)
 
@@ -323,20 +327,20 @@ Apfel Grotezk by Collletttivo, SIL Open Font License 1.1 (license verified in th
 
 ### Spacing, controls, wordmark, icons, color blocks
 
-- 4px base scale (4–64px). Touch targets at least 44px; primary controls 48px. Buttons: primary (burgundy fill), secondary (ink outline pill, see C1) and quiet (underlined link style). The servings control is a "– 2 +" stepper.
+- 4px base scale (4–64px). Touch targets at least 44px; primary controls 48px. Buttons: primary (burgundy fill, white text), secondary (tonal fill with ink text and no outline: `#F3F2E7` on white surfaces, white on `#F3F2E7` panels and on the burgundy hero) and quiet (underlined link style). The servings control is a "– 2 +" stepper.
 - **Wordmark slot:** the header shows `assets/brand/wordmark.svg` at a fixed 32px height. It is a placeholder; replace it with the En Clair logo image. No script web font is loaded.
 - **Icons:** 14 plain black stroke SVGs in `assets/icons/<name>.svg`, all rendered at 20 × 20 px through `icon(name)` in `js/ui/icons.js`. Replace any file with an ink drawing of the same name. No icon sits on a burgundy fill.
 - **Color blocks:** My Recipes has one (the burgundy chana masala hero). The recipe page, list and sheet have none. Each screen has at most one burgundy action button.
-- **Drawn accents:** a squiggle under recipe titles, a drawn arrow in comparisons, a pot for empty states, a spark next to Ideas (see C3).
+- **Drawn accents (temporary placeholders):** `assets/accents/squiggle.svg` under recipe titles, `arrow.svg` in comparisons, `pot.svg` for empty states, `spark.svg` next to Ideas. Each loads as an image with its colors baked in; replace a file with a drawing of the same name.
 
 ### Screens as built
 
 | Screen | What it does |
 | --- | --- |
 | My Recipes (`#/`) | "Start here" chana masala block (becomes "Pick up where you left off" once adapted), on-hand chips with suggestions (including "one swap away"), saved recipe cards with adapted and list status, demo collection with Save, About and Reset demo. |
-| Recipe (`#/recipe/:id`) | Servings stepper, your changes (undo each, undo last, restore original), Have / Some (amount) / Need per ingredient with staples as a single check, Swap per ingredient where swaps exist, Ideas with optional protein/fiber goals, rough nutrition, method with changed steps marked, shopping bar, My version / Original toggle. |
-| Swap sheet (dialog) | Options for one ingredient plus any explained unsupported requests, then a before/after preview: quantity diff at current servings, flavor, texture, quantities, prep, nutrition ranges, method changes with old text struck through, cautions, conflict handling. Bottom sheet on mobile, side panel at 720px and up. |
-| Grocery list (`#/list`) | Grouped by aisle; check off, edit amounts, remove, add your own, resolve conflicts, add back removed items, update when a recipe changed; a note when a partial on-hand amount is counted by more than one recipe. |
+| Recipe (`#/recipe/:id`) | Servings stepper with a scaling note when servings differ, your changes (undo each, undo last, restore original), Have / Some (amount for this recipe) / Need per ingredient with staples as a single check, Swap where swaps exist and an inline "No tested swap" note where a reason is recorded, "Contains dairy." on paneer, Ideas with optional protein/fiber goals, rough nutrition, method with changed steps marked, shopping bar, My version / Original toggle. |
+| Swap sheet (dialog) | Options for one ingredient plus any explained unsupported requests, then a before/after preview: quantity diff at current servings, notes on added ingredients ("Paneer: contains dairy."), only the effect dimensions the data covers (flavor, texture, quantities, prep, nutrition with ranges), method changes with old text struck through, cautions, conflict handling. Bottom sheet on mobile, side panel at 720px and up. |
+| Grocery list (`#/list`) | Grouped by aisle; check off, edit amounts, remove, add your own, resolve conflicts, add back removed items, update when a recipe changed. |
 
 ### Behavior as built
 
@@ -346,7 +350,7 @@ Apfel Grotezk by Collletttivo, SIL Open Font License 1.1 (license verified in th
 - **Composition order:** replacements, omissions and additions, then quantity adjustments (to whatever fills the slot), then portion scaling. Steps can be inserted at the start (`after: "start"`, used by the dried chickpeas soak).
 - **Unsupported:** same-ingredient swaps and declared incompatibilities (paneer with tofu in chana masala; extra egg with tofu) show the reason and offer an explicit "Switch to this swap". Asked-for swaps we don't support (`recipe.unsupported`, e.g. lentils for chickpeas) and ingredients with no tested swap (`noSwap`) explain why.
 - **Scaling:** linear by default; pan fat scales at half rate (no visible note); spices, salt and chiles scale and are marked "to taste" when servings change. Display rounds to measurable amounts; the list rounds counts up.
-- **Availability:** one shared record keyed by ingredient (`have` / `some` with optional amount / `need`), used by recipes and the home chips. Unmarked counts as needed, and the UI says so. Without an amount, or with an incomparable unit, the full amount stays on the list, flagged.
+- **Availability:** shared presence keyed by ingredient (`have` / `need`) in `state.pantry`, used by every recipe and the home chips. "Some" with an amount lives in that recipe's adaptation state (`adaptation.partial`) and overrides shared presence for that recipe only; the home chip shows "some" when any recipe has a partial amount. Partial amounts are kept through restore original and aren't part of the undo history. Older saves with shared partial amounts drop them on load. Unmarked counts as needed, and the UI says so. Without an amount, or with an incomparable unit, the full amount stays on the list, flagged.
 - **Shopping needs** = adjusted quantity minus available amount in the same unit family. Mass, volume and count never convert into each other.
 - **List regeneration** tracks each recipe's contribution per line. Manual items are untouched. Edited or checked lines whose amount changes get a conflict ("Use 300 g / Keep 400 g"). Lines no recipe needs are removed unless edited or checked, which flags them instead. Deleted or cleared generated lines are remembered and offered as "Add back", never re-added silently. The same item in the same unit family merges across recipes. Checking an item off does not mark it as on hand.
 - **Out-of-date detection:** each synced recipe stores a signature of its needs; the recipe and the list both say when a recipe changed since it was added.
@@ -355,11 +359,10 @@ Apfel Grotezk by Collletttivo, SIL Open Font License 1.1 (license verified in th
 
 ### Seed data (demo)
 
-Five recipes written for the prototype from common home-style versions, not tested: Chana masala (hero), Chana palak, Paneer bhurji, Masoor dal tadka, Tomato and egg stir-fry. 27 recipe-specific swaps in total. Chana masala (4 servings): canned tomatoes (3 medium → 400 g); dried chickpeas (200 g, soak and simmer step first); ground ginger (1 tbsp → ¼ tsp); add paneer or add firm tofu (200 g each, not combinable); add frozen spinach (130 g, thaw and squeeze); lentils for chickpeas explained as unsupported. The other recipes cover missing-ingredient swaps (frozen spinach, kale, fresh or canned tomatoes, tofu, half paneer half tofu, moong dal, oil for ghee, skip scallions), a preference swap (tofu instead of eggs) and nutrition-oriented ones (add paneer, peas, eggs, spinach or edamame; brown basmati; more dal, less rice; one more egg each). Dairy-free-related swaps carry a caution that they don't make the meal dairy-free. Nutrition figures are rounded typical values in the style of USDA FoodData Central, not lab data.
+Five recipes written for the prototype from common home-style versions, not tested: Chana masala (hero), Chana palak, Paneer bhurji, Masoor dal tadka, Tomato and egg stir-fry. 27 recipe-specific swaps in total. Chana masala (4 servings): canned tomatoes (3 medium → 400 g); dried chickpeas (200 g, soak and simmer step first); ground ginger (1 tbsp → ¼ tsp); add paneer or add firm tofu (200 g each, not combinable); add frozen spinach (130 g, thaw and squeeze); lentils for chickpeas explained as unsupported. The other recipes cover missing-ingredient swaps (frozen spinach, kale, fresh or canned tomatoes, tofu, half paneer half tofu, moong dal, oil for ghee, skip scallions), a preference swap (tofu instead of eggs) and nutrition-oriented ones (add paneer, peas, eggs, spinach or edamame; brown basmati; more dal, less rice; one more egg each). Dairy-free-related swaps carry a caution that they don't make the meal dairy-free, and paneer carries a plain "Contains dairy." note. Effects include a dimension only when there is something to say about it. Nutrition figures are rounded typical values in the style of USDA FoodData Central, not lab data.
 
 ### Known limitations
 
-- Partial on-hand amounts are subtracted per recipe, so two recipes on the list can both count the same amount. The list shows a note when this happens. A proper fix means allocating amounts across recipes in list syncing, out-of-date detection and conflict checks; making partial amounts per recipe (C8) would remove the problem instead.
 - Generated list lines can't be renamed (only manual ones). Amount edits keep the line's unit.
 - The undo stack resets on reload.
 - Nutrition covers only protein and fiber, and the catalog is small.
@@ -369,28 +372,30 @@ Five recipes written for the prototype from common home-style versions, not test
 
 ### Verification log
 
+**T04, align build with decision record (2026-10-29).** `npm test`: 18 pass (new: per-recipe partial amounts with no double count across two recipes; old shared partial amounts dropped on load; effects never use generic "no change" text). Browser at 430 × 932 and 1280 × 860 from a fresh Reset demo: rice Some 100 g in chana masala at 2 servings stays out of chana palak; the list shows rice 350 g (50 + 300) with no double-count note; the shared onion Have carries across; tonal secondary buttons (oat on white, white on panels and hero); "Contains dairy." in the paneer row and in the preview sheet; ground ginger preview shows only Flavor, Quantities and Prep; the servings note appears when servings differ; "No tested swap" shows inline with no dead-end buttons. No console errors. Fixed during the pass: the servings note took its own grid cell at 1280px.
+
 **Decision record merge and build queue (2026-10-29).** Documentation and queue files only, no app code changed. `npm test` re-run.
 
 **Demo polish pass (2026-10-29).** `npm test`: 16 pass (new: chana masala soak-step insertion, composition at 2 servings, partial canned tomato subtraction, paneer/tofu block). Demo path checked by driving the real controls at 430 × 932 and 1280 × 860 from a fresh Reset demo: open chana masala from the hero → servings 2 → chickpeas and onion Have, spices "I have all of these", rice Some 100 g → compare and apply canned tomatoes → apply Add paneer → apply and then undo Add frozen spinach → lentils explanation → reload (state persists) → Add to list → rice 50 g (150 − 100), paneer 100 g, canned tomatoes 200 g, oil 2¼ tbsp → edit rice to 100 g (marked edited). No console errors. Fixed during the pass: a duplicate "Chickpeas" chip, an awkward step sentence, and the check icon wrapping the Swap button at 430px.
 
 **First build.** 15 tests covering seed-data integrity, units, scaling, source immutability, swap apply/undo/compose/omit, added steps, conflicts, nutrition with missing data, partial availability and incompatible units, list regeneration, suggestions, and save/reload/reset. Browser walkthrough at 430px and 1280px. Fixed during verification: `aria-pressed` booleans not rendering, a late dialog `close` event emptying a newly opened sheet, a `pagehide` save that could overwrite newer storage, duplicate "Rice" chips, a prep note that didn't scale, missing nutrition data shown as a low number, and toast and shopping bar overlaps.
 
-## 8. Contradictions between the decision record and the build (for the owner)
+## 8. Contradictions resolved (T04, October 29)
 
-None of these have been changed in code. Each needs a decision.
+Found while merging v0.4; each decision is in the decision log and is now reflected in both this record and the code.
 
-| ID | Decision record says | Build does | Suggested resolution |
-| --- | --- | --- | --- |
-| C1 | Outlined pill buttons dropped (Confirmed). | The secondary button is an ink-outlined pill, used for Save, Swap, "Open and adapt it", list Add and conflict choices. The last instruction was not to add outlined styles or restyle working components, so it stayed. | Decide what replaces it (for example a filled `#F3F2E7` pill or a plain text button), then restyle `.btn--secondary` once. |
-| C2 | Color table: `#F3F2E7` as page canvas, white for panels; ink `#1A1A1A`; blue for e.g. the consequence panel. | White page, `#F3F2E7` for adaptation panels (matches the confirmed surface split); ink `#1F1A17`; blue for the selected availability segment. | Treat the confirmed surface split as current and update the color table; choose an ink value. |
-| C3 | Do not generate imitation hand-drawn art. | Four drawn-style SVG accents (squiggle, arrow, pot, spark) made during the first build. | Replace them with plain placeholders or remove them until the owner's drawings exist. |
-| C4 | Canned tomatoes: "a little brighter and more acidic, cooks down faster." | Flavor text: "Deeper and more cooked, a little less fresh"; texture "smoother"; prep "a couple of minutes faster". | Choose the wording. |
-| C5 | Ground ginger is added with the dry spices instead of with the onions. | Added with the garlic and chili (step 4) for 30 seconds. It was kept off the dry-spice step because the canned tomato swap rewrites that step, and two swaps editing one step would overwrite each other. | Accept, or support composable step edits so both swaps can change step 5. |
-| C6 | Adding paneer adds dairy. | The chana masala paneer option doesn't mention dairy. | Add a dairy caution to paneer additions (data-only change). |
-| C7 | Every ingredient has a swap entry point. | Only ingredients with written swaps show Swap; those with a recorded reason show "No swap"; others show neither. | Decide whether every ingredient should open the sheet, even if it only says no tested swap exists. |
-| C8 | Partial amounts belong to the recipe and do not become inventory. | Partial amounts are stored in the shared on-hand record, so they appear in other recipes and on the home chips (as "some"). | Store partial amounts per recipe and keep only presence shared. This also fixes the double-counting limitation. |
-| C9 | If there's no consequence for a dimension, say nothing rather than "no change". | Every swap fills every effect field; several say "No change." (ground ginger texture, oil-for-ghee texture and prep, others). | Allow empty effect fields and hide them, then update the seed-data test. |
-| C10 | Poorly scaling ingredients (whole spices, salt, chiles, cooking times, pan size) get a short note. | Spices, salt and chiles get "to taste"; pan fat is scaled at half rate silently; cooking times and pan size have no note. | Add short notes for pan fat and for cooking time and pan size when servings change. |
+| ID | Resolution |
+| --- | --- |
+| C1 | Secondary button is a tonal fill with ink text and no outline (`#F3F2E7` on white, white on `#F3F2E7`); primary stays burgundy. |
+| C2 | The build's colors are the record; the color table follows `css/tokens.css`. |
+| C3 | The four drawn accents stay as temporary placeholders in `assets/accents/`; placeholder accents are allowed if swappable and recorded as temporary. |
+| C4 | Canned tomato copy: more concentrated, cooked flavor, can be slightly more acidic, less fresh brightness. |
+| C5 | Ground ginger stays with the garlic step; the record now matches. |
+| C6 | Paneer shows "Contains dairy." as a plain fact, in ingredient rows and in the swap preview. |
+| C7 | Swap entry points only where swaps exist; recorded reasons show inline; no dead-end buttons. |
+| C8 | Partial amounts are per recipe; shared presence only. The double-counting limitation and its list note are gone. |
+| C9 | No generic "No change." text; a dimension shows only when the data says something. |
+| C10 | One short note when servings differ: cooking times, pan size and oil may need adjusting. |
 
 ## Root CLAUDE.md guidance
 

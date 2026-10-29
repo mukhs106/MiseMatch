@@ -67,8 +67,10 @@ function heroSection(ctx) {
 function kitchenSection(ctx) {
   const { state } = ctx;
   const chips = pantryChipItems(RECIPES);
-  const marked = chips.filter((id) => ["have", "some"].includes(state.pantry[id]?.status));
-  const results = suggest(RECIPES, state.pantry).slice(0, 3);
+  // Chips show shared presence. An item with a partial amount in some recipe shows as "some".
+  const inRecipe = (id) => Object.values(state.adaptations).some((a) => a.partial?.[id]);
+  const marked = chips.filter((id) => state.pantry[id]?.status === "have" || inRecipe(id));
+  const results = suggest(RECIPES, state.pantry, state.adaptations).slice(0, 3);
   return html`
     <section class="kitchen panel" aria-labelledby="kitchen-h">
       <div class="section-head">
@@ -78,10 +80,10 @@ function kitchenSection(ctx) {
       <p class="small muted kitchen-hint">Tap what you have today. Suggestions and recipes both use it, and nothing needs upkeep.</p>
       <div class="chips" role="group" aria-label="Ingredients you have">
         ${chips.map((id) => {
-          const status = state.pantry[id]?.status;
-          const on = status === "have" || status === "some";
-          return html`<button class="chip" aria-pressed="${on}" data-state="${status ?? ""}" data-action="pantry-toggle" data-item="${id}">
-            ${on ? icon("check") : ""}${capitalize(shortName(id))}${status === "some" ? html`<span class="visually-hidden">, some</span><span aria-hidden="true" class="chip-some">some</span>` : ""}
+          const on = state.pantry[id]?.status === "have";
+          const status = on ? "have" : inRecipe(id) ? "some" : "";
+          return html`<button class="chip" aria-pressed="${on}" data-state="${status}" data-action="pantry-toggle" data-item="${id}">
+            ${on ? icon("check") : ""}${capitalize(shortName(id))}${status === "some" ? html`<span class="visually-hidden">, some in a recipe</span><span aria-hidden="true" class="chip-some">some</span>` : ""}
           </button>`;
         })}
       </div>

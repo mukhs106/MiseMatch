@@ -120,6 +120,12 @@ function compareSheet(ctx, { recipeId, swapId, from }) {
   const nb = estimate(before);
   const na = estimate(after);
   const fx = swap.effects;
+  // Plain facts about ingredients this change brings in (e.g. "Contains dairy.").
+  const beforeItems = new Set(before.ingredients.flatMap((l) => l.entries.map((e) => e.item)));
+  const notes = [...new Set(after.ingredients.flatMap((l) => l.entries.map((e) => e.item)))]
+    .filter((id) => !beforeItems.has(id) && ITEMS[id].note)
+    .map((id) => `${ITEMS[id].name}: ${ITEMS[id].note.toLowerCase()}`);
+  const dims = [["flavor", "Flavor"], ["texture", "Texture"], ["quantity", "Quantities"], ["prep", "Prep"]].filter(([k]) => fx[k]);
 
   return html`
     ${head(swap.label, applied ? "Applied to your version" : `Preview · ${recipe.title}`, from === "slot" ? "back-to-options" : null)}
@@ -142,21 +148,19 @@ function compareSheet(ctx, { recipeId, swapId, from }) {
               <span class="diff-after">${r.after ?? "Removed"}</span>
             </li>`)}
         </ul>
+        ${notes.map((n) => html`<p class="small item-note">${n}</p>`)}
       </section>
 
       <section aria-labelledby="cmp-fx">
         <h3 id="cmp-fx" class="eyebrow">What changes in the dish</h3>
         <dl class="effects">
-          <div><dt>Flavor</dt><dd>${fx.flavor}</dd></div>
-          <div><dt>Texture</dt><dd>${fx.texture}</dd></div>
-          <div><dt>Quantities</dt><dd>${fx.quantity}</dd></div>
-          <div><dt>Prep</dt><dd>${fx.prep}</dd></div>
-          <div><dt>Nutrition</dt><dd>${fx.nutrition}
+          ${dims.map(([k, label]) => html`<div><dt>${label}</dt><dd>${fx[k]}</dd></div>`)}
+          ${fx.nutrition ? html`<div><dt>Nutrition</dt><dd>${fx.nutrition}
             <span class="nut-compare small">
               ${["protein", "fiber"].map((n) => html`<span>${capitalize(n)} per serving: ${formatRange(nb[n])} → ${formatRange(na[n])} <span class="muted">(${direction(nb[n], na[n])})</span></span>`)}
               <span class="muted">Rough estimate from typical values.</span>
             </span>
-          </dd></div>
+          </dd></div>` : ""}
         </dl>
       </section>
 

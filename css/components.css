@@ -33,14 +33,27 @@
   background: var(--action-hover);
 }
 
+/* Tonal, no outline: oat on white surfaces, white on oat (and brand) surfaces. */
 .btn--secondary {
-  background: var(--surface);
+  background: var(--surface-support);
   color: var(--text);
-  border-color: var(--text);
 }
 
 .btn--secondary:hover {
-  background: var(--surface-support);
+  background: var(--border-subtle);
+}
+
+.panel .btn--secondary,
+.add-item .btn--secondary,
+.nutrition .btn--secondary,
+.hero .btn--secondary {
+  background: var(--surface);
+}
+
+.panel .btn--secondary:hover,
+.add-item .btn--secondary:hover,
+.nutrition .btn--secondary:hover {
+  background: var(--border-subtle);
 }
 
 .btn--quiet {
@@ -483,12 +496,12 @@ body:has(.shop-bar) .toast-region {
   }
 }
 
-/* Hand-drawn accents: sparse, decorative only */
+/* Placeholder drawn accents (images in assets/accents/): sparse, decorative only */
 
 .doodle {
-  color: var(--action);
+  flex: none;
 }
 
-.doodle--yolk {
-  color: var(--highlight);
+.hero .btn--secondary:hover {
+  background: var(--surface-support);
 }

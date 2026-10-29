@@ -70,7 +70,7 @@ function originalView(recipe) {
           return html`<h3 class="group-label eyebrow">${label}</h3>
             <ul class="ing-list ing-list--plain">${lines.map((l) => l.entries.map((e) => html`
               <li class="ing"><div class="ing-text"><span class="qty">${formatQty(e.qty, e.unit, e.step)}</span>
-              <span class="ing-name">${ITEMS[e.item].name}${e.prep ? html`<span class="prep">, ${e.prep}</span>` : ""}</span></div></li>`))}</ul>`;
+              <span class="ing-name">${ITEMS[e.item].name}${e.prep ? html`<span class="prep">, ${e.prep}</span>` : ""}${ITEMS[e.item].note ? html`<span class="item-note">${ITEMS[e.item].note}</span>` : ""}</span></div></li>`))}</ul>`;
         })}
       </section>
       <section class="method" aria-labelledby="method-h">
@@ -103,6 +103,7 @@ function adaptPanel(ctx, recipe, adaptation, d) {
   const adapted = isAdapted(recipe, adaptation);
   return html`
     <section class="panel adapt" aria-label="Adjust this recipe">
+      <div class="adapt-servings">
       <div class="adapt-row">
         <div>
           <h2 class="adapt-label" id="servings-label">Servings</h2>
@@ -113,6 +114,8 @@ function adaptPanel(ctx, recipe, adaptation, d) {
           <output aria-live="polite" aria-label="${plural(adaptation.servings, "serving")}">${adaptation.servings}</output>
           <button data-action="servings" data-id="${recipe.id}" data-delta="1" aria-label="More servings" ${adaptation.servings >= 12 ? "disabled" : ""}>${icon("plus")}</button>
         </div>
+      </div>
+      ${adaptation.servings !== recipe.servings ? html`<p class="small scale-note">Cooking times, pan size and oil may need adjusting for ${plural(adaptation.servings, "serving")}.</p>` : ""}
       </div>
 
       <div class="adapt-changes">
@@ -162,7 +165,7 @@ function ingredientsSection(ctx, recipe, d) {
         if (!lines.length) return "";
         const compact = g === "spices" || g === "staples";
         const items = lines.flatMap((l) => l.entries.map((e) => e.item)).filter((id) => !ITEMS[id].noShop);
-        const allHave = items.every((id) => ctx.state.pantry[id]?.status === "have");
+        const allHave = items.every((id) => availOf(ctx, recipe, id).status === "have");
         return html`
           <div class="group">
             <div class="group-head">
@@ -193,10 +196,11 @@ function ingredientLine(ctx, recipe, line, swaps, compact) {
       ? html`<button class="btn btn--secondary btn--small swap-btn" data-action="open-swaps" data-id="${recipe.id}" data-slot="${line.slot}"
           aria-label="Swap options for ${line.omitted ? ITEMS[original.item].name : line.entries.map((e) => ITEMS[e.item].name).join(" and ")}">
           ${icon("swap")} Swap</button>`
-      : noSwap
-        ? html`<button class="btn btn--quiet swap-none" data-action="open-swaps" data-id="${recipe.id}" data-slot="${line.slot}"
-            aria-label="Why there's no swap for ${ITEMS[original.item].name}">No swap</button>`
-        : "";
+      : "";
+  // No swap written: explain inline instead of offering a button that leads nowhere.
+  const noSwapNote = !line.addedBy && !slotSwaps.length && noSwap
+    ? html`<details class="no-swap small"><summary>No tested swap</summary><p class="muted">${noSwap}</p></details>`
+    : "";
 
   if (line.omitted) {
     return html`
@@ -221,13 +225,15 @@ function ingredientLine(ctx, recipe, line, swaps, compact) {
             ${line.scaling === "taste" && d_scaled(ctx, recipe) ? html`<span class="taste">to taste</span>` : ""}
             ${changed && i === 0 ? html`<span class="changed-by">${icon("swap")} ${line.addedBy ? "Added" : "Changed"}: ${by}</span>` : ""}
             ${wasText && i === 0 ? html`<span class="was">${wasText}</span>` : ""}
+            ${item.note ? html`<span class="item-note">${item.note}</span>` : ""}
           </span>
         </div>
         <div class="ing-controls">
-          ${shop ? (compact ? haveToggle(ctx, e) : availability(ctx, e)) : html`<span class="small muted">From the tap</span>`}
+          ${shop ? (compact ? haveToggle(ctx, recipe, e) : availability(ctx, recipe, e)) : html`<span class="small muted">From the tap</span>`}
           ${i === 0 ? swapBtn : ""}
         </div>
-        ${shop && !compact && ctx.state.pantry[e.item]?.status === "some" ? partialInput(ctx, e) : ""}
+        ${i === 0 ? noSwapNote : ""}
+        ${shop && !compact && availOf(ctx, recipe, e.item).status === "some" ? partialInput(ctx, recipe, e) : ""}
       </li>`;
   });
 }
@@ -242,25 +248,32 @@ function d_scaled(ctx, recipe) {
   return ctx.adaptation(recipe.id).servings !== recipe.servings;
 }
 
-function availability(ctx, entry) {
-  const status = ctx.state.pantry[entry.item]?.status ?? "";
+/** This recipe's partial amount if it has one, otherwise shared presence. */
+function availOf(ctx, recipe, item) {
+  const partial = ctx.adaptation(recipe.id).partial?.[item];
+  if (partial) return { status: "some", ...partial };
+  return { status: ctx.state.pantry[item]?.status ?? "" };
+}
+
+function availability(ctx, recipe, entry) {
+  const status = availOf(ctx, recipe, entry.item).status;
   const name = ITEMS[entry.item].name;
   const opts = [["have", "Have"], ["some", "Some"], ["need", "Need"]];
   return html`
     <fieldset class="seg" aria-label="Do you have ${name}?">
       ${opts.map(([v, label]) => html`
         <label>
-          <input type="radio" name="avail-${entry.item}" value="${v}" ${status === v ? "checked" : ""} data-action="avail" data-item="${entry.item}">
+          <input type="radio" name="avail-${entry.item}" value="${v}" ${status === v ? "checked" : ""} data-action="avail" data-id="${recipe.id}" data-item="${entry.item}">
           ${icon("check")}${label}
         </label>`)}
     </fieldset>`;
 }
 
-function haveToggle(ctx, entry) {
-  const have = ctx.state.pantry[entry.item]?.status === "have";
+function haveToggle(ctx, recipe, entry) {
+  const have = availOf(ctx, recipe, entry.item).status === "have";
   return html`
     <label class="check have-check">
-      <input type="checkbox" ${have ? "checked" : ""} data-action="avail-toggle" data-item="${entry.item}">
+      <input type="checkbox" ${have ? "checked" : ""} data-action="avail-toggle" data-id="${recipe.id}" data-item="${entry.item}">
       <span class="small">Have</span>
       <span class="visually-hidden">${ITEMS[entry.item].name}</span>
     </label>`;
@@ -268,8 +281,8 @@ function haveToggle(ctx, entry) {
 
 const UNIT_CHOICES = { mass: ["g", "kg"], volume: ["ml", "tsp", "tbsp", "cup"] };
 
-function partialInput(ctx, entry) {
-  const have = ctx.state.pantry[entry.item];
+function partialInput(ctx, recipe, entry) {
+  const have = availOf(ctx, recipe, entry.item);
   const fam = unitFamily(entry.unit);
   const units = UNIT_CHOICES[fam] ?? [entry.unit];
   const unit = have.unit ?? entry.unit;
@@ -277,12 +290,12 @@ function partialInput(ctx, entry) {
   const id = `partial-${entry.item}`;
   return html`
     <div class="partial">
-      <label for="${id}" class="small">How much do you have?</label>
+      <label for="${id}" class="small">How much do you have for this recipe?</label>
       <div class="partial-row">
         <input id="${id}" class="input input--num" type="number" inputmode="decimal" min="0" step="any"
-          value="${have.qty ?? ""}" placeholder="amount" data-action="avail-qty" data-item="${entry.item}" data-unit="${mismatch ? entry.unit : unit}">
+          value="${have.qty ?? ""}" placeholder="amount" data-action="avail-qty" data-id="${recipe.id}" data-item="${entry.item}" data-unit="${mismatch ? entry.unit : unit}">
         ${units.length > 1
-          ? html`<select class="select" aria-label="Unit" data-action="avail-unit" data-item="${entry.item}">
+          ? html`<select class="select" aria-label="Unit" data-action="avail-unit" data-id="${recipe.id}" data-item="${entry.item}">
               ${units.map((u) => html`<option value="${u}" ${u === unit ? "selected" : ""}>${u}</option>`)}</select>`
           : html`<span class="small">${entry.unit || "count"}</span>`}
       </div>
@@ -371,7 +384,7 @@ function shopBar(ctx, recipe, d, placement) {
   const listed = ctx.state.list.synced[recipe.id] != null;
   const current = listed && isListCurrent(ctx.state.list, recipe.id, needs);
   const unmarked = d.ingredients.flatMap((l) => l.entries)
-    .filter((e) => !ITEMS[e.item].noShop && !ctx.state.pantry[e.item]?.status).length;
+    .filter((e) => !ITEMS[e.item].noShop && !availOf(ctx, recipe, e.item).status).length;
   let action;
   if (current) action = html`<a class="btn btn--secondary btn--small" href="#/list">${icon("check")} On your list</a>`;
   else if (listed) action = html`<button class="btn btn--primary btn--small" data-action="sync-list" data-id="${recipe.id}" data-place="${placement}">Update list</button>`;

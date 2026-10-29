@@ -9,7 +9,9 @@
 //   adjust    [{ slot, factor }] multiplies whatever currently fills that slot
 //   steps     { stepId: replacement text }
 //   addSteps  [{ after: stepId | "start", id, text }]
-//   effects   plain-language consequences shown before applying
+//   effects   plain-language consequences shown before applying. Include a
+//             dimension (flavor, texture, quantity, prep, nutrition) only when
+//             there is something to say; never a generic "No change."
 //   conflicts [{ swap, reason }] combinations we don't support
 
 export const SWAPS = [
@@ -23,7 +25,7 @@ export const SWAPS = [
     replace: { slot: "tomatoes", with: [{ item: "canned-tomatoes", qty: 400, unit: "g", prep: "crushed" }] },
     steps: { s5: "Add the {coriander}, {chilipowder} and {turmeric} for 30 seconds, then the {tomatoes} and {salt}. Cook until thick and the oil separates, 8 to 10 minutes." },
     effects: {
-      flavor: "Deeper and more cooked, a little less fresh. Very consistent from can to can.",
+      flavor: "More concentrated, cooked flavor, and it can be slightly more acidic. You lose some fresh brightness.",
       texture: "A smoother, more even sauce with no tomato skins.",
       quantity: "One 400 g can stands in for 3 medium tomatoes.",
       prep: "No chopping, and the masala comes together a couple of minutes faster.",
@@ -61,10 +63,8 @@ export const SWAPS = [
     steps: { s4: "Stir in the {garlic}, {chili} and {ginger}. Cook for 30 seconds, just until fragrant; ground ginger scorches quickly." },
     effects: {
       flavor: "Warmer and more muted. You lose fresh ginger's bright, zesty bite.",
-      texture: "No change.",
       quantity: "About ¼ tsp ground replaces 1 tbsp grated fresh.",
       prep: "Nothing to grate. Cook it only briefly.",
-      nutrition: "No meaningful change.",
     },
   },
   {
@@ -332,9 +332,7 @@ export const SWAPS = [
     replace: { slot: "ghee", with: [{ item: "neutral-oil", qty: 2, unit: "tbsp" }] },
     effects: {
       flavor: "Loses ghee's nutty, buttery aroma. The garlic and cumin still come through.",
-      texture: "No real change.",
       quantity: "Same amount.",
-      prep: "No change.",
       nutrition: "About the same.",
     },
     caution: "Removing ghee doesn't make the meal dairy-free on its own. Check anything you serve with it.",
@@ -418,10 +416,7 @@ export const SWAPS = [
     steps: { s6: "Return the eggs, fold gently, and serve over the rice." },
     effects: {
       flavor: "Loses a fresh, oniony lift at the end. Everything else stays.",
-      texture: "No change.",
-      quantity: "Nothing to replace.",
       prep: "One less thing to chop.",
-      nutrition: "No meaningful change.",
     },
   },
   {
@@ -456,7 +451,6 @@ export const SWAPS = [
       flavor: "More eggy and rich; the tomato is less dominant.",
       texture: "More curds, a slightly drier sauce. Add a splash more water.",
       quantity: "6 eggs instead of 4 for 2 servings.",
-      prep: "No change.",
       nutrition: "More protein per serving (estimate).",
     },
     conflicts: [{ swap: "te-tofu", reason: "Extra eggs only make sense while the dish still uses eggs." }],

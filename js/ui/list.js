@@ -4,8 +4,7 @@ import { html, plural } from "./html.js";
 import { icon, doodle } from "./icons.js";
 import { getRecipe } from "../data/recipes.js";
 import { computedQty, displayQty, formatShopQty, isListCurrent } from "../core/shopping.js";
-import { practical, unitFamily, formatQty } from "../core/units.js";
-import { ITEMS } from "../data/items.js";
+import { practical, unitFamily } from "../core/units.js";
 
 const AISLES = ["Produce", "Frozen", "Refrigerated", "Dairy & eggs", "Pantry", "Bakery", "Spices", "Added by you"];
 
@@ -64,22 +63,7 @@ function listNotices(ctx) {
     if (!isListCurrent(list, recipeId, needs)) stale.push(recipe);
     for (const n of needs) if (list.dismissed[recipeId]?.[n.key]) removed.push({ recipe, need: n });
   }
-  // Known limitation: each recipe subtracts a partial on-hand amount on its own.
-  const shared = Object.entries(ctx.state.pantry)
-    .filter(([, have]) => have.status === "some" && have.qty != null)
-    .map(([item, have]) => ({
-      item,
-      have,
-      titles: Object.keys(list.synced)
-        .filter((id) => getRecipe(id) && ctx.derived(id).ingredients.some((l) => l.entries.some((e) => e.item === item)))
-        .map((id) => getRecipe(id).title),
-    }))
-    .filter((s) => s.titles.length > 1);
   return html`
-    ${shared.map((s) => html`
-      <div class="notice notice--cool">
-        <p><strong>Check ${ITEMS[s.item].name.toLowerCase()}.</strong> You marked ${formatQty(s.have.qty, s.have.unit)} at home, and ${s.titles.join(" and ")} each counted it, so you may need more than shown.</p>
-      </div>`)}
     ${stale.map((r) => html`
       <div class="notice" role="status">
         <p><strong>${r.title} changed</strong> since it was added. The list still shows the earlier amounts.</p>

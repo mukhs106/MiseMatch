@@ -9,8 +9,8 @@ export function initialState() {
   return {
     version: 1,
     saved: ["chana-palak", "masoor-dal"], // demo starting state
-    adaptations: {}, // recipeId -> { servings, applied: [swapId] }
-    pantry: {}, // itemId -> { status: "have" | "some" | "need", qty?, unit? }
+    adaptations: {}, // recipeId -> { servings, applied: [swapId], partial?: { itemId: { qty?, unit? } } }
+    pantry: {}, // shared presence only: itemId -> { status: "have" | "need" }
     list: emptyList(),
     goals: [], // optional: "protein", "fiber"
   };
@@ -26,11 +26,22 @@ export function load() {
     return {
       ...base,
       ...data,
+      pantry: presenceOnly(data.pantry),
       list: { ...base.list, ...data.list },
     };
   } catch {
     return initialState();
   }
+}
+
+// Older saves kept partial amounts in the shared list. Those belonged to no
+// particular recipe, so they are dropped rather than guessed.
+function presenceOnly(pantry = {}) {
+  return Object.fromEntries(
+    Object.entries(pantry)
+      .filter(([, v]) => v?.status === "have" || v?.status === "need")
+      .map(([k, v]) => [k, { status: v.status }]),
+  );
 }
 
 export function save(state) {
