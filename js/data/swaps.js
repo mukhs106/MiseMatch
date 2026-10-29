@@ -1,0 +1,388 @@
+// Supported, recipe-specific adaptations. Nothing here is a universal
+// substitution: each rule is written for one dish and explains what it does
+// to that dish. Quantities in `with`/`add` are at the recipe's base servings.
+//
+//   reasons   why someone might pick it: "missing" | "preference" | "protein" | "fiber"
+//   replace   { slot, with: [{ item, qty, unit, prep }] } (one swap per slot at a time)
+//   omit      slot to leave out
+//   add       new ingredients [{ item, qty, unit, group, prep }]; tokens use the item id
+//   adjust    [{ slot, factor }] multiplies whatever currently fills that slot
+//   steps     { stepId: replacement text }
+//   addSteps  [{ after: stepId, id, text }]
+//   effects   plain-language consequences shown before applying
+//   conflicts [{ swap, reason }] combinations we don't support
+
+export const SWAPS = [
+  // Chana palak
+  {
+    id: "cp-frozen-spinach",
+    recipe: "chana-palak",
+    label: "Frozen spinach",
+    summary: "Use frozen spinach instead of fresh.",
+    reasons: ["missing"],
+    replace: { slot: "spinach", with: [{ item: "spinach-frozen", qty: 130, unit: "g", prep: "thawed and squeezed" }] },
+    steps: { s7: "Squeeze the excess water from the thawed {spinach}, stir it in, and simmer for 3 minutes." },
+    effects: {
+      flavor: "A little more muted and mineral. The masala carries the dish either way.",
+      texture: "Softer and more broken down, with less leafy bite.",
+      quantity: "Frozen spinach is already wilted and denser, so about 130 g replaces 200 g fresh.",
+      prep: "Thaw it first and squeeze out the water so the curry doesn't turn thin.",
+      nutrition: "About the same per serving.",
+    },
+  },
+  {
+    id: "cp-kale",
+    recipe: "chana-palak",
+    label: "Kale",
+    summary: "Use chopped kale instead of spinach.",
+    reasons: ["missing"],
+    replace: { slot: "spinach", with: [{ item: "kale", qty: 150, unit: "g", prep: "finely chopped" }] },
+    steps: { s7: "Stir in the {spinach} with a splash of water, cover, and cook until tender, 6 to 8 minutes." },
+    effects: {
+      flavor: "Earthier and slightly bitter. The lemon at the end matters more.",
+      texture: "Chewier, with more structure than spinach.",
+      quantity: "Kale shrinks less, so 150 g is enough.",
+      prep: "Strip the stems, chop finely, and cook several minutes longer.",
+      nutrition: "Slightly more fiber, otherwise similar (estimate).",
+    },
+  },
+  {
+    id: "cp-fresh-tomatoes",
+    recipe: "chana-palak",
+    label: "Fresh tomatoes",
+    summary: "Use fresh tomatoes instead of canned.",
+    reasons: ["missing"],
+    replace: { slot: "tomatoes", with: [{ item: "fresh-tomatoes", qty: 3, unit: "", prep: "finely chopped" }] },
+    steps: { s5: "Add the {tomatoes}, {coriander}, {turmeric} and {salt}. Cover for 5 minutes until the tomatoes break down, then uncover and simmer until the oil separates, 10 to 12 minutes." },
+    effects: {
+      flavor: "Brighter and fresher, sometimes sharper. A pinch of sugar helps if they taste tart.",
+      texture: "A slightly looser masala with some tomato skin.",
+      quantity: "3 medium tomatoes stand in for one 400 g can.",
+      prep: "Adds about 5 minutes of cooking.",
+      nutrition: "About the same.",
+    },
+  },
+  {
+    id: "cp-paneer",
+    recipe: "chana-palak",
+    label: "Add paneer",
+    summary: "Fold in paneer cubes for a richer, higher-protein curry.",
+    reasons: ["protein"],
+    add: [{ item: "paneer", qty: 200, unit: "g", group: "main", prep: "cubed" }],
+    addSteps: [{ after: "s6", id: "cp-paneer-step", text: "Add the {paneer} and simmer gently for 3 minutes so it softens without breaking up." }],
+    effects: {
+      flavor: "Milky and mild, softening the spice a little.",
+      texture: "Soft, chewy cubes alongside the chickpeas.",
+      quantity: "Adds 200 g paneer for 4 servings. Nothing else changes.",
+      prep: "One extra step, about 3 minutes.",
+      nutrition: "Noticeably more protein per serving (estimate).",
+    },
+  },
+  {
+    id: "cp-peas",
+    recipe: "chana-palak",
+    label: "Add green peas",
+    summary: "Stir in frozen peas for more fiber and color.",
+    reasons: ["fiber"],
+    add: [{ item: "frozen-peas", qty: 150, unit: "g", group: "main" }],
+    addSteps: [{ after: "s6", id: "cp-peas-step", text: "Add the {frozen-peas} and simmer for 3 minutes." }],
+    effects: {
+      flavor: "A little sweetness against the spice.",
+      texture: "Small pops of texture; the curry feels heartier.",
+      quantity: "Adds 150 g frozen peas for 4 servings.",
+      prep: "Straight from the freezer, no thawing.",
+      nutrition: "More fiber and a bit more protein per serving (estimate).",
+    },
+  },
+  {
+    id: "cp-brown-rice",
+    recipe: "chana-palak",
+    label: "Brown basmati",
+    summary: "Serve with brown basmati instead of white.",
+    reasons: ["fiber", "missing"],
+    replace: { slot: "rice", with: [{ item: "brown-basmati", qty: 300, unit: "g", prep: "uncooked" }] },
+    steps: { s1: "Start the rice first. Rinse the {rice} and cook it with 2 times its volume of water, about 40 minutes. Rest it covered for 10 minutes." },
+    effects: {
+      flavor: "Nuttier. It stands up well to the curry.",
+      texture: "Chewier, and the grains stay more separate.",
+      quantity: "Same amount of rice.",
+      prep: "Takes about 25 minutes longer, so start it before the curry.",
+      nutrition: "More fiber per serving (estimate).",
+    },
+  },
+
+  // Paneer bhurji
+  {
+    id: "pb-tofu",
+    recipe: "paneer-bhurji",
+    label: "Extra-firm tofu",
+    summary: "Make it with tofu instead of paneer.",
+    reasons: ["missing", "preference"],
+    replace: { slot: "paneer", with: [{ item: "tofu", qty: 200, unit: "g", prep: "pressed and crumbled" }] },
+    adjust: [{ slot: "salt", factor: 1.25 }],
+    steps: { s4: "Crumble in the pressed {paneer} and cook for 5 to 6 minutes so it loses its raw taste and soaks up the masala." },
+    effects: {
+      flavor: "Less milky and rich. Tofu is neutral, so the masala leads; salt goes up a little.",
+      texture: "Firmer and more crumbly, less creamy.",
+      quantity: "Same weight. Salt rises by about a quarter.",
+      prep: "Press the tofu for 10 minutes first and cook it a few minutes longer.",
+      nutrition: "Slightly less protein than paneer, though brands vary a lot (estimate).",
+    },
+    caution: "This removes the paneer, but we haven't checked the rest for dairy. Ghee or store-bought rotis can contain it.",
+  },
+  {
+    id: "pb-half-tofu",
+    recipe: "paneer-bhurji",
+    label: "Half paneer, half tofu",
+    summary: "Stretch a small block of paneer with tofu.",
+    reasons: ["missing"],
+    replace: {
+      slot: "paneer",
+      with: [
+        { item: "paneer", qty: 100, unit: "g", prep: "crumbled" },
+        { item: "tofu", qty: 100, unit: "g", prep: "pressed and crumbled" },
+      ],
+    },
+    steps: { s4: "Add the tofu first and cook for 3 minutes, then crumble in the paneer and cook for 2 more minutes." },
+    effects: {
+      flavor: "Still recognizably paneer bhurji, a little lighter.",
+      texture: "Mixed: creamy paneer crumbs with firmer tofu.",
+      quantity: "100 g of each instead of 200 g paneer.",
+      prep: "Press the tofu first. The tofu goes in before the paneer.",
+      nutrition: "Protein about the same (estimate).",
+    },
+  },
+  {
+    id: "pb-canned-tomatoes",
+    recipe: "paneer-bhurji",
+    label: "Canned tomatoes",
+    summary: "Use canned tomatoes instead of fresh.",
+    reasons: ["missing"],
+    replace: { slot: "tomatoes", with: [{ item: "canned-tomatoes", qty: 200, unit: "g", prep: "crushed" }] },
+    steps: { s3: "Add the {tomatoes}, {turmeric}, {chilipowder} and {salt}. Cook until thick and jammy, 6 to 8 minutes." },
+    effects: {
+      flavor: "Deeper and more cooked, less fresh.",
+      texture: "Saucier, so cook it down a bit longer.",
+      quantity: "About half a 400 g can replaces 2 medium tomatoes.",
+      prep: "Adds a few minutes of reducing.",
+      nutrition: "About the same.",
+    },
+  },
+  {
+    id: "pb-eggs",
+    recipe: "paneer-bhurji",
+    label: "Add eggs",
+    summary: "Make it anda paneer bhurji for more protein.",
+    reasons: ["protein"],
+    add: [{ item: "eggs", qty: 2, unit: "", group: "main", prep: "beaten", step: 1 }],
+    addSteps: [{ after: "s4", id: "pb-eggs-step", text: "Push everything to one side, scramble the {eggs} in the gap until just set, then fold together." }],
+    effects: {
+      flavor: "Richer and more savory, a familiar combination.",
+      texture: "Softer, with egg curds through the paneer.",
+      quantity: "Adds 2 eggs for 2 servings.",
+      prep: "One extra step, about 2 minutes.",
+      nutrition: "More protein per serving (estimate).",
+    },
+  },
+  {
+    id: "pb-peas",
+    recipe: "paneer-bhurji",
+    label: "Add green peas",
+    summary: "Make it matar paneer bhurji for more fiber.",
+    reasons: ["fiber"],
+    add: [{ item: "frozen-peas", qty: 100, unit: "g", group: "main" }],
+    addSteps: [{ after: "s3", id: "pb-peas-step", text: "Add the {frozen-peas} and cook for 2 minutes." }],
+    effects: {
+      flavor: "A little sweetness; a common home variation.",
+      texture: "More body and bite.",
+      quantity: "Adds 100 g frozen peas for 2 servings.",
+      prep: "Straight from the freezer.",
+      nutrition: "More fiber per serving (estimate).",
+    },
+  },
+
+  // Masoor dal
+  {
+    id: "md-moong",
+    recipe: "masoor-dal",
+    label: "Split moong dal",
+    summary: "Use yellow moong dal instead of red lentils.",
+    reasons: ["missing"],
+    replace: { slot: "lentils", with: [{ item: "moong-dal", qty: 200, unit: "g", prep: "rinsed" }] },
+    steps: { s2: "Simmer the {lentils} with the {water}, {turmeric} and {tomato} until completely soft, 25 to 30 minutes. Whisk, add the {salt}, and loosen with water if needed." },
+    effects: {
+      flavor: "Milder and slightly sweeter; a lighter yellow dal.",
+      texture: "Holds a little more shape unless whisked well.",
+      quantity: "Same weight.",
+      prep: "About 5 minutes longer to soften.",
+      nutrition: "Protein similar. Fiber isn't estimated because figures for split moong vary widely.",
+    },
+  },
+  {
+    id: "md-oil",
+    recipe: "masoor-dal",
+    label: "Oil for the tadka",
+    summary: "Temper the spices in oil instead of ghee.",
+    reasons: ["missing", "preference"],
+    replace: { slot: "ghee", with: [{ item: "neutral-oil", qty: 2, unit: "tbsp" }] },
+    effects: {
+      flavor: "Loses ghee's nutty, buttery aroma. The garlic and cumin still come through.",
+      texture: "No real change.",
+      quantity: "Same amount.",
+      prep: "No change.",
+      nutrition: "About the same.",
+    },
+    caution: "Removing ghee doesn't make the meal dairy-free on its own. Check anything you serve with it.",
+  },
+  {
+    id: "md-more-dal",
+    recipe: "masoor-dal",
+    label: "More dal, less rice",
+    summary: "Shift the plate toward dal for more protein and fiber, with the same flavors.",
+    reasons: ["protein", "fiber"],
+    adjust: [
+      { slot: "lentils", factor: 1.5 },
+      { slot: "water", factor: 1.4 },
+      { slot: "rice", factor: 2 / 3 },
+    ],
+    effects: {
+      flavor: "Unchanged. Same spices, same tadka.",
+      texture: "A thicker, bowl-forward plate with less rice under it.",
+      quantity: "Lentils up by half, water up by 40 percent, rice down by a third.",
+      prep: "The dal may need a few more minutes and an extra splash of water.",
+      nutrition: "More protein and fiber per serving (estimate).",
+    },
+  },
+  {
+    id: "md-spinach",
+    recipe: "masoor-dal",
+    label: "Add spinach",
+    summary: "Make it dal palak for more fiber.",
+    reasons: ["fiber"],
+    add: [{ item: "spinach-fresh", qty: 100, unit: "g", group: "main", prep: "chopped" }],
+    addSteps: [{ after: "s2", id: "md-spinach-step", text: "Stir in the {spinach-fresh} and simmer for the last 3 minutes." }],
+    effects: {
+      flavor: "Green and slightly earthy; a familiar variation.",
+      texture: "Soft greens through the dal.",
+      quantity: "Adds 100 g fresh spinach for 4 servings.",
+      prep: "One extra stir, 3 minutes.",
+      nutrition: "A little more fiber per serving (estimate).",
+    },
+  },
+  {
+    id: "md-brown-rice",
+    recipe: "masoor-dal",
+    label: "Brown basmati",
+    summary: "Serve with brown basmati instead of white.",
+    reasons: ["fiber", "missing"],
+    replace: { slot: "rice", with: [{ item: "brown-basmati", qty: 300, unit: "g", prep: "uncooked" }] },
+    steps: { s3: "Start the rice first. Rinse the {rice} and cook it with 2 times its volume of water, about 40 minutes." },
+    effects: {
+      flavor: "Nuttier.",
+      texture: "Chewier grains.",
+      quantity: "Same amount of rice.",
+      prep: "Takes about 25 minutes longer, so start it before the dal.",
+      nutrition: "More fiber per serving (estimate).",
+    },
+  },
+
+  // Tomato and egg stir-fry
+  {
+    id: "te-canned-tomatoes",
+    recipe: "tomato-egg",
+    label: "Canned whole tomatoes",
+    summary: "Use canned tomatoes instead of fresh.",
+    reasons: ["missing"],
+    replace: { slot: "tomatoes", with: [{ item: "canned-tomatoes", qty: 400, unit: "g", prep: "roughly chopped" }] },
+    steps: { s4: "Add the rest of the oil and the {tomatoes} with half their juice. Cook until slightly thickened, 4 to 5 minutes." },
+    effects: {
+      flavor: "Deeper and more cooked, less fresh. Taste before adding all the sugar.",
+      texture: "Saucier and softer, with no wedges.",
+      quantity: "One 400 g can replaces 3 medium tomatoes.",
+      prep: "Chop the tomatoes in the can and use only half the juice.",
+      nutrition: "About the same.",
+    },
+  },
+  {
+    id: "te-no-scallions",
+    recipe: "tomato-egg",
+    label: "Leave out scallions",
+    summary: "Skip the garnish.",
+    reasons: ["missing"],
+    omit: "scallions",
+    steps: { s6: "Return the eggs, fold gently, and serve over the rice." },
+    effects: {
+      flavor: "Loses a fresh, oniony lift at the end. Everything else stays.",
+      texture: "No change.",
+      quantity: "Nothing to replace.",
+      prep: "One less thing to chop.",
+      nutrition: "No meaningful change.",
+    },
+  },
+  {
+    id: "te-tofu",
+    recipe: "tomato-egg",
+    label: "Firm tofu instead of eggs",
+    summary: "An egg-free tomato and tofu version.",
+    reasons: ["preference", "missing"],
+    replace: { slot: "eggs", with: [{ item: "tofu", qty: 300, unit: "g", prep: "pressed and crumbled" }] },
+    steps: {
+      s2: "Pat the {eggs} dry and crumble it into bite-size pieces with a pinch of the {salt}.",
+      s3: "Heat half the {oil} over medium-high heat and fry the tofu until lightly golden, 4 to 5 minutes. Set it aside.",
+      s6: "Return the tofu, fold gently, and scatter with the {scallions}. Serve over the rice.",
+    },
+    effects: {
+      flavor: "No eggy richness. It becomes a tomato and tofu dish: good, but a different dish.",
+      texture: "Firmer crumbles instead of soft curds.",
+      quantity: "300 g tofu replaces 4 eggs.",
+      prep: "Press the tofu first; frying takes a few minutes longer.",
+      nutrition: "Protein about the same (estimate).",
+    },
+    conflicts: [{ swap: "te-extra-egg", reason: "Extra eggs only make sense while the dish still uses eggs." }],
+  },
+  {
+    id: "te-extra-egg",
+    recipe: "tomato-egg",
+    label: "One more egg each",
+    summary: "Add an egg per serving for more protein.",
+    reasons: ["protein"],
+    adjust: [{ slot: "eggs", factor: 1.5 }],
+    effects: {
+      flavor: "More eggy and rich; the tomato is less dominant.",
+      texture: "More curds, a slightly drier sauce. Add a splash more water.",
+      quantity: "6 eggs instead of 4 for 2 servings.",
+      prep: "No change.",
+      nutrition: "More protein per serving (estimate).",
+    },
+    conflicts: [{ swap: "te-tofu", reason: "Extra eggs only make sense while the dish still uses eggs." }],
+  },
+  {
+    id: "te-edamame",
+    recipe: "tomato-egg",
+    label: "Add edamame",
+    summary: "Not traditional, but adds protein and fiber without changing the sauce.",
+    reasons: ["protein", "fiber"],
+    add: [{ item: "edamame", qty: 120, unit: "g", group: "main" }],
+    addSteps: [{ after: "s4", id: "te-edamame-step", text: "Add the {edamame} with the tomatoes so they heat through." }],
+    effects: {
+      flavor: "Mild and slightly sweet. Not part of the usual dish.",
+      texture: "Firm green beans through the soft eggs.",
+      quantity: "Adds 120 g shelled edamame for 2 servings.",
+      prep: "Straight from the freezer.",
+      nutrition: "More protein and fiber per serving (estimate).",
+    },
+  },
+];
+
+export function swapsForRecipe(recipeId) {
+  return SWAPS.filter((s) => s.recipe === recipeId);
+}
+
+export function getSwap(id) {
+  return SWAPS.find((s) => s.id === id) ?? null;
+}
+
+/** The slot a swap is offered under in the ingredient list, if any. */
+export function swapSlot(swap) {
+  return swap.replace?.slot ?? swap.omit ?? null;
+}
