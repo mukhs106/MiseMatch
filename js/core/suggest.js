@@ -1,11 +1,11 @@
-// Pantry-based suggestions: which recipes you can make now, or with a
-// supported swap, from what you've marked as on hand.
+// "Use what you have": which recipes you can make now, or one swap away,
+// from what's in the pantry.
 
 import { ITEMS } from "../data/items.js";
 import { swapsForRecipe } from "../data/swaps.js";
 
-// On hand for a recipe: shared presence, or a partial amount entered in that recipe.
-const onHand = (pantry, partial, item) => pantry[item]?.status === "have" || partial[item] != null;
+// In the pantry at all (any amount, or amount unknown). Free-text items never match.
+const onHand = (pantry, item) => pantry[item] != null && !pantry[item].free;
 
 /** Key ingredients: the main things you'd shop for, not spices or staples. */
 export function keyLines(recipe) {
@@ -13,33 +13,36 @@ export function keyLines(recipe) {
 }
 
 /**
- * @returns [{ recipe, have, total, missing: [{ slot, item, fix }], ready }]
+ * @returns [{ recipe, have, total, missing: [{ slot, item, fix }], ready, fixes, rank }], ordered
+ *          can make now, then one swap away, then the rest by how much is on hand.
  * `fix` is a supported "missing" swap whose replacement is on hand, if one exists.
  */
-export function suggest(recipes, pantry, adaptations = {}) {
+export function suggest(recipes, pantry) {
   const results = [];
   for (const recipe of recipes) {
-    const partial = adaptations[recipe.id]?.partial ?? {};
     const lines = keyLines(recipe);
     const swaps = swapsForRecipe(recipe.id).filter((s) => s.reasons.includes("missing"));
     let have = 0;
     const missing = [];
     for (const line of lines) {
-      if (onHand(pantry, partial, line.item)) {
+      if (onHand(pantry, line.item)) {
         have++;
         continue;
       }
       const fix = swaps.find((s) =>
-        (s.replace?.slot === line.slot && s.replace.with.every((w) => onHand(pantry, partial, w.item)))
+        (s.replace?.slot === line.slot && s.replace.with.every((w) => onHand(pantry, w.item)))
         || s.omit === line.slot);
       missing.push({ slot: line.slot, item: line.item, fix: fix ?? null });
     }
     const unresolved = missing.filter((m) => !m.fix).length;
-    results.push({ recipe, have, total: lines.length, missing, ready: unresolved === 0, unresolved });
+    const fixes = missing.length - unresolved;
+    // 0: can make now, 1: one swap away, 2: anything else with something on hand
+    const rank = unresolved > 0 ? 2 : fixes === 0 ? 0 : fixes === 1 ? 1 : 2;
+    results.push({ recipe, have, total: lines.length, missing, ready: unresolved === 0, unresolved, fixes, rank });
   }
   return results
     .filter((r) => r.have > 0)
-    .sort((a, b) => a.unresolved - b.unresolved || b.have / b.total - a.have / a.total);
+    .sort((a, b) => a.rank - b.rank || a.unresolved - b.unresolved || b.have / b.total - a.have / a.total);
 }
 
 /** Items worth offering as quick pantry chips: key items across recipes and their swaps. */
