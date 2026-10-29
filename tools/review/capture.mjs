@@ -153,7 +153,9 @@ async function walkthrough(browser) {
   const dir = join(out, label, "video");
   mkdirSync(dir, { recursive: true });
   const size = { width: 430, height: 932 };
-  const context = await browser.newContext({ viewport: size, recordVideo: { dir, size }, isMobile: true, hasTouch: true });
+  // Plain 430 × 932 window: Chrome's mobile emulation (isMobile) records frames into
+  // a smaller area with a grey band. Layout depends only on width, so this matches.
+  const context = await browser.newContext({ viewport: size, recordVideo: { dir, size } });
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
