@@ -28,10 +28,11 @@ Queued work lives in docs/queue/QUEUE.md; run one task per session with /next an
 - Never convert between mass, volume and count. Incompatible amounts get flagged.
 - List regeneration must keep manual items and user edits; edited or checked lines that change get a conflict, deleted lines are remembered.
 - Label demo data as demo data. Don't claim allergy safety.
-- `#FEBD02` and `#A0B9C4` are fills behind dark text only; they fail as text on white. Meaning is never carried by color alone.
-- At most one large burgundy or yellow color block per screen. No outlined buttons; reuse `.btn--primary/--secondary/--quiet` (secondary is a tonal fill).
+- Black and white stage (`docs/product-context.md` Part 9): every color token is black or white, one typeface, no greys or reduced opacity. Hierarchy, state and emphasis come from size, weight, spacing, rules, borders, position and wording. Reserved color values are kept beside the tokens; color may return only as an addition, and nothing may depend on it.
+- Reuse `.btn--primary/--secondary/--quiet`. Secondary is outlined for this stage only (temporarily overrides C1, which returns with color).
+- Reserved rules for when color returns: `#FEBD02` and `#A0B9C4` are fills behind dark text only; at most one large burgundy or yellow color block per screen.
 - Chana masala (`HERO_RECIPE_ID`) is the demo's hero recipe; keep the demo path in README working.
-- Touch targets ≥ 44px, visible focus, labeled controls. Mobile first around 430px; check 360px and 960px+ too. Page and content surfaces are white; `#F3F2E7` only for small tonal controls.
+- Touch targets ≥ 44px, visible focus, labeled controls. Mobile first around 430px; check 360px and 960px+ too. Page and content surfaces are white.
 - Focus: script-moved focus (page titles, dialog title, `main`) shows a ring only for keyboard users (`html[data-input]`); never remove `:focus-visible` from controls.
 - Visual evidence is required for any substantive UI review: before/after PNGs and a recorded walkthrough (passing runs too) via `tools/review`, saved in a dated `reviews/` folder (git-ignored), with viewport, revision, scenario and results noted, zipped for sharing. If capture is unavailable, say so; never claim evidence that wasn't captured.
 - Add a test in `tests/core.test.js` for any change to `js/core/` or the seed data.

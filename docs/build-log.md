@@ -19,3 +19,10 @@
 - Interpretations: not in pantry shows as Need (no "unmarked"); unconvertible or amount-less Some keeps the full amount on the list, flagged, never subtracted; Profile is a minimal placeholder holding Reset demo until T06; Update list recalculates all listed recipes together.
 - Incident: `ec84eef` (committed outside the session mid-task) imported uncommitted views and broke GitHub Pages; `2706654` restored it.
 - Not checked: Safari, Firefox, a physical phone, a screen reader.
+
+## 2026-11-02 · Black and white stage
+- Changed: every color token set to black or white with its reserved value alongside; one typeface (fake italic and the Arial favicon removed). Selected, changed, warning, status, disabled and hover states redesigned to read without color (`docs/product-context.md` Part 9). Accents are black line only; sheet has a 2 px border and no dimming. Secondary buttons are outlined for this stage, temporarily overriding C1.
+- Copy: "Check:" lead on warnings, "Before" and "After" labels in the swap sheet, bold lead on the no-longer-needed list notice.
+- Verified: `npm test` 20 pass; Playwright before `ac1cceb` 82/82 (the before run skips later scenarios), after 121/121 on uncommitted changes at 430, 360 and 1280 plus a recorded 430 walkthrough; computed-style scan of recipe, list, pantry and profile found no color, grey, opacity or second font; toast and keyboard focus checked in the in-app browser. Evidence in `reviews/2026-11-02-black-white/` (+ ZIP).
+- Found during review: a flipped hover made the primary button look secondary under a resting cursor, so hover keeps the fill and adds an inner ring.
+- Not seen on screen: the "Check" note on list lines, pantry unit mismatches and missing nutrition data (same component as the servings note), the list conflict notice. Not checked: Safari, Firefox, a physical phone, a screen reader.

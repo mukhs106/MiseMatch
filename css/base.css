@@ -97,8 +97,11 @@ small,
   font-size: var(--fs-sm);
 }
 
+/* Secondary text: smaller and regular weight, not lighter. */
 .muted {
   color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
 }
 
 .qty,
@@ -215,7 +218,7 @@ main {
 
 /* Navigation: three primary destinations. A bottom tab bar on small screens,
    in the header on wide ones. The current tab has an indicator bar and a heavier
-   label as well as color. Pushed screens (recipe, profile) hide it on small screens. */
+   label. Pushed screens (recipe, profile) hide it on small screens. */
 
 .tabbar {
   position: fixed;
@@ -240,7 +243,7 @@ main {
   min-height: 60px;
   color: var(--text-muted);
   text-decoration: none;
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-regular);
   font-size: var(--fs-xs);
 }
 
@@ -268,7 +271,8 @@ main {
   padding: 0 0.4em;
   border-radius: var(--radius-pill);
   background: var(--highlight);
-  color: var(--c-ink);
+  color: var(--text-on-highlight);
+  box-shadow: 0 0 0 2px var(--surface); /* keeps it apart from the icon it sits on */
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
   line-height: 1.5;
@@ -282,12 +286,13 @@ main {
   width: var(--tap);
   height: var(--tap);
   margin-left: auto;
+  border: var(--border-w) solid var(--border-control);
   border-radius: 50%;
   background: var(--surface-support);
 }
 
 .avatar:hover {
-  background: var(--border-subtle);
+  box-shadow: var(--hover-ring);
 }
 
 body[data-route="profile"] .avatar {

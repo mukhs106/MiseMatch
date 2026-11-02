@@ -1,6 +1,6 @@
 // Functional icons and placeholder drawn accents, both loaded from asset files.
 
-import { raw } from "./html.js";
+import { html, raw } from "./html.js";
 
 // Placeholder icons: plain black SVG files in assets/icons/, all shown at one
 // size (20px). Replace a file with a drawing of the same name to restyle it.
@@ -8,6 +8,11 @@ export function icon(name, label) {
   return raw(
     `<img class="icon" src="assets/icons/${name}.svg" width="20" height="20" alt="${label ?? ""}"${label ? "" : ' aria-hidden="true"'}>`,
   );
+}
+
+// A note to check, carried by the icon and the bold lead word, never by color.
+export function checkNote(text, lead = "Check:") {
+  return html`${icon("info")}<span><strong>${lead}</strong> ${text}</span>`;
 }
 
 // Drawn accents: temporary placeholders, each its own file in assets/accents/

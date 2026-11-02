@@ -1,7 +1,12 @@
 /*
   mise & match design tokens.
   Provisional defaults for this iteration, not final brand approvals.
-  Contrast ratios (WCAG 2.x) are recorded in docs/product-context.md.
+
+  Black and white stage: every color token is black or white, and one typeface
+  is used. Hierarchy, state and emphasis come from size, weight, spacing, rules,
+  borders, position and wording. Each reserved value is kept beside its token so
+  color can return later as an addition; nothing may depend on it.
+  The full record is in docs/product-context.md (Part 9).
 */
 
 @font-face {
@@ -27,19 +32,20 @@
 }
 
 :root {
-  /* Brand palette (raw values) */
+  /* Brand palette (raw values). Black or white for now; reserved value alongside. */
   --c-white: #ffffff;
-  --c-oat: #f3f2e7;
-  --c-wine: #59000e;
-  --c-wine-hover: #420009;
-  --c-yolk: #febd02;
-  --c-yolk-soft: #fff3c4;
-  --c-sky: #a0b9c4;
-  --c-sky-soft: #e6eef1;
-  --c-ink: #1f1a17;
-  --c-ink-muted: #5e5650;
-  --c-line-strong: #8a8178;
-  --c-line: #dcd8c8;
+  --c-oat: #ffffff;       /* reserved: #f3f2e7 */
+  --c-wine: #000000;      /* reserved: #59000e */
+  --c-wine-hover: #000000; /* reserved: #420009 */
+  --c-yolk: #000000;      /* reserved: #febd02 */
+  --c-yolk-soft: #ffffff; /* reserved: #fff3c4 */
+  --c-sky: #000000;       /* reserved: #a0b9c4 */
+  --c-sky-soft: #ffffff;  /* reserved: #e6eef1 */
+  --c-ink: #000000;       /* reserved: #1f1a17 */
+  --c-ink-muted: #000000; /* reserved: #5e5650 */
+  --c-line-strong: #000000; /* reserved: #8a8178 */
+  --c-line: #000000;      /* reserved: #dcd8c8 */
+  --c-warn: #000000;      /* reserved: #7a5200 */
 
   /* Roles */
   --surface: var(--c-white);
@@ -50,14 +56,18 @@
   --text-on-action: var(--c-white);
   --action: var(--c-wine);
   --action-hover: var(--c-wine-hover);
-  --highlight: var(--c-yolk);           /* fill only, dark text on top */
-  --highlight-soft: var(--c-yolk-soft); /* changed-by-you backgrounds */
-  --cool: var(--c-sky);                 /* fill only, dark text on top */
+  --highlight: var(--c-yolk);           /* status fills: tags, counts, changed steps */
+  --text-on-highlight: var(--c-white);  /* reserved: --c-ink */
+  --highlight-soft: var(--c-yolk-soft);
+  --selected: var(--c-sky);             /* selected chips, segments and toggles */
+  --text-on-selected: var(--c-white);   /* reserved: --c-ink */
   --cool-soft: var(--c-sky-soft);
-  --border-control: var(--c-line-strong); /* 3.8:1 on white, meets 3:1 for controls */
-  --border-subtle: var(--c-line);         /* decorative dividers only */
+  --border-control: var(--c-line-strong);
+  --border-subtle: var(--c-line);
   --focus: var(--c-wine);
-  --warn-text: #7a5200;                   /* 6.2:1 on --highlight-soft */
+  --warn-text: var(--c-warn);
+  --backdrop: transparent;              /* reserved: rgb(31 26 23 / 0.45) */
+  --icon-on-fill: invert(1);            /* black icon files on a black fill */
 
   /* Type */
   --font-sans: "Apfel Grotezk", "Helvetica Neue", Arial, system-ui, sans-serif;
@@ -97,8 +107,12 @@
   --tap: 44px;           /* minimum touch target */
   --control-h: 48px;
   --border-w: 1.5px;
+  --border-w-strong: 2px;
   --rule: 1px solid var(--border-subtle); /* restrained section separator on white */
-  --shadow-sheet: 0 -8px 32px rgb(31 26 23 / 0.14);
+  --rule-head: var(--border-w-strong) solid var(--text); /* opens a list */
+  --rule-mark: 3px solid var(--text); /* left rule on anything you changed */
+  --hover-ring: inset 0 0 0 1px var(--text); /* hover: the border gets heavier */
+  --shadow-sheet: none;   /* reserved: 0 -8px 32px rgb(31 26 23 / 0.14) */
   --shadow-lift: 0 2px 0 var(--c-ink);
 
   /* Layout */

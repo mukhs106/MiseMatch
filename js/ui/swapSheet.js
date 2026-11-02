@@ -143,9 +143,9 @@ function compareSheet(ctx, { recipeId, swapId, from }) {
         <ul class="diff">
           ${lines.map((r) => html`
             <li class="diff-row">
-              <span class="diff-before">${r.before ?? "Not in the recipe"}</span>
+              <span class="diff-before"><span class="eyebrow diff-label">Before</span>${r.before ? html`<s>${r.before}</s>` : "Not in the recipe"}</span>
               <span class="diff-arrow">${doodle.arrow}<span class="visually-hidden">becomes</span></span>
-              <span class="diff-after">${r.after ?? "Removed"}</span>
+              <span class="diff-after"><span class="eyebrow diff-label">After</span>${r.after ?? "Removed"}</span>
             </li>`)}
         </ul>
         ${notes.map((n) => html`<p class="small item-note">${n}</p>`)}

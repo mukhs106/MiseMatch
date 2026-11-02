@@ -2,7 +2,7 @@
 // is derived from the source recipe plus the stored adaptation state.
 
 import { html, plural } from "./html.js";
-import { icon, doodle } from "./icons.js";
+import { icon, doodle, checkNote } from "./icons.js";
 import { ITEMS, shortName } from "../data/items.js";
 import { swapsForRecipe, getSwap } from "../data/swaps.js";
 import { formatQty, unitFamily } from "../core/units.js";
@@ -117,7 +117,7 @@ function adaptPanel(ctx, recipe, adaptation, d) {
               <button data-action="servings" data-id="${recipe.id}" data-delta="1" aria-label="More servings" ${adaptation.servings >= 12 ? "disabled" : ""}>${icon("plus")}</button>
             </div>
           </div>
-          ${adaptation.servings !== recipe.servings ? html`<p class="small scale-note">Cooking times, pan size and oil may need adjusting for ${plural(adaptation.servings, "serving")}.</p>` : ""}
+          ${adaptation.servings !== recipe.servings ? html`<p class="small warn scale-note">${checkNote(`cooking times, pan size and oil may need adjusting for ${plural(adaptation.servings, "serving")}.`)}</p>` : ""}
         </div>
         ${waysToAdapt(recipe)}
       </div>
@@ -321,7 +321,7 @@ function partialInput(ctx, recipe, entry) {
           : html`<span class="small">${entry.unit || "count"}</span>`}
       </div>
       ${have.qty == null ? html`<p class="small muted">Without an amount, the full quantity stays on your list.</p>` : ""}
-      ${mismatch && have.qty != null ? html`<p class="small warn">Your pantry has ${formatQty(have.qty, have.unit)}, which can't be compared with ${entry.unit || "a count"}. It counts as amount unknown until you enter it here.</p>` : ""}
+      ${mismatch && have.qty != null ? html`<p class="small warn">${checkNote(`your pantry has ${formatQty(have.qty, have.unit)}, which can't be compared with ${entry.unit || "a count"}. It counts as amount unknown until you enter it here.`)}</p>` : ""}
     </div>`;
 }
 
@@ -347,8 +347,8 @@ function ideasSection(ctx, recipe, adaptation) {
               <div class="idea-text">
                 <h3>${s.label}</h3>
                 <p class="small">${s.summary}</p>
-                <p class="idea-tags">${s.reasons.filter((r) => r !== "missing").map((r) => html`<span class="tag ${goals.includes(r) ? "tag--yolk" : "tag--cool"}">${REASON_LABEL[r]}</span>`)}
-                  ${applied ? html`<span class="tag">${icon("check")} Applied</span>` : ""}</p>
+                <p class="idea-tags">${s.reasons.filter((r) => r !== "missing").map((r) => html`<span class="tag ${goals.includes(r) ? "tag--yolk" : "tag--cool"}">${goals.includes(r) ? icon("check") : ""}${REASON_LABEL[r]}</span>`)}
+                  ${applied ? html`<span class="tag tag--yolk">${icon("check")} Applied</span>` : ""}</p>
               </div>
               <button class="btn btn--secondary btn--small" data-action="preview-swap" data-id="${recipe.id}" data-swap="${s.id}">
                 ${applied ? "Review" : "See what changes"}
@@ -371,7 +371,7 @@ function nutritionSection(ctx, recipe, adaptation, d) {
         <dd>
           <span class="nut-value num">${formatRange(now[n])}</span>
           ${base ? html`<span class="small muted">Original ${formatRange(base[n])} · ${direction(base[n], now[n])}</span>` : ""}
-          ${missing.length ? html`<span class="small warn">No reliable ${n} data for ${missing.join(", ")}, which could be a main source here.</span>` : ""}
+          ${missing.length ? html`<span class="small warn">${checkNote(`no reliable ${n} data for ${missing.join(", ")}, which could be a main source here.`)}</span>` : ""}
         </dd>
       </div>`;
   });
