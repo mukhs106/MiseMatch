@@ -17,6 +17,21 @@ A requirement in this file is not evidence that it has been built. Verify agains
 
 This section is the current record. Where it disagrees with older parts of this file (screens, pantry model, "My version" toggle, seed data, known limitations in Part 7), this section wins; the older text is kept as history.
 
+### T10 changes to this section (November 2)
+
+Where this subsection disagrees with the rest of Version 0.6, this subsection wins. Status per audit ID: `docs/queue/T10-integrity-audit.md`.
+
+- **Quantities.** Three amounts stay separate: needed (exact), cooking (`practical`: eighths for spoons and counts, a pinch below that, tenths below a gram) and purchase (`purchaseQty`, rounded up). Estimates use the cooking amount. Method and effect text render amounts from state. Each dish has a `servingsRange`. Pan fat scales at half rate and water at three-quarter rate, both authored assumptions shown beside the amount. Times don't scale.
+- **Nutrition.** Ranges are labelled illustrative: a fixed ±15% band on fixtures, not measured uncertainty. The serving-weight claim is gone; only raw weight added per serving is reported. This replaces "a change in food per serving is disclosed".
+- **Requirements and results.** Eligibility is settled first, then results group as Meets, May meet, Closest supported, Can't estimate. Copy follows the actual cause. Lower goals come from one candidate, as a set. Questions appear only when a candidate depends on the answer. Filter semantics: hard exclusions and time limits include or exclude; goals and dislikes rank and label.
+- **Combinations.** Three or more rules are supported only as an exact authored bundle. Declared pairs keep a larger set untested. "Supported" never means kitchen-tested.
+- **Pantry.** Not checked, don't have, have unknown and measured are distinct; zero is out of stock. Step 1 captures what's missing today (session-only) and what's on hand (pantry), and is skippable. "I have enough" is one question about the combined requirement, bound to a fingerprint and the entry's revision. Transfers happen once, using the amount bought. "Update pantry after cooking" is optional and reviewed from the exact snapshot, with Undo, and never automatic. This keeps the light-pantry decision.
+- **Records.** Store version 3. Saved, planned and cooked records carry revisions and a snapshot; migrated ones say so. Versions save the recipe outcome, not requirements, and say so at save; cook mode re-evaluates under current requirements; cook records keep a short "made under" note. Cook visits freeze at entry and persist per visit. Undo is narrow, and Saved lists recent removals.
+- **Resilience.** Failed writes show a persistent notice and no saved-state claim. Unreadable or future data is quarantined and not overwritten until the person chooses. Bad records are skipped with reasons. Another tab's write produces a reviewable whole-state choice. Routes validate relationships.
+- **Import.** A preview comes before a draft, and raw text is kept. Source yield is separate from Make for. Package, net and drained weights are separate. Compounds stay compound. Every blocking issue has an action, including Keep as unknown. Excluded is not removed. Limits: 40,000 characters, 150 ingredient lines, 100 steps, 500 characters per line, 200 per title, 2,048 per URL, 100 servings.
+
+Still true: no real kitchen test has happened, and all amounts, rates and rules remain suggestions.
+
 ### Direction
 
 The central value is adapting familiar Indian and South Asian comfort food to someone's pantry, portions, dietary requirements and optional nutrition goals, while clearly explaining the consequences. Saving, planning and the shopping list support it. The product keeps its broader promise of reducing the mental load of meal preparation. It is not a calorie tracker and never implies that traditional food needs correcting. Indian and South Asian recipes are the initial focus, not a claim of complete regional expertise.
@@ -93,7 +108,8 @@ Drafts, never assurances. Extraction (`js/core/importer.js`) is separate from no
 - No server: no real link import, OCR, transcription, accounts or sync. Data lives in one browser.
 - Imported drafts can't be planned on the shopping list or adapted; adaptation is only for the 10 supported recipes.
 - Pantry quantities have no expiry or usage tracking. Feedback is stored but doesn't change rankings yet.
-- Not checked in Safari, Firefox, on a physical phone or with a screen reader.
+- Not checked in Safari, Firefox, iOS Safari, Android Chrome, on a physical phone, with a real on-screen keyboard or IME, or with a screen reader.
+- Two dishes aren't combined for quantity, time or nutrition until both are planned. Tab conflicts are a whole-state choice, not a merge. Rendering is still full-root, apart from cook ticks. Regional cup sizes aren't modelled.
 
 ### Deferred
 
@@ -104,6 +120,8 @@ Public publishing and forks (relationships and attribution are prepared; no feed
 1. Should "Make it again" also offer versions cooked once without feedback?
 2. Which dishes should be cooked first to move from suggested to team-tested?
 3. Pexels page links for the eight displayed photos.
+4. Should modal sheets get a dimmed backdrop? Part 9 currently rules it out, and modals work through inertness, focus containment, a close control and the 2 px border (T10, H02).
+5. Are `paratha-01` (plain layered parathas with chai) and `palak-channa-01` (no visible spinach) acceptable for Aloo paratha and Chana palak, or should those dishes use the tile?
 
 ### Evidence gaps
 
@@ -157,6 +175,11 @@ Not inspected by anyone working in the repository: the Figma file and its eight 
 | Nov 2 | "Have it, amount unknown" now asks for confirmation instead of counting as enough | Confirmed; built. Supersedes T05's rule |
 | Nov 2 | Collection is 10 Indian and South Asian dishes; tomato and egg stir-fry removed | Confirmed; built |
 | Nov 2 | Eight Pexels photos displayed (page links pending); dishes without a suitable photo use a typographic tile | Working |
+| Nov 2 | Food photos show in natural color (`--photo-filter: none`); the rest of the interface stays black and white. Reverses the Part 9 greyscale treatment | Confirmed (owner, T10) |
+| Nov 2 | Serving-size reporting replaced by raw weight added per serving; nutrition ranges labelled illustrative | Confirmed (owner, T10) |
+| Nov 2 | Versions save the recipe outcome, not requirements; cook records keep a short "made under" note | Working (decided in T10, E02) |
+| Nov 2 | Whole-set authoring needed for three or more rules; optional, reviewed pantry update after cooking, never automatic | Confirmed (owner, T10) |
+| Nov 2 | Dimmed modal backdrop not added; open for the owner | Open (T10, H02) |
 | Oct 29 | Copy rule: at most one line of wordplay per screen; navigation, buttons, quantities, consequences, errors and allergy text stay plain. Assigned lines: Recipes header "Blend the rules."; swap sheet title "Thyme for a swap."; Pantry header "Turn 'what's left?' into 'what's next.'"; empty grocery list "Nacho average grocery list."; all list items checked "Bean there, done that."; Use what you have with no matches "Dinner, off-script." followed by a plain next step. | Confirmed (T05) |
 | Nov 2 | Black and white stage: every color token black or white, one typeface, no greys or reduced opacity. Color values stay recorded (Part 9) and may return only as an addition. Secondary buttons are outlined for this stage, temporarily overriding C1. | Confirmed for this stage of development |
 
@@ -524,7 +547,7 @@ Found while merging v0.4; each decision is in the decision log and is now reflec
 
 ## 9. Black and white stage (November 2)
 
-For this stage of development the interface uses one typeface and black and white only. The design system is simplified, not removed: tokens, spacing, type scale, grid and component structure all stay. Where this conflicts with color guidance elsewhere in this file, this part wins until color returns; that guidance stays as the record for later.
+For this stage of development the interface uses one typeface and black and white only. Food photography is the one exception: photos show in natural color. The design system is simplified, not removed: tokens, spacing, type scale, grid and component structure all stay. Where this conflicts with color guidance elsewhere in this file, this part wins until color returns; that guidance stays as the record for later.
 
 ### State without color
 
@@ -542,14 +565,38 @@ For this stage of development the interface uses one typeface and black and whit
 | Current adaptation step | Heavy top rule and bold label; other steps 1 px and regular |
 | Original and Your version | 1 px and 2 px borders, labeled; in comparison tables the old value is struck through and the new value is bold |
 | Radio chips and cook checkboxes | Drawn in black and white, because browser defaults are grey |
-| Recipe photos | Greyscale for this stage, through `--photo-filter`. They carry no meaning. Dishes without a photo keep the outlined typographic tile |
+| Recipe photos | Natural color (`--photo-filter: none`; owner decision, Nov 2, T10, reversing the earlier greyscale treatment). They carry no meaning. Dishes without a photo, and photos that fail to load, show the outlined typographic tile |
 | Idea matching a goal | 2 px border and a black tag with a check |
 | Disabled | Dashed border, regular weight |
 | Secondary text | Smaller size and regular weight, never lighter |
 | Before and after in the swap sheet | Labeled, with the old value struck through |
 | Sheet | 2 px border; no shadow and no dimmed backdrop |
 
+Modal separation comes from real inertness, focus containment, Escape, a visible close control and the 2 px border; whether to add dimming is an open owner decision.
+
 Icons are black files, so they are inverted with `--icon-on-fill` where they sit on a black fill. The favicon is a plain black disc, because an "&" there would need a second typeface.
+
+### Component state contract (T10)
+
+"n/a" means the state doesn't apply; no component was added to fill a cell. Measured in desktop Chrome; see `tools/review/matrix.mjs`.
+
+| Component | Default | Hover | Focus | Selected or pressed | Disabled | Error | Empty or long content |
+|---|---|---|---|---|---|---|---|
+| Button | Fill, outline or underline by kind | Inner ring or heavier border | Outline, keyboard ring | n/a | Dashed, regular, with a nearby reason where it matters | n/a | Wraps |
+| Chip | 1.5 px outline | Heavier border | Outline | Black fill, bold, check; forced colors: 3 px border | n/a | n/a | Wraps |
+| Input, select | 1.5 px outline, `--tap` tall | n/a | Outline | n/a | Dashed | Double 4 px border, `aria-invalid`, "Check:" text; last valid value kept | Long values scroll inside; selects shrink |
+| Stepper | Outlined | Heavier | Outline | n/a | Dashed at the dish's limit | n/a | n/a |
+| List row | Rule below | Title underline on links | Outline | Checked: struck through | n/a | Conflict notice | Wraps; quantity moves under the name below 540 px |
+| Option card | 1 px | n/a | On its controls | Chosen: 2 px and a tag | n/a | n/a | Wraps |
+| Comparison table | Caption, scoped headers | n/a | n/a | Changed: old struck through, new bold | n/a | n/a | Fixed layout, wraps |
+| Sheet | 2 px border, native modal | n/a | Title on open; contained | n/a | n/a | n/a | Body scrolls |
+| Notice | 1 px informs, 2 px asks to act; stays until resolved | n/a | On its controls | n/a | n/a | `role="alert"` when work is at risk | Wraps |
+| Toast | Black fill, 10 s, close control | Pauses | Pauses | n/a | n/a | n/a | Wraps; Saved keeps the recovery |
+| Disclosure | Plus and minus | Underline | Outline | Open state kept across redraws | n/a | n/a | Wraps |
+| Navigation | Regular | Underline | Outline | Bold and bar (`aria-current`) | n/a | n/a | Wraps |
+| Photo | Natural color, 4:3, `focal` where set | No filter | n/a | No filter | n/a | Same tile as no photo | Tile with initials |
+
+Shell tokens: `--h-tabbar`, `--h-actionbar`, `--safe-bottom`, `--z-actionbar`, `--z-tabbar`, `--z-toast`, `--z-skip`.
 
 ### Reserved values
 
@@ -572,7 +619,6 @@ These are also kept beside each token in `css/tokens.css`.
 | `--text-on-highlight`, `--text-on-selected` | `--c-ink` |
 | `--backdrop` | `rgb(31 26 23 / 0.45)` |
 | `--shadow-sheet` | `0 -8px 32px rgb(31 26 23 / 0.14)` |
-| `--photo-filter` | `none` |
 | `assets/accents/arrow.svg` | stroke `#59000E` |
 | `assets/accents/squiggle.svg`, `spark.svg` | stroke `#FEBD02` |
 | `assets/accents/pot.svg` | stroke `#59000E`, filled dots `#FEBD02` and `#A0B9C4` |

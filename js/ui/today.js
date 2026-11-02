@@ -8,7 +8,7 @@ import { icon } from "./icons.js";
 import { RECIPES, getRecipe, HERO_RECIPE_ID } from "../data/recipes.js";
 import { getSwap } from "../data/swaps.js";
 import { suggest } from "../core/suggest.js";
-import { hasUnsavedChanges, isAdaptedSnapshot, repeatable } from "../core/versions.js";
+import { hasUnsavedChanges, isAdaptedSnapshot, repeatable, ruleLabels } from "../core/versions.js";
 import { normalizeConstraints } from "../core/constraints.js";
 import { recipeImage, constraintsSummary } from "./parts.js";
 import { STEPS } from "./adapt.js";
@@ -42,9 +42,11 @@ export function todayView(ctx) {
       ${again.length || versions.length ? html`
         <section class="today-section" aria-labelledby="again-h">
           <h2 id="again-h" class="section-title">Make it again</h2>
-          <p class="small muted">Start from a version you saved, then change only what's different today.</p>
+          <p class="small muted">Start from something you made or saved, then change only what's different today.</p>
           <ul class="row-list">
-            ${(again.length ? again.map((c) => state.versions[c.versionId] ?? null).filter(Boolean) : versions.slice(0, 2)).map((v) => againRow(ctx, v, again.some((c) => c.versionId === v.id)))}
+            ${again.length
+              ? again.map((c) => (c.versionId && state.versions[c.versionId] ? againRow(ctx, state.versions[c.versionId], true) : againCookRow(c)))
+              : versions.slice(0, 2).map((v) => againRow(ctx, v, false))}
           </ul>
         </section>` : ""}
 
@@ -66,20 +68,24 @@ export function todayView(ctx) {
         <a class="quiet-row" href="#/list">${icon("list")}<span>${openItems ? `${plural(openItems, "item")} on your shopping list` : "Your shopping list is empty"}</span>${icon("next")}</a>
         <a class="quiet-row" href="#/import">${icon("plus")}<span>Import a recipe as a draft</span>${icon("next")}</a>
       </section>
-      <p class="small muted home-note">Recipes and adaptations are demo content written for this prototype and not yet kitchen-tested. Nutrition figures are rough estimates from fixture values.</p>
+      <details class="more home-note" data-open-key="about-data">
+        <summary class="small">About this content</summary>
+        <p class="small muted">Recipes and adaptations are demo content written for this prototype and not yet kitchen-tested. Nutrition figures are rough estimates from fixture values. Everything you do stays on this device.</p>
+      </details>
     </div>`;
 }
 
 // A way into the demo scenario until there's something of your own to continue.
+// It opens a real preview: two servings, canned tomatoes chosen, fresh tomatoes marked missing for today.
 function startRow() {
   const r = getRecipe(HERO_RECIPE_ID);
   return html`
     <section class="today-section" aria-labelledby="start-h">
       <h2 id="start-h" class="section-title">Start here</h2>
-      <ul class="row-list"><li><a class="row-link" href="#/recipe/${r.id}">
+      <ul class="row-list"><li><button class="row-link row-link--button" data-action="start-scenario" data-id="${r.id}">
         ${recipeImage(r, { size: "thumb", credit: false })}
         <span class="row-text"><span class="row-title">${r.title} for 2, with no fresh tomatoes</span>
-          <span class="small muted">See what a swap changes before you commit to it.</span></span>${icon("next")}</a></li></ul>
+          <span class="small muted">Opens a preview with canned tomatoes chosen, to see what a swap changes. Nothing is saved.</span></span>${icon("next")}</button></li></ul>
     </section>`;
 }
 
@@ -108,7 +114,24 @@ function againRow(ctx, v, liked) {
           <span class="small muted">${r.title} · ${plural(v.servings, "serving")}${liked ? " · you'd make it again" : ""}</span>
         </span>
       </div>
-      <button class="btn btn--secondary btn--small" data-action="start-adapt" data-id="${r.id}" data-from="${v.id}">Make again</button>
+      <button class="btn btn--secondary btn--small" data-action="start-adapt" data-id="${r.id}" data-from="${v.id}" aria-label="Make ${v.name} again">Make again</button>
+    </li>`;
+}
+
+// A meal you'd make again that was never saved keeps a real way back: its own record.
+function againCookRow(c) {
+  const r = getRecipe(c.recipeId);
+  const labels = ruleLabels(c);
+  return html`
+    <li class="row-split">
+      <div class="row-link row-link--static">
+        ${recipeImage(r, { size: "thumb", credit: false })}
+        <span class="row-text">
+          <span class="row-title">${r.title}</span>
+          <span class="small muted">${plural(c.servings, "serving")}${labels.length ? ` · ${labels.join(", ")}` : " · as written"} · you'd make it again</span>
+        </span>
+      </div>
+      <button class="btn btn--secondary btn--small" data-action="repeat-cook" data-cook="${c.id}" aria-label="Make ${r.title} again, ${plural(c.servings, "serving")}">Make again</button>
     </li>`;
 }
 

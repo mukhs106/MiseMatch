@@ -5,7 +5,7 @@ import { html } from "./html.js";
 import { icon } from "./icons.js";
 import { RECIPES } from "../data/recipes.js";
 import { ITEMS, NUTRITION_SOURCE, shortName } from "../data/items.js";
-import { normalizeConstraints } from "../core/constraints.js";
+import { normalizeConstraints, openQuestions } from "../core/constraints.js";
 import { keyLines } from "../core/suggest.js";
 import { constraintsForm, capitalize } from "./parts.js";
 
@@ -17,13 +17,14 @@ export function profileView(ctx) {
       <a class="back-link" href="#/">${icon("back")} Today</a>
       <header class="list-head">
         <h1 tabindex="-1" data-route-focus>Requirements and settings</h1>
-        <p class="muted">Saved on this device only. There are no accounts.</p>
+        <p class="muted">Saved in this browser on this device only. There are no accounts and no backup.</p>
       </header>
 
       <section class="profile-group" aria-labelledby="req-h">
         <h2 id="req-h">Your usual requirements</h2>
         <p class="small muted">Used for suggestions and as the starting point when you adapt a dish. You can change them for one dish without changing these.</p>
-        ${constraintsForm(c, "profile")}
+        ${constraintsForm(c, "profile", { questions: openQuestions(c).filter((q) => q.key === "nutScope" || q.key === "eggs") })}
+        <p class="small muted">Other questions, like soy or coconut, are asked only when a dish depends on the answer. You can always list them under Must not include.</p>
         <div class="notice notice--cool">${icon("info")}<p>We flag ingredients that conflict with what you've told us, using our own ingredient data. That data can be incomplete and can't see product labels, so nothing here confirms a dish is safe for an allergy. Check labels and your own needs.</p></div>
       </section>
 
@@ -40,10 +41,16 @@ export function profileView(ctx) {
         <ul class="small about-list">
           <li><strong>Recipes</strong> are home-style versions written for this prototype, not kitchen-tested.</li>
           <li><strong>Adaptations</strong> are rule-based suggestions written for each dish. None has been cooked and checked by our team yet, and there are no community cooking reports.</li>
-          <li><strong>Nutrition</strong>: ${NUTRITION_SOURCE.detail}</li>
+          <li><strong>Nutrition</strong>: ${NUTRITION_SOURCE.detail} Ranges are illustrative, not measured uncertainty.</li>
+          <li><strong>Your data</strong> stays in this browser. It isn't synced or backed up, and this site isn't set up to work offline.</li>
           <li><strong>Photos</strong> are from Pexels under its free license; individual page links are still being recorded.</li>
           <li><strong>Not built yet:</strong> reading real web links, screenshots or video, accounts, sharing or publishing versions, live AI suggestions.</li>
         </ul>
+        <details class="more" data-open-key="export-data">
+          <summary class="small">Copy my data</summary>
+          <p class="small muted">Plain text you can keep somewhere safe. There's no import for it yet.</p>
+          <textarea class="input" rows="6" readonly aria-label="Your saved data as text">${JSON.stringify(ctx.state)}</textarea>
+        </details>
         <button class="btn btn--secondary" data-action="reset-demo">Reset demo</button>
         <p class="small muted">Reset clears everything you've done in this browser.</p>
       </section>

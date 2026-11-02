@@ -7,9 +7,10 @@ import { ITEMS, shortName } from "../data/items.js";
 import { RECIPES } from "../data/recipes.js";
 import { SWAPS } from "../data/swaps.js";
 import { pantryChipItems } from "../core/suggest.js";
-import { searchCatalog, displayName, freeKey } from "../core/pantry.js";
+import { displayName, freeKey, amountText, isOut, suggestMatch } from "../core/pantry.js";
+import { searchIngredients } from "../core/search.js";
 import { unitFamily } from "../core/units.js";
-import { capitalize } from "./parts.js";
+import { capitalize, fieldError } from "./parts.js";
 
 /** Pantry and shopping list share one tab: what you have, and what you still need. */
 export function kitchenTabs(current, open) {
@@ -37,8 +38,8 @@ const unitLabel = (u) => (u === "" ? "count" : u);
 export function pantryView(ctx) {
   const { state, ui } = ctx;
   const q = ui.pantryQuery;
-  const matches = searchCatalog(q);
-  const exact = matches.some((id) => ITEMS[id].name.toLowerCase() === q.trim().toLowerCase());
+  const matches = searchIngredients(q, { limit: 6 });
+  const exact = matches.some((m) => m.exact);
   const entries = Object.entries(state.pantry).sort(([a, ea], [b, eb]) => displayName(a, ea).localeCompare(displayName(b, eb)));
   const chips = pantryChipItems(RECIPES);
   return html`
@@ -54,14 +55,15 @@ export function pantryView(ctx) {
           <span class="field-label">Add an ingredient</span>
           <input class="input" type="search" data-action="pantry-search" value="${q}" placeholder="Search, for example chickpeas" autocomplete="off" aria-describedby="pantry-help">
         </label>
-        <p id="pantry-help" class="small muted">Amounts are optional. Without one, you'll be asked whether you have enough when you plan a meal.</p>
+        <p id="pantry-help" class="small muted">Regional names work too, like palak or chole. Amounts are optional. Without one, you'll be asked whether you have enough when you plan a meal.</p>
+        ${ui.pantryHint ? html`<p class="small field-error" role="alert">${ui.pantryHint}</p>` : ""}
         ${q.trim() ? html`
           <ul class="pantry-matches" aria-label="Matching ingredients">
-            ${matches.map((id) => html`
+            ${matches.map(({ id, via }) => html`
               <li>
                 ${state.pantry[id]
                   ? html`<span class="small muted">${ITEMS[id].name}: already in your pantry</span>`
-                  : html`<button type="button" class="btn btn--secondary btn--small" data-action="pantry-add" data-item="${id}">${icon("plus")} ${ITEMS[id].name}</button>`}
+                  : html`<button type="button" class="btn btn--secondary btn--small" data-action="pantry-add" data-item="${id}" aria-label="Add ${ITEMS[id].name} to your pantry">${icon("plus")} ${ITEMS[id].name}${via ? html` <span class="small">(${via})</span>` : ""}</button>`}
               </li>`)}
             ${exact || state.pantry[freeKey(q)] ? "" : html`
               <li class="pantry-free">
@@ -79,8 +81,8 @@ export function pantryView(ctx) {
         <div class="kitchen-body">
           <div class="chips" role="group" aria-label="Quick add ingredients">
             ${chips.map((id) => {
-              const on = !!state.pantry[id];
-              return html`<button class="chip" aria-pressed="${on}" data-action="pantry-toggle" data-item="${id}">
+              const on = !!state.pantry[id] && !isOut(state.pantry[id]);
+              return html`<button class="chip" aria-pressed="${on}" data-action="pantry-toggle" data-item="${id}" aria-label="${shortName(id)}: ${on ? "in your pantry" : "not added"}">
                 ${on ? icon("check") : ""}${capitalize(shortName(id))}</button>`;
             })}
           </div>
@@ -93,21 +95,28 @@ export function pantryView(ctx) {
           <span class="muted small">${plural(entries.length, "item")}</span>
         </div>
         ${entries.length
-          ? html`<ul class="lines">${entries.map(([key, e]) => pantryRow(key, e))}</ul>`
-          : html`<div class="empty"><p>Nothing here yet. Search above or use Quick add. Recipes also add to it when you mark Have or Some.</p></div>`}
+          ? html`<ul class="lines">${entries.map(([key, e]) => pantryRow(key, e, ui))}</ul>`
+          : html`<div class="empty"><p>Nothing checked yet. You don't need a full inventory: search above, use Quick add, or mark items while adapting a dish. Anything not here counts as not checked, not as missing.</p></div>`}
       </section>
     </div>`;
 }
 
-function pantryRow(key, e) {
+function pantryRow(key, e, ui) {
   const name = displayName(key, e);
+  const errKey = `pantry:${key}`;
+  const err = ui.fieldErrors[errKey];
+  const errId = `pantry-err-${key.replace(/[^a-z0-9-]/gi, "_")}`;
   if (e.free) {
+    const suggestion = suggestMatch(name);
+    const options = Object.keys(ITEMS).filter((k) => !ITEMS[k].noShop).sort((a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name));
+    const candidates = searchIngredients(name, { limit: 5 }).map((m) => m.id);
+    const openKey = `match-${key}`;
     return html`
       <li class="line pantry-line">
         <div class="line-row">
           <div class="line-body">
             <span class="line-name">${name}</span>
-            <span class="line-meta small muted">Not matched to recipes yet</span>
+            <span class="line-meta small muted">Your own item. Not counted in recipes until it's matched.</span>
           </div>
           <label class="line-qty">
             <span class="visually-hidden">Amount of ${name}</span>
@@ -115,22 +124,36 @@ function pantryRow(key, e) {
           </label>
           <button class="icon-btn" data-action="pantry-remove" data-key="${key}" aria-label="Remove ${name}">${icon("close")}</button>
         </div>
+        <details class="more line-match" data-open-key="${openKey}" ${ui.open[openKey] ? "open" : ""}>
+          <summary class="small">Match to an ingredient${suggestion ? `: looks like ${ITEMS[suggestion].name}` : ""}</summary>
+          <label class="field"><span class="field-label small">Which ingredient is “${name}”?</span>
+            <select class="select" data-action="pantry-match-free" data-key="${key}">
+              <option value="">Choose…</option>
+              ${candidates.length ? html`<optgroup label="Likely">${candidates.map((id) => html`<option value="${id}">${ITEMS[id].name}</option>`)}</optgroup>` : ""}
+              <optgroup label="All ingredients">${options.map((id) => html`<option value="${id}">${ITEMS[id].name}</option>`)}</optgroup>
+            </select></label>
+          <p class="small muted">Your wording and amount stay until you choose.</p>
+        </details>
       </li>`;
   }
   const units = unitsFor(key);
   const unit = e.unit ?? units[0];
+  const measured = e.qty != null && e.qty !== 0;
   return html`
-    <li class="line pantry-line">
+    <li class="line pantry-line ${isOut(e) ? "is-out" : ""}">
       <div class="line-row">
         <div class="line-body">
           <span class="line-name">${name}</span>
-          <span class="line-meta small muted">${e.qty != null ? "Shared by every meal, counted once" : e.some ? "Some, amount not entered" : "Have it, amount unknown"}</span>
+          <span class="line-meta small muted">${isOut(e) ? "Don't have" : e.qty != null ? `${amountText(e)}. Shared by every meal, counted once` : amountText(e)}</span>
+          ${e.fromFree ? html`<span class="line-meta small muted">Matched from “${e.fromFree.name}”${e.fromFree.qtyText ? `, ${e.fromFree.qtyText}` : ""}</span>` : ""}
+          ${measured ? html`<button class="btn btn--quiet line-reset" data-action="pantry-clear" data-key="${key}" aria-label="Clear the amount of ${name}. It becomes amount unknown.">Clear amount</button>` : ""}
+          ${isOut(e) || e.qty == null ? "" : ""}
         </div>
         <div class="line-qty">
           <label>
-            <span class="visually-hidden">Amount of ${name}${unit ? ` in ${unit}` : ""}, optional</span>
-            <input class="input input--num" type="number" inputmode="decimal" min="0" step="any" value="${e.qty ?? ""}" placeholder="any"
-              data-action="pantry-qty" data-key="${key}" data-unit="${unit}">
+            <span class="visually-hidden">Amount of ${name}${unit ? ` in ${unit}` : ""}, optional. Zero means you're out.</span>
+            <input class="input input--num" type="text" inputmode="decimal" value="${err?.value ?? e.qty ?? ""}" placeholder="any"
+              data-action="pantry-qty" data-key="${key}" data-unit="${unit}" ${err ? html`aria-invalid="true" aria-describedby="${errId}"` : ""}>
           </label>
           ${units.length > 1
             ? html`<select class="select pantry-unit" aria-label="Unit for ${name}" data-action="pantry-unit" data-key="${key}">
@@ -139,5 +162,6 @@ function pantryRow(key, e) {
         </div>
         <button class="icon-btn" data-action="pantry-remove" data-key="${key}" aria-label="Remove ${name}">${icon("close")}</button>
       </div>
+      ${err ? fieldError(err.message, errId) : ""}
     </li>`;
 }

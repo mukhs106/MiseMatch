@@ -6,28 +6,42 @@ import { icon, checkNote } from "./icons.js";
 import { ITEMS, ALLERGEN_LABEL, NUTRITION_SOURCE, shortName } from "../data/items.js";
 import { getSwap, EVIDENCE } from "../data/swaps.js";
 import { AVOID_OPTIONS, NUT_SCOPES, openQuestions, describe } from "../core/constraints.js";
-import { NUTRIENT_LABEL, formatRange, direction, servingSizeChange } from "../core/nutrition.js";
+import { NUTRIENT_LABEL, RANGE_NOTE, formatRange, direction, rawWeightChange } from "../core/nutrition.js";
+import { renderEffect, servingDescription } from "../core/adapt.js";
 
 export const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// Each photo is a 4:3 web copy at 480 and 960 px wide (docs/image-sources.md).
+const PHOTO_SIZES = { hero: "(min-width: 960px) 400px, (min-width: 720px) 45vw, 100vw", thumb: "64px", card: "(min-width: 720px) 240px, 40vw" };
+
+/** The intentional tile for a dish with no photo, or a photo that failed to load. Same dimensions either way. */
+export function photoTile(title, size = "card", label = null) {
+  const initials = title.split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
+  return html`<span class="photo photo--${size} photo--none" ${label ? html`role="img" aria-label="${label}"` : html`aria-hidden="true"`}><span class="tile-initials">${initials}</span></span>`;
+}
+
 /** A recipe photo with its credit. Credits stay honest: page links are still pending. */
-export function photo(image, { size = "card", credit = true } = {}) {
+export function photo(image, { size = "card", credit = true, title = "" } = {}) {
   if (!image) return "";
   const base = `assets/images/web/${image.file}`;
-  const sizes = size === "hero" ? "(min-width: 960px) 480px, 100vw" : size === "thumb" ? "96px" : "(min-width: 720px) 320px, 50vw";
   return html`
-    <figure class="photo photo--${size}">
-      <img src="${base}-480.jpg" srcset="${base}-480.jpg 480w, ${base}-960.jpg 960w" sizes="${sizes}" alt="${image.alt}" loading="${size === "hero" ? "eager" : "lazy"}" decoding="async"
-        onerror="this.closest('.photo').classList.add('is-missing')">
+    <figure class="photo photo--${size}" data-tile="${title}" data-size="${size}">
+      <img src="${base}-480.jpg" srcset="${base}-480.jpg 480w, ${base}-960.jpg 960w" sizes="${PHOTO_SIZES[size]}" width="960" height="720" alt="${image.alt}" ${image.focal ? html`style="object-position: ${image.focal}"` : ""} loading="${size === "hero" ? "eager" : "lazy"}" decoding="async">
       ${credit ? html`<figcaption class="credit">Photo: Pexels, page link pending</figcaption>` : ""}
     </figure>`;
 }
 
 /** A recipe's photo, or a plain typographic tile when there's no suitable photo (never a stand-in dish). */
 export function recipeImage(recipe, opts = {}) {
-  if (recipe.image) return photo(recipe.image, opts);
-  const initials = recipe.title.split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
-  return html`<span class="photo photo--${opts.size ?? "card"} photo--none" aria-hidden="true"><span class="tile-initials">${initials}</span></span>`;
+  if (recipe.image) return photo(recipe.image, { ...opts, title: recipe.title });
+  return photoTile(recipe.title, opts.size ?? "card", opts.size === "hero" ? `${recipe.title}: no photo yet` : null);
+}
+
+/** "About 45 min, 30 hands-on, plus soaking ahead". Times are for the written batch. */
+export function timeText(timing, planAhead = []) {
+  const parts = [`About ${timing.elapsed} min`];
+  if (timing.active < timing.elapsed) parts.push(`${timing.active} hands-on`);
+  return `${parts.join(", ")}${timing.advance ? `, plus time ahead${planAhead.length ? `: ${planAhead.join(" ")}` : ""}` : ""}`;
 }
 
 export function evidence(kind = "suggested") {
@@ -53,8 +67,7 @@ const AVOID_LABEL = { dairy: "Dairy", egg: "Egg", gluten: "Wheat or gluten", nut
  * The four kinds of requirement, each in its own group so they read differently:
  * hard exclusions, clarifying questions, a limit, flexible targets.
  */
-export function constraintsForm(c, scope, { compact = false } = {}) {
-  const questions = openQuestions(c);
+export function constraintsForm(c, scope, { compact = false, questions = openQuestions(c) } = {}) {
   const chip = (action, value, on, label, extra = "") => html`
     <button type="button" class="chip" aria-pressed="${on}" data-action="${action}" data-scope="${scope}" data-value="${value}" ${raw(extra)}>${on ? icon("check") : ""}${label}</button>`;
   return html`
@@ -129,10 +142,10 @@ export function constraintsSummary(c) {
 const DIMS = [["texture", "Texture"], ["richness", "Richness"], ["aroma", "Aroma and taste"], ["acidity", "Acidity"], ["cooking", "Cooking"], ["quantity", "Quantities"]];
 
 /** Concrete expected changes for a set of rules, grouped by what changes, plus what stays the same. */
-export function expectedChanges(applied, { bundle = null } = {}) {
+export function expectedChanges(applied, { bundle = null, derived = null } = {}) {
   const swaps = applied.map(getSwap).filter(Boolean);
   if (!swaps.length) return html`<p class="small muted">Nothing changes. This is the recipe as written.</p>`;
-  const rows = DIMS.map(([k, label]) => [label, swaps.filter((s) => s.effects?.[k]).map((s) => ({ s, text: s.effects[k] }))]).filter(([, v]) => v.length);
+  const rows = DIMS.map(([k, label]) => [label, swaps.filter((s) => s.effects?.[k]).map((s) => ({ s, text: renderEffect(s.effects[k], derived) }))]).filter(([, v]) => v.length);
   const unchanged = swaps.map((s) => s.effects?.unchanged).filter(Boolean);
   const balance = swaps.flatMap((s) => (s.balance ?? []).map((b) => ({ ...b, s })));
   const needs = swaps.flatMap((s) => s.requires ?? []);
@@ -154,9 +167,9 @@ export function expectedChanges(applied, { bundle = null } = {}) {
 
 // ---------- nutrition ----------
 
-/** Per-serving comparison of the same serving definition; discloses serving size changes. */
-export function nutritionCompare(before, after, { servings, recipe, open = false, targets = {} }) {
-  const size = servingSizeChange(before, after);
+/** Per-serving comparison of the same serving definition; reports raw weight added, never a plated weight. */
+export function nutritionCompare(before, after, { servings, recipe, derived, open = false, targets = {} }) {
+  const raw = rawWeightChange(before, after);
   const row = (n) => html`
     <tr>
       <th scope="row">${NUTRIENT_LABEL[n]}${targets[n] != null ? html` <span class="muted small">goal ${targets[n]} g+</span>` : ""}</th>
@@ -168,18 +181,20 @@ export function nutritionCompare(before, after, { servings, recipe, open = false
   return html`
     <details class="nutrition" ${open ? "open" : ""} data-open-key="nut-${recipe.id}">
       <summary><span class="h3">Nutrition estimate</span><span class="tag">Optional</span></summary>
-      <p class="small muted">Per serving (${recipe.servingDef.replace(/^1 of \d+: /, "")}). Both columns use the same serving definition at ${plural(servings, "serving")}.</p>
-      ${size ? html`<p class="small notice-inline">${icon("info")} Each serving holds about ${Math.round(size.after)} g of food instead of ${Math.round(size.before)} g, because ingredients were ${size.change === "larger" ? "added" : "taken out"}. Compare with that in mind.</p>` : ""}
+      <p class="small muted">Per serving (${servingDescription(derived)}). Both columns use the same serving definition at ${plural(servings, "serving")}.</p>
+      ${raw ? html`<p class="small notice-inline">${icon("info")} ${raw.change === "more" ? `Adds about ${Math.round(raw.delta)} g of raw ingredients per serving` : `Takes out about ${Math.round(raw.delta)} g of raw ingredients per serving`}, compared with the original. That's uncooked weight going in, not the weight on the plate.</p>` : ""}
       <table class="nut-table">
+        <caption class="visually-hidden">Protein and fiber per serving, original and your version</caption>
         <thead><tr><th scope="col"><span class="visually-hidden">Nutrient</span></th><th scope="col">Original</th><th scope="col">Your version</th><th scope="col"><span class="visually-hidden">Change</span></th></tr></thead>
         <tbody>${row("protein")}${row("fiber")}</tbody>
       </table>
       <details class="more-nut" data-open-key="morenut-${recipe.id}">
         <summary class="small">Fat and energy</summary>
-        <table class="nut-table"><tbody>${row("fat")}${row("kcal")}</tbody></table>
+        <table class="nut-table"><caption class="visually-hidden">Fat and energy per serving, original and your version</caption><thead class="visually-hidden"><tr><th scope="col">Nutrient</th><th scope="col">Original</th><th scope="col">Your version</th><th scope="col">Change</th></tr></thead><tbody>${row("fat")}${row("kcal")}</tbody></table>
       </details>
       ${missing.length ? html`<p class="small warn">${checkNote(`${missing.join(", ")}. These are left as unknown, not counted as zero.`, "Can't estimate where data is missing:")}</p>` : ""}
-      <p class="small muted">${NUTRITION_SOURCE.label}: ${NUTRITION_SOURCE.detail} Shown as ±15% ranges. Not dietary or medical advice.</p>
+      ${after.optionalIncluded?.length ? html`<p class="small muted">Includes optional ${after.optionalIncluded.join(", ").toLowerCase()}. Leave it out and these figures would be lower.</p>` : ""}
+      <p class="small muted">${NUTRITION_SOURCE.label}: ${NUTRITION_SOURCE.detail} ${RANGE_NOTE} Built from the rounded amounts shown. Not dietary or medical advice.</p>
     </details>`;
 }
 
@@ -201,6 +216,11 @@ export function requirementCheck(check, c) {
           <ul class="small">${check.labelChecks.map((l) => html`<li><strong>${ITEMS[l.item].name}</strong>: ${l.text}</li>`)}</ul>
         </div>` : ""}
     </section>`;
+}
+
+/** One row of inline validation: what's wrong, and that the last valid value is kept. */
+export function fieldError(message, id) {
+  return message ? html`<span class="field-error small" id="${id}" role="alert">${checkNote(message, "Check:")}</span>` : "";
 }
 
 export function itemList(ids) {

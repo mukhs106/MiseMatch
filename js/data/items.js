@@ -80,7 +80,8 @@ export const ITEMS = {
   "tomato-puree": { name: "Tomato purée (passata)", short: "tomato purée", aliases: ["passata"], aisle: "Pantry", state: "as-sold", nutrition: { protein: 1.6, fiber: 1.5, fat: 0.2, kcal: 38 }, key: true },
   // Kabuli chana. Not the same as chana dal (split Bengal gram) or kala chana (brown chickpeas).
   "dried-chickpeas": { name: "Dried chickpeas", short: "dried chickpeas", aliases: ["dried kabuli chana"], aisle: "Pantry", state: "dry", nutrition: { protein: 19, fiber: 17, fat: 6, kcal: 378 }, key: true },
-  "chickpeas": { name: "Chickpeas, cooked or canned", short: "chickpeas", aliases: ["kabuli chana", "chole", "garbanzo beans"], aisle: "Pantry", state: "canned-drained", nutrition: { protein: 8, fiber: 7, fat: 2.6, kcal: 140 }, key: true },
+  "chickpeas": { name: "Chickpeas, cooked or canned", short: "chickpeas", aliases: ["kabuli chana", "kabuli channa", "chole", "chhole", "garbanzo beans"], aisle: "Pantry", state: "canned-drained", nutrition: { protein: 8, fiber: 7, fat: 2.6, kcal: 140 }, key: true },
+  "kidney-beans": { name: "Kidney beans, cooked or canned", short: "kidney beans", aliases: ["rajma", "red kidney beans"], aisle: "Pantry", state: "canned-drained", nutrition: { protein: 8.5, fiber: 7, fat: 0.5, kcal: 127 }, key: true },
   "chana-dal": { name: "Chana dal (split Bengal gram)", short: "chana dal", aisle: "Pantry", state: "dry", nutrition: { protein: 21, fiber: 12, fat: 5, kcal: 360 }, key: true },
   "kala-chana": { name: "Kala chana (brown chickpeas), dried", short: "kala chana", aliases: ["black chickpeas", "brown chickpeas"], aisle: "Pantry", state: "dry", nutrition: { protein: 19, fiber: 17, fat: 5, kcal: 360 }, key: true },
   "red-lentils": { name: "Red lentils (masoor dal)", short: "red lentils", aliases: ["masoor dal", "masoor"], aisle: "Pantry", state: "dry", nutrition: { protein: 24, fiber: 11, fat: 2.2, kcal: 358 }, key: true },
@@ -120,6 +121,7 @@ export const ITEMS = {
 // one silently; the import review asks which was meant.
 export const AMBIGUOUS = {
   "chana": { candidates: ["chickpeas", "kala-chana", "chana-dal"], why: "“Chana” can mean white chickpeas, brown kala chana or split chana dal." },
+  "channa": { candidates: ["chickpeas", "kala-chana", "chana-dal"], why: "“Channa” can mean white chickpeas, brown kala chana or split chana dal." },
   "dal": { candidates: ["red-lentils", "moong-dal", "chana-dal"], why: "“Dal” covers many split pulses." },
   "mutton": { candidates: ["goat-bone-in", "lamb-bone-in"], why: "“Mutton” usually means goat in South Asia and sheep in the UK and elsewhere." },
   "cottage cheese": { candidates: ["paneer"], why: "Western cottage cheese is a different, wetter product from paneer." },

@@ -1,17 +1,23 @@
-// Rough nutrition per serving from the catalog's fixture values.
-// Results are ranges, not point values. An ingredient without usable data
-// (no value, unknown weight, unknown quantity) makes that nutrient
-// incomplete; it is never counted as zero or silently left out.
-// Comparisons are only made per serving of the same serving definition, and
-// a change in how much food one serving holds is reported, not hidden.
+// Rough nutrition per serving from the catalog's fixture values, computed from
+// the amounts a cook would actually measure (units.practical), so the estimate
+// and the displayed recipe describe the same food.
+// Results are illustrative ranges: a fixed band around fixture values, not
+// measured uncertainty. An ingredient without usable data (no value, unknown
+// weight, unknown quantity) makes that nutrient incomplete; it is never counted
+// as zero or silently left out. Comparisons are only made per serving of the
+// same serving definition. There is no cooked-yield model, so the only weight
+// reported is the raw weight of ingredients added per serving, never a plated
+// or cooked serving weight.
 
 import { ITEMS } from "../data/items.js";
-import { convert, unitFamily } from "./units.js";
+import { convert, unitFamily, practical } from "./units.js";
+
+export const RANGE_NOTE = "Ranges are illustrative: a fixed ±15% band around fixture values, not measured uncertainty.";
 
 export const NUTRIENTS = ["protein", "fiber", "fat", "kcal"];
 export const NUTRIENT_LABEL = { protein: "Protein", fiber: "Fiber", fat: "Fat", kcal: "Energy" };
 const UNIT = { protein: "g", fiber: "g", fat: "g", kcal: "kcal" };
-const SPREAD = 0.15; // ±15% band around the estimate to reflect typical variation
+const SPREAD = 0.15; // illustrative fixed band, not calibrated from source data (RANGE_NOTE)
 
 export function grams(entry, item) {
   if (entry.qty == null) return null;
@@ -24,13 +30,14 @@ export function grams(entry, item) {
 
 /**
  * @param derived { servings, ingredients: [{ entries: [{ item, qty, unit }] }] }
- * @returns {{ [nutrient]: { low, high, mid, incomplete }, missing: { [nutrient]: string[] }, servingGrams: { value, incomplete } }}
+ * @returns {{ [nutrient]: { low, high, mid, incomplete }, missing: { [nutrient]: string[] }, rawGrams: { value, incomplete }, optionalIncluded: string[] }}
  */
 export function estimate(derived) {
   const totals = Object.fromEntries(NUTRIENTS.map((n) => [n, 0]));
   const missing = Object.fromEntries(NUTRIENTS.map((n) => [n, []]));
   let mass = 0;
   let massIncomplete = false;
+  const optionalIncluded = [];
   const servings = derived.servings;
   for (const line of derived.ingredients) {
     for (const entry of line.entries) {
@@ -41,7 +48,8 @@ export function estimate(derived) {
         continue;
       }
       if (item.negligible) continue;
-      const g = grams(entry, item);
+      if (entry.optional && !optionalIncluded.includes(item.name)) optionalIncluded.push(item.name);
+      const g = grams(entry.qty == null ? entry : { ...entry, qty: practical(entry.qty, entry.unit, entry.step) }, item);
       if (g == null) massIncomplete = true;
       else mass += g;
       for (const n of NUTRIENTS) {
@@ -54,7 +62,7 @@ export function estimate(derived) {
       }
     }
   }
-  const result = { missing, servingGrams: { value: servings ? mass / servings : null, incomplete: massIncomplete || !servings } };
+  const result = { missing, rawGrams: { value: servings ? mass / servings : null, incomplete: massIncomplete || !servings }, optionalIncluded };
   for (const n of NUTRIENTS) {
     const mid = servings ? totals[n] / servings : null;
     const incomplete = missing[n].length > 0 || !servings;
@@ -92,17 +100,18 @@ export function direction(before, after) {
 }
 
 /**
- * Whether one serving holds noticeably more or less food than the original's,
- * so a per-serving comparison can say so instead of hiding it.
- * @returns {null | { before, after, change: "larger" | "smaller" }}
+ * Raw ingredient weight added or removed per serving against the original, when
+ * it's noticeable. This is uncooked input weight (rice before it absorbs water,
+ * nothing for evaporation), not the weight of a plated serving.
+ * @returns {null | { before, after, delta, change: "more" | "less" }}
  */
-export function servingSizeChange(before, after) {
-  const b = before.servingGrams;
-  const a = after.servingGrams;
+export function rawWeightChange(before, after) {
+  const b = before.rawGrams;
+  const a = after.rawGrams;
   if (b.incomplete || a.incomplete || !b.value) return null;
   const ratio = a.value / b.value;
-  if (ratio > 1.1) return { before: b.value, after: a.value, change: "larger" };
-  if (ratio < 0.9) return { before: b.value, after: a.value, change: "smaller" };
+  if (ratio > 1.1) return { before: b.value, after: a.value, delta: a.value - b.value, change: "more" };
+  if (ratio < 0.9) return { before: b.value, after: a.value, delta: b.value - a.value, change: "less" };
   return null;
 }
 

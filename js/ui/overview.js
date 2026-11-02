@@ -6,9 +6,10 @@ import { icon } from "./icons.js";
 import { ITEMS } from "../data/items.js";
 import { getSwap, swapsForRecipe } from "../data/swaps.js";
 import { formatQty } from "../core/units.js";
-import { deriveRecipe, defaultAdaptation } from "../core/adapt.js";
-import { hasUnsavedChanges, isAdaptedSnapshot, lineage } from "../core/versions.js";
-import { photo } from "./parts.js";
+import { deriveRecipe, defaultAdaptation, servingDescription, servingsBounds } from "../core/adapt.js";
+import { hasUnsavedChanges, isAdaptedSnapshot, lineage, ruleLabels } from "../core/versions.js";
+import { recipeImage, timeText } from "./parts.js";
+import { timingFor } from "../core/engine.js";
 
 const GROUPS = [["main", "Main ingredients"], ["serve", "To serve"], ["spices", "Spices and seasonings"], ["staples", "Staples"]];
 
@@ -24,12 +25,12 @@ export function overviewView(ctx, recipe) {
     <div class="page page--wide overview">
       <a class="back-link" href="#/recipes">${icon("back")} Recipes</a>
       <div class="overview-top">
-        ${photo(recipe.image, { size: "hero" })}
+        ${recipeImage(recipe, { size: "hero" })}
         <header class="overview-head">
           <p class="eyebrow">${recipe.cuisine}</p>
           <h1 tabindex="-1" data-route-focus>${recipe.title}</h1>
           <p class="recipe-sub">${recipe.subtitle}</p>
-          <p class="meta-line small">${recipe.minutes} min · makes ${plural(recipe.servings, "serving")}</p>
+          <p class="meta-line small">${timeText(timingFor(recipe, []))} · makes ${plural(recipe.servings, "serving")} · written for ${servingsBounds(recipe).join(" to ")} servings</p>
           <p class="recipe-blurb">${recipe.blurb}</p>
           <div class="cta-stack">
             ${active
@@ -51,19 +52,19 @@ export function overviewView(ctx, recipe) {
             <li class="row-split">
               <div class="row-text">
                 <span class="row-title">${v.name}</span>
-                <span class="small muted">${plural(v.servings, "serving")} · ${v.applied.length ? v.applied.map((id) => getSwap(id)?.label).join(", ") : "no ingredient changes"}</span>
+                <span class="small muted">${plural(v.servings, "serving")} · ${v.applied.length ? ruleLabels(v).join(", ") : "no ingredient changes"}</span>
                 <span class="small muted">${lineage(v, state.versions)}</span>
               </div>
               <div class="row-actions">
-                <button class="btn btn--secondary btn--small" data-action="start-adapt" data-id="${recipe.id}" data-from="${v.id}">Make again</button>
-                <a class="btn btn--quiet" href="#/cook/${recipe.id}/v/${v.id}">Cook</a>
+                <button class="btn btn--secondary btn--small" data-action="start-adapt" data-id="${recipe.id}" data-from="${v.id}" aria-label="Make ${v.name} again">Make again</button>
+                <a class="btn btn--quiet" href="#/cook/${recipe.id}/v/${v.id}" aria-label="Cook ${v.name}">Cook</a>
               </div>
             </li>`)}</ul>
         </section>` : ""}
 
       <section class="overview-section source" aria-labelledby="src-h">
         <div class="section-head"><h2 id="src-h">The original</h2><span class="small muted">for ${recipe.servings}</span></div>
-        <p class="small muted">${recipe.source.label}. ${recipe.source.detail} One serving: ${recipe.servingDef.replace(/^1 of \d+: /, "")}.</p>
+        <p class="small muted">${recipe.source.label}. ${recipe.source.detail} One serving: ${servingDescription(d)}.</p>
         <div class="recipe-grid">
           <div>
             ${GROUPS.map(([g, label]) => {

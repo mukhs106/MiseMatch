@@ -9,10 +9,11 @@ import { getSwap, swapsForRecipe } from "../data/swaps.js";
 import { getRecipe } from "../data/recipes.js";
 import { formatQty } from "../core/units.js";
 import { deriveRecipe, applySwap, removeSwap, checkSwap } from "../core/adapt.js";
-import { estimate, formatRange, direction } from "../core/nutrition.js";
+import { estimate, formatRange, direction, RANGE_NOTE } from "../core/nutrition.js";
 import { checkItems } from "../core/constraints.js";
-import { hasUnsavedChanges, lineage } from "../core/versions.js";
-import { evidence, expectedChanges, capitalize } from "./parts.js";
+import { recordStatus, ruleLabels } from "../core/versions.js";
+import { amountText, cookPantryReview } from "../core/pantry.js";
+import { constraintsSummary, evidence, expectedChanges, capitalize } from "./parts.js";
 
 export function sheetView(ctx, dialog) {
   switch (dialog.type) {
@@ -24,7 +25,12 @@ export function sheetView(ctx, dialog) {
     case "discard-session": return discardSheet(ctx, dialog);
     case "plan-unsaved": return planUnsavedSheet(ctx, dialog);
     case "plan-update": return planUpdateSheet(ctx, dialog);
+    case "plan-duplicate": return planDuplicateSheet(ctx, dialog);
+    case "plan-linked": return planLinkedSheet(ctx, dialog);
     case "feedback": return feedbackSheet(ctx, dialog);
+    case "cook-pantry": return cookPantrySheet(ctx, dialog);
+    case "import-duplicate": return importDuplicateSheet(ctx, dialog);
+    case "other-tab": return otherTabSheet(ctx, dialog);
     case "reset": return resetSheet();
     default: return "";
   }
@@ -58,7 +64,7 @@ function slotSheet(ctx, { recipeId, slot }) {
         <p class="muted">Options for ${name}, written for this dish only. Pick one to see what changes before applying it.</p>
         <ul class="option-list">
           ${options.map((x) => html`
-            <li><button class="option" data-action="preview-swap" data-id="${recipeId}" data-swap="${x.id}" data-from="slot">
+            <li><button class="option" data-action="preview-swap" data-id="${recipeId}" data-swap="${x.id}" data-from="slot" aria-label="Preview ${x.label} for ${name}">
               <span class="option-text">
                 <span class="option-label">${x.label}${s.applied.includes(x.id) ? html` <span class="tag tag--yolk">${icon("check")} Applied</span>` : ""}</span>
                 <span class="small muted">${x.summary}</span>
@@ -107,7 +113,8 @@ function compareSheet(ctx, { recipeId, swapId, from }) {
           <p>Applying this removes “${check.blockers.map((b) => b.swap.label).join("”, “")}”. The preview shows that result.</p>
         </div>` : ""}
       ${check.untested.length ? html`
-        <div class="notice" role="status"><p><strong>Untested combination.</strong> This hasn't been written to go with ${check.untested.map((x) => `“${x.label}”`).join(" or ")}. Each works on its own; together is a guess, and it will be labelled that way.</p></div>` : ""}
+        <div class="notice" role="status"><p><strong>Untested combination.</strong> This hasn't been written to go with ${check.untested.map((x) => `“${x.label}”`).join(" or ")}. Each works on its own; together is a guess, and it will be labelled that way.</p></div>` : check.wholeSetUntested ? html`
+        <div class="notice" role="status"><p><strong>Untested combination.</strong> These pair up one at a time, but all ${s.applied.length + 1} together were never written as a set. Together is a guess, and it will be labelled that way.</p></div>` : ""}
       ${newConflicts.length ? html`<div class="notice" role="status">${newConflicts.map((x) => html`<p>${icon("info")} ${x.reason}.</p>`)}</div>` : ""}
 
       <section aria-labelledby="cmp-qty">
@@ -117,8 +124,8 @@ function compareSheet(ctx, { recipeId, swapId, from }) {
       </section>
       <section aria-labelledby="cmp-fx">
         <h3 id="cmp-fx" class="eyebrow">What changes in the dish</h3>
-        ${expectedChanges([swapId])}
-        <p class="small nut-compare">${["protein", "fiber"].map((n) => html`<span>${capitalize(n)} per serving: ${formatRange(nb[n], n)} → ${formatRange(na[n], n)} (${direction(nb[n], na[n])})</span>`)}<span class="muted">Rough estimates from prototype fixture values.</span></p>
+        ${expectedChanges([swapId], { derived: after })}
+        <p class="small nut-compare">${["protein", "fiber"].map((n) => html`<span>${capitalize(n)} per serving: ${formatRange(nb[n], n)} → ${formatRange(na[n], n)} (${direction(nb[n], na[n])})</span>`)}<span class="muted">Rough estimates from prototype fixture values. ${RANGE_NOTE}</span></p>
       </section>
       ${Object.keys(swap.steps ?? {}).length || (swap.addSteps ?? []).length ? html`
         <section aria-labelledby="cmp-steps">
@@ -136,7 +143,7 @@ function compareSheet(ctx, { recipeId, swapId, from }) {
       ${applied
         ? html`<button class="btn btn--secondary btn--block" data-action="remove-swap" data-id="${recipeId}" data-swap="${swapId}" data-close="1">${icon("undo")} Remove this change</button>`
         : html`<button class="btn btn--primary btn--block" data-action="apply-swap" data-id="${recipeId}" data-swap="${swapId}" data-remove="${removeIds.join(",")}">
-            ${removeIds.length ? "Switch to this change" : check.untested.length ? "Apply, untested" : "Apply to your version"}</button>`}
+            ${removeIds.length ? "Switch to this change" : check.untested.length || check.wholeSetUntested ? "Apply, untested" : "Apply to your version"}</button>`}
       <button class="btn btn--quiet" data-action="close-dialog">${applied ? "Close" : "Not now"}</button>
     </footer>`;
 }
@@ -151,9 +158,10 @@ function saveSheet(ctx, { recipeId }) {
     ${head("Save to your collection", recipe.title)}
     <form class="sheet-body" data-action="save-form">
       <p>Saves ${plural(s.servings, "serving")} with ${s.applied.length ? s.applied.map((id) => getSwap(id).label).join(", ") : "no ingredient changes"}. The original recipe stays as it is.</p>
+      <p class="small muted">A version saves the recipe, not today's requirements. It's checked against whatever your requirements are when you cook it.</p>
       <label class="field"><span class="field-label">Name</span><input class="input" name="version-name" value="${suggested}" autocomplete="off"></label>
       ${base ? html`<p class="small muted">Saving as new with the same name gives it a numbered name instead.</p>` : ""}
-      <p class="small muted">Saved privately on this device. Sharing publicly isn't part of this prototype.</p>
+      <p class="small muted">Saved in this browser on this device only, with no backup. Sharing publicly isn't part of this prototype.</p>
     </form>
     <footer class="sheet-foot">
       ${base ? html`
@@ -178,17 +186,18 @@ function renameSheet(ctx, { versionId }) {
     </footer>`;
 }
 
-function replaceSheet(ctx, { recipeId, from }) {
+function replaceSheet(ctx, { recipeId, from, proposal }) {
   const recipe = getRecipe(recipeId);
   const v = from ? ctx.state.versions[from] : null;
+  const target = proposal ? (proposal.scenario ? "the preview" : "this proposal") : v ? `“${v.name}”` : "the original";
   return html`
     ${head("You have unsaved changes", recipe.title)}
     <div class="sheet-body">
-      <p>Your current adaptation of ${recipe.title} has changes that aren't saved. Starting from ${v ? `“${v.name}”` : "the original"} replaces them.</p>
+      <p>Your current adaptation of ${recipe.title} has changes that aren't saved. Starting from ${target} replaces them. You can put them back from Saved.</p>
     </div>
     <footer class="sheet-foot">
       <a class="btn btn--primary btn--block" href="#/adapt/${recipeId}/${ctx.working(recipeId).step ?? "needs"}">Continue my changes</a>
-      <button class="btn btn--secondary btn--block" data-action="confirm-replace-session" data-id="${recipeId}" data-from="${from ?? ""}">Start over from ${v ? "that version" : "the original"}</button>
+      <button class="btn btn--secondary btn--block" data-action="confirm-replace-session" data-id="${recipeId}" data-from="${from ?? ""}">Start over from ${proposal ? target : v ? "that version" : "the original"}</button>
       <button class="btn btn--quiet" data-action="close-dialog">Cancel</button>
     </footer>`;
 }
@@ -196,7 +205,7 @@ function replaceSheet(ctx, { recipeId, from }) {
 function discardSheet(ctx, { recipeId }) {
   return html`
     ${head("Discard unsaved changes?", getRecipe(recipeId).title)}
-    <div class="sheet-body"><p>Your saved versions and the original aren't affected.</p></div>
+    <div class="sheet-body"><p>Your saved versions and the original aren't affected. You can put this back from Saved.</p></div>
     <footer class="sheet-foot">
       <button class="btn btn--primary btn--block" data-action="confirm-discard-session" data-id="${recipeId}">Discard changes</button>
       <button class="btn btn--quiet" data-action="close-dialog">Keep them</button>
@@ -213,6 +222,38 @@ function planUnsavedSheet(ctx, { recipeId }) {
     <footer class="sheet-foot">
       <button class="btn btn--primary btn--block" data-action="plan-save-and-add" data-id="${recipeId}">Save version and add</button>
       <button class="btn btn--secondary btn--block" data-action="plan-add-copy" data-id="${recipeId}">Add without saving</button>
+      <button class="btn btn--quiet" data-action="close-dialog">Cancel</button>
+    </footer>`;
+}
+
+function planDuplicateSheet(ctx, { planId, recipeId, intent }) {
+  const entry = ctx.state.plan.find((p) => p.id === planId);
+  return html`
+    ${head("Already on your list", getRecipe(recipeId).title)}
+    <div class="sheet-body">
+      <p>This exact version, ${plural(entry.servings, "serving")}, is already a planned meal, so adding it again would double the shopping.</p>
+    </div>
+    <footer class="sheet-foot">
+      <a class="btn btn--primary btn--block" href="#/list">View shopping list</a>
+      <button class="btn btn--secondary btn--block" data-action="plan-add-another" data-intent="${JSON.stringify(intent)}">Add another meal</button>
+      <button class="btn btn--quiet" data-action="close-dialog">Cancel</button>
+    </footer>`;
+}
+
+function planLinkedSheet(ctx, { planId, recipeId, intent }) {
+  const entry = ctx.state.plan.find((p) => p.id === planId);
+  const s = ctx.working(recipeId);
+  const labels = ruleLabels(entry);
+  return html`
+    ${head("Update your planned meal?", getRecipe(recipeId).title)}
+    <div class="sheet-body">
+      <p>Planned: ${labels.length ? labels.join(", ") : "as written"}, ${plural(entry.servings, "serving")}.</p>
+      <p>Now: ${s.applied.length ? s.applied.map((id) => getSwap(id)?.label).join(", ") : "as written"}, ${plural(s.servings, "serving")}.</p>
+      <p class="small muted">Updating recalculates this meal's lines. Edited or checked lines are flagged, not overwritten.</p>
+    </div>
+    <footer class="sheet-foot">
+      <button class="btn btn--primary btn--block" data-action="plan-replace" data-plan="${planId}" data-id="${recipeId}">Update the planned meal</button>
+      <button class="btn btn--secondary btn--block" data-action="plan-add-another" data-intent="${JSON.stringify(intent)}">Add as another meal</button>
       <button class="btn btn--quiet" data-action="close-dialog">Cancel</button>
     </footer>`;
 }
@@ -253,11 +294,68 @@ function feedbackSheet(ctx, { cookId }) {
       <label class="field"><span class="field-label">What turned out differently from what you expected?</span><textarea class="input" name="differed" rows="2" placeholder="Optional"></textarea></label>
       <fieldset><legend>Did you change any ingredients beyond this version?</legend>${radios("changed", [["no", "No"], ["yes", "Yes"]])}</fieldset>
       <fieldset><legend>Did you follow the method?</legend>${radios("followed", [["yes", "Yes"], ["mostly", "Mostly"], ["no", "No"]])}</fieldset>
-      ${!v && rec.applied.length ? html`<p class="small">This was an unsaved version. You can save it from the recipe's adaptation if you'd like to make it again.</p>` : ""}
+      ${!v && rec.applied.length ? html`<p class="small muted">This wasn't a saved version. If you'd make it again, you'll find it under Make it again, exactly as cooked.</p>` : ""}
     </form>
     <footer class="sheet-foot">
       <button class="btn btn--primary btn--block" data-action="save-feedback" data-cook="${cookId}">Save</button>
-      <button class="btn btn--quiet" data-action="skip-feedback">Skip</button>
+      <button class="btn btn--quiet" data-action="skip-feedback" data-cook="${cookId}">Skip</button>
+    </footer>`;
+}
+
+function cookPantrySheet(ctx, { cookId }) {
+  const rec = ctx.state.cooks.find((c) => c.id === cookId);
+  const recipe = getRecipe(rec.recipeId);
+  const rows = cookPantryReview(rec.snapshot.ingredients, ctx.state.pantry);
+  const deduct = rows.filter((r) => r.action === "deduct");
+  const unknown = rows.filter((r) => r.action === "unknown");
+  const incomparable = rows.filter((r) => r.action === "incomparable");
+  const plan = rec.planId ? ctx.state.plan.find((p) => p.id === rec.planId) : null;
+  return html`
+    ${head("Update pantry after cooking", `${recipe.title} · ${plural(rec.servings, "serving")}`)}
+    <form class="sheet-body cook-pantry-form">
+      <p>Optional. This uses exactly what you cooked. Nothing changes unless you apply it, and you can undo it.</p>
+      ${deduct.length ? html`
+        <fieldset><legend>Take out of your pantry</legend>
+          <ul class="plain-list">${deduct.map((r) => html`<li><label class="check-row"><input type="checkbox" name="deduct" value="${r.item}" checked>
+            <span><strong>${r.name}</strong>: ${amountText(r.before)} now, ${amountText(r.after)} after (used ${formatQty(r.used.qty, r.used.unit)}).</span></label></li>`)}</ul>
+        </fieldset>` : html`<p class="small muted">None of the ingredients have a measured amount in your pantry, so there's nothing to take out.</p>`}
+      ${unknown.length ? html`<p class="small muted"><strong>Stays unknown:</strong> ${unknown.map((r) => r.name).join(", ")}. No amount was entered, so nothing is subtracted.</p>` : ""}
+      ${incomparable.length ? html`<p class="small muted"><strong>Left as is:</strong> ${incomparable.map((r) => r.name).join(", ")}. Measured in a way that can't be compared.</p>` : ""}
+      ${plan ? html`<label class="check-row"><input type="checkbox" name="complete-plan" checked> <span>Mark this planned meal as cooked and take it off your plan.</span></label>` : ""}
+    </form>
+    <footer class="sheet-foot">
+      <button class="btn btn--primary btn--block" data-action="apply-cook-pantry" data-cook="${cookId}">Update pantry</button>
+      <button class="btn btn--quiet" data-action="close-dialog">Not now</button>
+    </footer>`;
+}
+
+function importDuplicateSheet(ctx, { draftId, index }) {
+  const d = ctx.state.drafts[draftId];
+  return html`
+    ${head("Already imported", d.title)}
+    <div class="sheet-body"><p>You already have a ${d.status === "reference" ? "reference" : "draft"} that looks the same. Importing again makes a second, separate copy.</p></div>
+    <footer class="sheet-foot">
+      <a class="btn btn--primary btn--block" href="#/draft/${draftId}">Open the one I have</a>
+      <button class="btn btn--secondary btn--block" data-action="import-pick" data-index="${index}" data-force="1">Import a second copy</button>
+      <button class="btn btn--quiet" data-action="close-dialog">Cancel</button>
+    </footer>`;
+}
+
+function otherTabSheet(ctx, { diff }) {
+  return html`
+    ${head("Changed in another tab", "Your saved data")}
+    <div class="sheet-body">
+      <p>Another tab saved changes after this one last read them. Nothing has been overwritten. Choose which to keep.</p>
+      <table class="cmp-table">
+        <caption class="visually-hidden">What's in this tab and in the other tab</caption>
+        <thead><tr><th scope="col">In this tab</th><th scope="col">In the other tab</th></tr></thead>
+        <tbody>${diff.map((d) => html`<tr class="${d.mine === d.theirs ? "" : "is-changed"}"><td>${d.label}: ${d.mine}</td><td>${d.label}: ${d.theirs}</td></tr>`)}</tbody>
+      </table>
+    </div>
+    <footer class="sheet-foot">
+      <button class="btn btn--primary btn--block" data-action="tab-use-theirs">Use the other tab's</button>
+      <button class="btn btn--secondary btn--block" data-action="tab-keep-mine">Keep this tab's and replace the other's</button>
+      <button class="btn btn--quiet" data-action="close-dialog">Decide later</button>
     </footer>`;
 }
 

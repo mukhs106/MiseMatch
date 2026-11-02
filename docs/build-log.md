@@ -33,3 +33,11 @@
 - Found during review: a flipped hover made the primary button look secondary, so hover keeps the fill and adds an inner ring. Arrow icons on primary buttons were invisible on black, and no automated check caught it; they are inverted now, and a check of all icons on 11 routes found no mismatch.
 - Not seen on screen: toasts, focus and swap-preview states on v0.6 beyond the capture's scenarios; import failure states; missing-nutrition and plan-update notes. Not checked: Safari, Firefox, a physical phone, a screen reader.
 - Note: the v0.6 entry above says "Not pushed", but it was merged in PR #1 and is live.
+
+## 2026-11-02 · T10 Integrity audit and connected journey
+- Changed: photos in natural color; deliberate precision with separate needed, cooking and purchase amounts; method and effect text rendered from state; dish serving ranges; active, elapsed and advance time; requirement-bound confirmations; once-only transfers; one-pass reconciliation; optional pantry update after cooking; store v3 with snapshots, quarantine, per-record validation and tab conflict detection; narrow recovery records with a Saved list; fit groups and cause-specific copy; honest draft repair with target portions. Full status per audit ID is in `docs/queue/T10-integrity-audit.md`.
+- Verified: `npm test` 71 pass. `tools/review/acceptance.mjs` (scenarios 1-10 and 12), `matrix.mjs` (scenario 11: 11 widths, 200% text, 400% zoom layout, text spacing, short landscape, reduced motion, forced colors, keyboard, modal, long content, large data) and `capture.mjs --video`, all in desktop Chrome 156 on macOS. Evidence in `reviews/2026-11-02-t10/`.
+- Found in review: "I cooked this" left a placeholder behind the dialog; skip-feedback lost its record id; status copy ignored what was marked missing.
+- Not checked: iOS Safari, Android Chrome, Safari, Firefox, a physical phone, a real on-screen keyboard, a real IME, a screen reader, a real kitchen. Deferred: H07, I05, I10, J04.
+- Owner decisions: dimmed modal backdrop (H02); whether `paratha-01` and `palak-channa-01` count as stand-ins; Pexels page links.
+- Not pushed.
