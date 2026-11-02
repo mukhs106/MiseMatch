@@ -107,6 +107,11 @@ export function snapshotOf(x) {
   return { servings: x.servings, applied: [...x.applied] };
 }
 
+/** The session's adaptation plus the optional items you chose, for planning. */
+export function snapshotWithOptional(x) {
+  return { ...snapshotOf(x), includeOptional: [...(x.includeOptional ?? [])] };
+}
+
 export function sameSnapshot(a, b) {
   return a.servings === b.servings && a.applied.length === b.applied.length && a.applied.every((id, i) => id === b.applied[i]);
 }

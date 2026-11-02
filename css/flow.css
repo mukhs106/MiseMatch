@@ -41,8 +41,7 @@
 }
 
 /* No photo to show: an outlined tile, so it doesn't read as blank space. */
-.photo--none,
-.photo.is-missing {
+.photo--none {
   border: var(--rule);
 }
 
@@ -62,10 +61,6 @@
   border-radius: var(--radius-sm);
 }
 
-.photo.is-missing img {
-  display: none;
-}
-
 .credit {
   position: absolute;
   right: var(--s-2);
@@ -75,10 +70,6 @@
   background: var(--surface);
   color: var(--text);
   font-size: var(--fs-xs);
-}
-
-.photo.is-missing .credit {
-  display: none;
 }
 
 /* ---------- labels ---------- */
@@ -442,13 +433,14 @@ a.row-title {
 .action-bar {
   position: sticky;
   bottom: 0;
-  z-index: 15;
+  z-index: var(--z-actionbar);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: var(--s-2);
   margin: var(--s-5) calc(-1 * var(--gutter)) 0;
-  padding: var(--s-3) var(--gutter) calc(var(--s-3) + env(safe-area-inset-bottom));
+  padding: var(--s-3) var(--gutter) calc(var(--s-3) + var(--safe-bottom));
   background: var(--surface);
   border-top: var(--rule);
 }
@@ -458,7 +450,7 @@ a.row-title {
 }
 
 body:has(.action-bar) .toast-region {
-  bottom: calc(76px + env(safe-area-inset-bottom));
+  bottom: calc(var(--h-actionbar) + var(--s-1) + var(--safe-bottom));
 }
 
 /* Status messages: one per screen at most, plain language. The border gets heavier
@@ -1289,4 +1281,193 @@ h3 {
 
 .have-row:has(.have-qty) .have-ctl {
   justify-content: flex-start;
+}
+
+/* ---------- T10: persistent notices, inline validation, needs, recovery ---------- */
+
+.notices {
+  display: grid;
+  gap: var(--s-2);
+  max-width: var(--w-content);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.notices:empty {
+  display: none;
+}
+
+.field-error {
+  display: block;
+  flex-basis: 100%;
+  font-weight: var(--fw-medium);
+}
+
+.input[aria-invalid="true"] {
+  border-style: double;
+  border-width: 4px;
+}
+
+.break {
+  overflow-wrap: anywhere;
+}
+
+.raw-text {
+  white-space: pre-wrap;
+  margin: var(--s-2) 0 0;
+  font: inherit;
+}
+
+.need-list {
+  list-style: none;
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  display: grid;
+}
+
+.need-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+  border-bottom: var(--rule);
+}
+
+.need-name {
+  min-width: 0;
+  flex: 1 1 10rem;
+  overflow-wrap: anywhere;
+}
+
+.need-name .small {
+  display: block;
+}
+
+.need-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.scale-note ul {
+  margin: var(--s-1) 0 0;
+  padding-left: var(--s-4);
+}
+
+.optional-list {
+  margin-top: var(--s-4);
+}
+
+.row-link--button {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.line-bought {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-1);
+}
+
+.line-match {
+  margin-top: var(--s-1);
+  flex-basis: 100%;
+}
+
+.is-out .line-name {
+  text-decoration: line-through;
+}
+
+.is-removed .dl-raw {
+  font-weight: var(--fw-regular);
+}
+
+.toast-close .icon {
+  filter: var(--icon-on-fill);
+}
+
+.toast-close:focus-visible {
+  outline-color: var(--text-on-action);
+}
+
+.cook-pantry-form fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.cook-pantry-form legend {
+  font-weight: var(--fw-bold);
+  padding: 0;
+  margin-bottom: var(--s-1);
+}
+
+/* Long dish names, unbroken URLs and ingredient lines wrap instead of stretching a grid. */
+.row-text,
+.line-body,
+.dl-orig,
+.dl-read,
+.oc-head h3,
+.confirm-row > span:first-child,
+.status p,
+.notice p,
+.adapt-head h1,
+.cook-head h1,
+.overview-head h1,
+.list-head h1 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.oc-foot,
+.actions,
+.row-actions,
+.confirm-btns,
+.confirm-row {
+  flex-wrap: wrap;
+}
+
+/* Forced colors: fills and hand-drawn controls give way to system colors; state stays in borders and wording. */
+@media (forced-colors: active) {
+  .icon,
+  .btn--primary:not([disabled], [aria-disabled="true"]) .icon,
+  .toast-close .icon {
+    filter: none;
+    forced-color-adjust: none;
+    background: Canvas;
+    border-radius: 2px;
+  }
+  .chip[aria-pressed="true"],
+  .tag--yolk {
+    border: 3px solid Highlight;
+  }
+  .btn[disabled] {
+    border-style: dashed;
+    color: GrayText;
+  }
+  dialog.sheet {
+    border-color: CanvasText;
+  }
+}
+
+/* Short windows, such as a phone on its side or with the keyboard open: the action bar stops following. */
+@media (max-height: 480px) {
+  .action-bar {
+    position: static;
+  }
+  body[data-screen="primary"] .tabbar {
+    position: static;
+  }
+  main {
+    padding-bottom: var(--s-6);
+  }
 }

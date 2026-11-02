@@ -149,7 +149,7 @@ h2[tabindex="-1"] {
   position: absolute;
   left: var(--s-2);
   top: -100px;
-  z-index: 100;
+  z-index: var(--z-skip);
   padding: var(--s-2) var(--s-4);
   background: var(--action);
   color: var(--text-on-action);
@@ -196,7 +196,7 @@ h2[tabindex="-1"] {
 main {
   max-width: var(--w-content);
   margin: 0 auto;
-  padding: 0 var(--gutter) calc(var(--s-8) + 72px);
+  padding: 0 var(--gutter) calc(var(--s-8) + var(--h-tabbar));
 }
 
 .page {
@@ -223,10 +223,10 @@ main {
 .tabbar {
   position: fixed;
   inset: auto 0 0 0;
-  z-index: 20;
+  z-index: var(--z-tabbar);
   display: flex;
   justify-content: center;
-  padding: 0 var(--s-2) env(safe-area-inset-bottom);
+  padding: 0 var(--s-2) var(--safe-bottom);
   background: var(--surface);
   border-top: var(--rule);
 }

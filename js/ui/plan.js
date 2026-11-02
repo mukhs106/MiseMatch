@@ -10,7 +10,8 @@ import { getSwap } from "../data/swaps.js";
 import { formatQty } from "../core/units.js";
 import { suggest, pantryChipItems } from "../core/suggest.js";
 import { normalizeConstraints } from "../core/constraints.js";
-import { deriveRecipe } from "../core/adapt.js";
+import { servingsBounds } from "../core/adapt.js";
+import { derivedForRecord, planUpdate, ruleLabels } from "../core/versions.js";
 import { constraintsSummary, capitalize } from "./parts.js";
 
 export function planView(ctx) {
@@ -46,7 +47,7 @@ export function planView(ctx) {
                 <span class="small">${s.option.kind === "original" ? "As written" : s.option.label} · 2 servings</span>
                 <ul class="reasons small">${s.reasons.map((x) => html`<li>${x}</li>`)}</ul>
               </div>
-              <button class="btn btn--secondary btn--small" data-action="plan-add-option" data-id="${s.recipe.id}" data-applied="${s.option.applied.join(",")}" data-servings="2">${icon("plus")} Plan it</button>
+              <button class="btn btn--secondary btn--small" data-action="plan-add-option" data-id="${s.recipe.id}" data-applied="${s.option.applied.join(",")}" data-servings="2" aria-label="Plan ${s.recipe.title}, ${s.option.kind === "original" ? "as written" : s.option.label}, 2 servings">${icon("plus")} Plan it</button>
             </li>`)}</ul>`
             : html`<p class="small">No supported dish uses ${ui.focus.map(shortName).join(" and ")} within your requirements. Try fewer ingredients at once.</p>`}
         </section>` : ""}
@@ -66,20 +67,25 @@ export function plannedList(ctx) {
   return html`<ul class="planned">${ctx.state.plan.map((p) => {
     const r = getRecipe(p.recipeId);
     const v = p.versionId ? ctx.state.versions[p.versionId] : null;
-    const updated = v && v.rev !== p.rev;
+    const update = planUpdate(p, ctx.state.versions);
+    const labels = ruleLabels(p);
+    const [min, max] = servingsBounds(r);
+    const frozen = update?.kind === "catalogue";
     return html`
       <li class="planned-row">
         <div class="row-text">
           <a class="row-title" href="#/recipe/${r.id}">${r.title}</a>
-          <span class="small muted">${p.label}${p.applied.length ? `: ${p.applied.map((id) => getSwap(id)?.label).join(", ")}` : ""}</span>
-          ${updated ? html`<span class="small warn">${checkNote(html`“${v.name}” changed since you planned it. <button class="btn btn--quiet" data-action="plan-review-update" data-plan="${p.id}">Review update</button>`)}</span>` : ""}
+          <span class="small muted">${p.label}${labels.length ? `: ${labels.join(", ")}` : ""}</span>
+          ${update?.kind === "updated" ? html`<span class="small warn">${checkNote(html`“${v.name}” changed since you planned it. <button class="btn btn--quiet" data-action="plan-review-update" data-plan="${p.id}" aria-label="Review the update to ${v.name}">Review update</button>`)}</span>` : ""}
+          ${frozen ? html`<span class="small warn">${checkNote(html`The catalogue changed since you planned this, so it keeps what you planned. <button class="btn btn--quiet" data-action="plan-remove" data-plan="${p.id}" aria-label="Remove ${r.title} from your plan">Remove</button>`)}</span>` : ""}
           ${p.versionId && !v ? html`<span class="small muted">That saved version was removed; this meal keeps its own copy.</span>` : ""}
+          <a class="small" href="#/cook/${r.id}/p/${p.id}" aria-label="Cook planned ${r.title}, ${plural(p.servings, "serving")}">Cook this meal</a>
         </div>
         <div class="planned-ctl">
           <div class="stepper stepper--small" role="group" aria-label="Servings for ${r.title}">
-            <button data-action="plan-servings" data-plan="${p.id}" data-delta="-1" aria-label="Fewer servings" ${p.servings <= 1 ? "disabled" : ""}>${icon("minus")}</button>
-            <output>${p.servings}</output>
-            <button data-action="plan-servings" data-plan="${p.id}" data-delta="1" aria-label="More servings" ${p.servings >= 12 ? "disabled" : ""}>${icon("plus")}</button>
+            <button data-action="plan-servings" data-plan="${p.id}" data-delta="-1" aria-label="Fewer servings of ${r.title}" ${p.servings <= min || frozen ? "disabled" : ""}>${icon("minus")}</button>
+            <output aria-label="${plural(p.servings, "serving")}">${p.servings}</output>
+            <button data-action="plan-servings" data-plan="${p.id}" data-delta="1" aria-label="More servings of ${r.title}" ${p.servings >= max || frozen ? "disabled" : ""}>${icon("plus")}</button>
           </div>
           <button class="icon-btn" data-action="plan-remove" data-plan="${p.id}" aria-label="Remove ${r.title} from your plan">${icon("close")}</button>
         </div>
@@ -91,7 +97,7 @@ export function plannedList(ctx) {
 function sharedUse(ctx) {
   const totals = new Map();
   for (const p of ctx.state.plan) {
-    const d = deriveRecipe(getRecipe(p.recipeId), p);
+    const d = derivedForRecord(p);
     for (const l of d.ingredients) for (const e of l.entries) {
       const it = ITEMS[e.item];
       if (!it?.key) continue;
@@ -108,7 +114,7 @@ function sharedUse(ctx) {
       <h3 class="eyebrow">Shared between meals</h3>
       <ul class="small">${shared.map((t) => {
         const have = ctx.state.pantry[t.item];
-        return html`<li><strong>${ITEMS[t.item].name}</strong>: ${formatQty(t.qty, t.unit)} across ${t.meals.size} meals. ${have?.qty != null ? `You have ${formatQty(have.qty, have.unit)}, counted once.` : have ? "In your pantry without an amount; you'll be asked to confirm." : "Not in your pantry."}</li>`;
+        return html`<li><strong>${ITEMS[t.item].name}</strong>: ${formatQty(t.qty, t.unit)} across ${t.meals.size} meals. ${have?.qty ? `You have ${formatQty(have.qty, have.unit)}, counted once.` : have?.out || have?.qty === 0 ? "You marked this as out." : have ? "In your pantry without an amount; you'll be asked about the total." : "Not checked in your pantry."}</li>`;
       })}</ul>
     </div>`;
 }

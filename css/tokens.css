@@ -121,6 +121,16 @@
   --w-mobile: 430px;
   --w-content: 1080px;
 
+  /* Shell: heights of what sits over the page, and what stacks above what.
+     Everything that has to clear the tab bar or action bar reads these. */
+  --h-tabbar: 64px;
+  --h-actionbar: 72px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --z-actionbar: 15;
+  --z-tabbar: 20;
+  --z-toast: 50;
+  --z-skip: 100;
+
   /* Motion */
   --ease: cubic-bezier(0.3, 0.7, 0.2, 1);
   --t-fast: 120ms;

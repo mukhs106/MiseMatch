@@ -480,8 +480,8 @@ dialog.sheet::backdrop {
 .toast-region {
   position: fixed;
   left: 50%;
-  bottom: calc(80px + env(safe-area-inset-bottom));
-  z-index: 50;
+  bottom: calc(var(--h-tabbar) + var(--s-3) + var(--safe-bottom));
+  z-index: var(--z-toast);
   width: min(calc(100% - 2 * var(--gutter)), 400px);
   transform: translateX(-50%);
   pointer-events: none;
@@ -511,7 +511,7 @@ dialog.sheet::backdrop {
 
 /* Sit above the recipe's sticky shopping bar when it's present. */
 body:has(.shop-bar) .toast-region {
-  bottom: calc(150px + env(safe-area-inset-bottom));
+  bottom: calc(var(--h-tabbar) + var(--h-actionbar) + var(--s-3) + var(--safe-bottom));
 }
 
 @media (min-width: 960px) {
