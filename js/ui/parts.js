@@ -2,7 +2,7 @@
 // form, expected changes, nutrition comparison and label checks.
 
 import { html, plural, raw } from "./html.js";
-import { icon } from "./icons.js";
+import { icon, checkNote } from "./icons.js";
 import { ITEMS, ALLERGEN_LABEL, NUTRITION_SOURCE, shortName } from "../data/items.js";
 import { getSwap, EVIDENCE } from "../data/swaps.js";
 import { AVOID_OPTIONS, NUT_SCOPES, openQuestions, describe } from "../core/constraints.js";
@@ -178,7 +178,7 @@ export function nutritionCompare(before, after, { servings, recipe, open = false
         <summary class="small">Fat and energy</summary>
         <table class="nut-table"><tbody>${row("fat")}${row("kcal")}</tbody></table>
       </details>
-      ${missing.length ? html`<p class="small warn">Can't estimate where data is missing: ${missing.join(", ")}. These are left as unknown, not counted as zero.</p>` : ""}
+      ${missing.length ? html`<p class="small warn">${checkNote(`${missing.join(", ")}. These are left as unknown, not counted as zero.`, "Can't estimate where data is missing:")}</p>` : ""}
       <p class="small muted">${NUTRITION_SOURCE.label}: ${NUTRITION_SOURCE.detail} Shown as ±15% ranges. Not dietary or medical advice.</p>
     </details>`;
 }

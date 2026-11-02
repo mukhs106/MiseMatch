@@ -6,7 +6,7 @@
 // only about uncertainties that block what you want to do.
 
 import { html, plural } from "./html.js";
-import { icon } from "./icons.js";
+import { icon, checkNote } from "./icons.js";
 import { ITEMS } from "../data/items.js";
 import { getRecipe } from "../data/recipes.js";
 import { DEMO_LINKS, FALLBACK_TEXT } from "../core/importer.js";
@@ -115,7 +115,7 @@ export function draftView(ctx, draft) {
         <h2 id="sv-h">Servings</h2>
         <label class="field field--inline"><span class="field-label">${draft.servingsText ? `The source says “${draft.servingsText}”.` : "The source doesn't say how many it serves."}</span>
           <input class="input input--num" type="number" min="1" step="1" inputmode="numeric" value="${draft.servings ?? ""}" placeholder="?" data-action="draft-servings" data-draft="${draft.id}"></label>
-        ${!draft.servings ? html`<p class="small warn">Without a serving count, portions can't be scaled and nutrition can't be given per serving.</p>` : ""}
+        ${!draft.servings ? html`<p class="small warn">${checkNote("without a serving count, portions can't be scaled and nutrition can't be given per serving.")}</p>` : ""}
       </section>
 
       <section class="adapt-section" aria-labelledby="ln-h">
@@ -126,7 +126,7 @@ export function draftView(ctx, draft) {
 
       <section class="adapt-section" aria-labelledby="st-h">
         <h2 id="st-h">Method as imported</h2>
-        ${draft.steps.length ? html`<ol class="steps">${draft.steps.map((s) => html`<li class="step"><p>${s}</p></li>`)}</ol>` : html`<p class="warn small">No instructions were found. They aren't written in for you.</p>`}
+        ${draft.steps.length ? html`<ol class="steps">${draft.steps.map((s) => html`<li class="step"><p>${s}</p></li>`)}</ol>` : html`<p class="warn small">${checkNote("They aren't written in for you.", "No instructions were found.")}</p>`}
       </section>
       <button class="btn btn--quiet" data-action="draft-delete" data-draft="${draft.id}">Delete this import</button>
     </div>`;
@@ -142,7 +142,7 @@ function lineRow(draft, l, blocking) {
       <div class="dl-read small">
         ${l.omitted ? html`<span class="muted">Left out of calculations.</span> <button class="btn btn--quiet" data-action="draft-unomit" data-draft="${draft.id}" data-line="${l.id}">Include</button>` : html`
           <span>${qtyText} · ${m.item ? ITEMS[m.item].name : m.confidence === "ambiguous" ? "which one?" : "not matched"}${l.state ? ` · ${STATE_LABEL[l.state]}` : ""}${l.prep ? ` · ${l.prep}` : ""}</span>
-          ${l.issues.filter((i) => i !== "range").map((i) => html`<span class="dl-issue ${blocking ? "warn" : "muted"}">${i === "ambiguous" && m.why ? m.why : ISSUE_TEXT[i]}</span>`)}
+          ${l.issues.filter((i) => i !== "range").map((i) => html`<span class="dl-issue ${blocking ? "warn" : "muted"}">${blocking ? checkNote(i === "ambiguous" && m.why ? m.why : ISSUE_TEXT[i]) : i === "ambiguous" && m.why ? m.why : ISSUE_TEXT[i]}</span>`)}
           ${l.issues.includes("range") ? html`<span class="muted">${ISSUE_TEXT.range}</span>` : ""}
           ${blocking ? html`
             <div class="dl-fix">

@@ -85,7 +85,7 @@ Drafts, never assurances. Extraction (`js/core/importer.js`) is separate from no
 
 ### Visual
 
-Pure white surfaces, Apfel Grotezk, burgundy actions, restrained yellow and blue fills, mobile first. Smaller page headings in the flow, photo thumbnails instead of repeated cards, one status message per step, evidence shown as one small label, nutrition and technical detail collapsed. Checked at 430 × 932 (iPhone 14/15 Pro Max class), 393 × 852 (14/15 Pro), 360 × 740 and 1280 × 860, plus 320 px for overflow.
+(Color is on hold for the black and white stage, Part 9.) Pure white surfaces, Apfel Grotezk, burgundy actions, restrained yellow and blue fills, mobile first. Smaller page headings in the flow, photo thumbnails instead of repeated cards, one status message per step, evidence shown as one small label, nutrition and technical detail collapsed. Checked at 430 × 932 (iPhone 14/15 Pro Max class), 393 × 852 (14/15 Pro), 360 × 740 and 1280 × 860, plus 320 px for overflow.
 
 ### Limitations
 
@@ -538,6 +538,11 @@ For this stage of development the interface uses one typeface and black and whit
 | Something to check | Info icon and bold lead word ("Check:"), via `checkNote` |
 | Status tag | Black fill. Information tag: 1 px outline. Demo data: dashed outline |
 | Notice | 2 px border to act on, 1 px border for information |
+| Status message | 1 px border when all is well; 2 px when it asks something or flags a conflict; 2 px plus a heavy left rule when nothing fits. The wording says what happened |
+| Current adaptation step | Heavy top rule and bold label; other steps 1 px and regular |
+| Original and Your version | 1 px and 2 px borders, labeled; in comparison tables the old value is struck through and the new value is bold |
+| Radio chips and cook checkboxes | Drawn in black and white, because browser defaults are grey |
+| Recipe photos | Greyscale for this stage, through `--photo-filter`. They carry no meaning. Dishes without a photo keep the outlined typographic tile |
 | Idea matching a goal | 2 px border and a black tag with a check |
 | Disabled | Dashed border, regular weight |
 | Secondary text | Smaller size and regular weight, never lighter |
@@ -567,6 +572,7 @@ These are also kept beside each token in `css/tokens.css`.
 | `--text-on-highlight`, `--text-on-selected` | `--c-ink` |
 | `--backdrop` | `rgb(31 26 23 / 0.45)` |
 | `--shadow-sheet` | `0 -8px 32px rgb(31 26 23 / 0.14)` |
+| `--photo-filter` | `none` |
 | `assets/accents/arrow.svg` | stroke `#59000E` |
 | `assets/accents/squiggle.svg`, `spark.svg` | stroke `#FEBD02` |
 | `assets/accents/pot.svg` | stroke `#59000E`, filled dots `#FEBD02` and `#A0B9C4` |

@@ -3,7 +3,7 @@
 // collection; the cooking record keeps the exact rules and servings used.
 
 import { html, plural } from "./html.js";
-import { icon } from "./icons.js";
+import { icon, checkNote } from "./icons.js";
 import { ITEMS } from "../data/items.js";
 import { getSwap } from "../data/swaps.js";
 import { getRecipe } from "../data/recipes.js";
@@ -85,7 +85,7 @@ function draftCook(ctx, draft) {
         <section aria-labelledby="ck-ing"><h2 id="ck-ing">Ingredients</h2>
           <ul class="cook-list">${draft.lines.filter((l) => !l.omitted).map((l) => html`<li><span>${l.raw}</span></li>`)}</ul></section>
         <section aria-labelledby="ck-steps"><h2 id="ck-steps">Method</h2>
-          ${v.ok ? html`<ol class="cook-steps">${draft.steps.map((s, i) => html`<li><span class="step-num">${i + 1}</span> ${s}</li>`)}</ol>` : html`<p class="warn">${v.blocking.map((b) => b.text).join(" ")}</p>`}</section>
+          ${v.ok ? html`<ol class="cook-steps">${draft.steps.map((s, i) => html`<li><span class="step-num">${i + 1}</span> ${s}</li>`)}</ol>` : html`<p class="warn">${checkNote(v.blocking.map((b) => b.text).join(" "))}</p>`}</section>
       </div>
     </div>`;
 }

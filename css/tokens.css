@@ -68,6 +68,7 @@
   --warn-text: var(--c-warn);
   --backdrop: transparent;              /* reserved: rgb(31 26 23 / 0.45) */
   --icon-on-fill: invert(1);            /* black icon files on a black fill */
+  --photo-filter: grayscale(1);         /* reserved: none */
 
   /* Type */
   --font-sans: "Apfel Grotezk", "Helvetica Neue", Arial, system-ui, sans-serif;
@@ -114,6 +115,7 @@
   --hover-ring: inset 0 0 0 1px var(--text); /* hover: the border gets heavier */
   --shadow-sheet: none;   /* reserved: 0 -8px 32px rgb(31 26 23 / 0.14) */
   --shadow-lift: 0 2px 0 var(--c-ink);
+  --check-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E");
 
   /* Layout */
   --w-mobile: 430px;

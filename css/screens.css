@@ -690,6 +690,10 @@
 }
 
 /* Something to check: an info icon and a bold lead word (see checkNote). */
+.warn-inline {
+  font-weight: var(--fw-bold);
+}
+
 .warn,
 .line-meta.warn {
   display: flex;
