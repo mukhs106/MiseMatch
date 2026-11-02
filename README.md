@@ -53,16 +53,18 @@ If it doesn't load, check both devices are on the same network (guest or office 
 
 ## Try this (the demo path)
 
-1. On **Today**, choose **Start here: Chana masala for 2, with no fresh tomatoes**, then **Adapt this dish**.
-2. **Portions and needs**: set servings to 2. Requirements are optional.
-3. **Options**: under **Change one thing**, choose **Tomatoes**, preview **Canned tomatoes** (texture, acidity, cooking, method, all labelled as a suggestion we haven't cooked) and apply it. Try **Undo** in the bottom bar.
+1. On a fresh browser, **Today** shows **Start here: Chana masala for 2, with no fresh tomatoes**. It opens a labelled preview at **Options**: 2 servings, canned tomatoes chosen, fresh tomatoes marked missing for today. Nothing is saved.
+2. **Portions and needs**: servings, **What needs changing?** (Have it or Missing, optional) and today's requirements.
+3. **Options**: under **Change one thing**, preview a change (texture, acidity, cooking, method, all labelled as a suggestion we haven't cooked) and apply it. Try **Undo** in the bottom bar.
 4. **Compare**: original and your version side by side at the same servings: ingredients, expected changes, method, and the optional nutrition estimate.
-5. **Pantry and shopping**: set rice to **Have this much… 100 g** and onion to **Have, amount unknown**. Onion asks whether you have enough instead of assuming. Choose **Add to shopping list**, then **Save version and add** or **Add without saving**.
-6. Open **Pantry → Shopping list**: rice is 50 g (150 − 100). Then **Saved → Make again**, add frozen spinach, **Save… → Update**: the shopping list offers the update for review instead of changing.
-7. **Cook now**, then **I cooked this** to leave optional feedback on that exact version.
-8. Conflicting needs: open **Paneer butter masala → Adapt**, choose **Plant-based (vegan)** and **Nuts**, answer the questions, set protein to 30 g, and see **Options** explain the gap with real choices. Avoid soy too and it says no supported version fits.
-9. **Import**: Today → Import a recipe → Link → a demo link. The draft keeps original wording and blocks only the actions an issue affects.
-10. Reload at any point: your session resumes from **Today → Pick up where you left off**. **Reset demo** is under the avatar.
+5. **Pantry and shopping**: set rice to **Have this much… 100 g** and onion to **Have, amount unknown**. Onion asks whether you have enough instead of assuming. Optional cilantro isn't on the list unless you add it. Choose **Add to shopping list**, then **Save version and add** or **Add without saving**.
+6. Open **Pantry → Shopping list**: rice is 50 g (150 − 100). Check off the lemon: you need ½, buy 1, and **Add to pantry** moves what you bought, once. Then **Saved → Make again**, add frozen spinach, **Save… → Update**: the shopping list offers the update for review instead of changing.
+7. **Cook now**, then **I cooked this**: optional feedback on that exact version, then an optional **Update pantry after cooking**, with Undo.
+8. Goals: open **Paneer bhurji → Adapt**, set protein to 25 g, and see versions grouped by whether they meet it. Conflicting needs: **Paneer butter masala → Adapt**, choose **Plant-based (vegan)** and **Nuts**, answer the questions, set protein to 30 g, and **Options** explains the gap with real choices. Avoid soy too and it says no supported version fits.
+9. **Import**: Today → Import a recipe → **Link (demo only)** → a demo link, or paste text. You get a preview, then a draft that keeps original wording. Every row has an Edit, and every blocking issue has an action.
+10. Reload at any point: your session resumes from **Today → Pick up where you left off**. Anything you removed is under **Saved → Recently removed**. **Reset demo** is under the avatar.
+
+Everything stays in this browser on this device, with no backup, and the site isn't set up to work offline.
 
 ## Replacing placeholder art
 
@@ -79,7 +81,7 @@ npm install
 node capture.mjs --label after --video --out ../../reviews/2026-10-29-visual-refresh
 ```
 
-It uses your installed Google Chrome (or Playwright's Chromium) and saves PNGs at 430, 393, 360 and 1280 px wide, an MP4 walkthrough and `results.json` (viewport, revision, scenario, pass/fail) under `reviews/`, which git ignores.
+It uses your installed Google Chrome (or Playwright's Chromium) and saves PNGs at 320, 360, 390, 430, 540, 719, 720, 959, 960, 1024 and 1440 px wide, an MP4 walkthrough and `results.json` (viewport, revision, scenario, pass/fail) under `reviews/`, which git ignores. `node acceptance.mjs` runs the connected scenarios, and `node matrix.mjs` runs widths, text size, keyboard and large-data checks. Both are desktop Chrome only.
 
 ## Docs
 

@@ -16,7 +16,8 @@ export function cookView(ctx, route) {
   if (route.draft) return draftCook(ctx, ctx.state.drafts[route.draft]);
   const recipe = getRecipe(route.id);
   const cs = ctx.state.cooking[route.cookKey];
-  if (!cs) return html`<div class="page"><h1 tabindex="-1" data-route-focus>${recipe.title}</h1><p>Getting this ready. <a href="#/recipe/${recipe.id}">Back to the recipe</a></p></div>`;
+  // No visit here means it was just finished; opening this route again starts a new one.
+  if (!cs) return html`<div class="page"><h1 tabindex="-1" data-route-focus>${recipe.title}</h1><p>Recorded as cooked. You'll find it under Saved.</p><p class="actions"><a class="btn btn--secondary" href="#/saved">Saved</a> <a class="btn btn--quiet" href="#/">Today</a></p></div>`;
   const d = hydrateSnapshot(cs.snapshot);
   d.recipe = recipe;
   const back = route.kind === "session" ? `#/adapt/${recipe.id}/${ctx.session(recipe.id)?.step ?? "compare"}` : route.kind === "plan" ? "#/list" : route.kind === "record" ? "#/saved" : `#/recipe/${recipe.id}`;

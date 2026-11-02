@@ -26,7 +26,7 @@ export function photo(image, { size = "card", credit = true, title = "" } = {}) 
   const base = `assets/images/web/${image.file}`;
   return html`
     <figure class="photo photo--${size}" data-tile="${title}" data-size="${size}">
-      <img src="${base}-480.jpg" srcset="${base}-480.jpg 480w, ${base}-960.jpg 960w" sizes="${PHOTO_SIZES[size]}" width="960" height="720" alt="${image.alt}" loading="${size === "hero" ? "eager" : "lazy"}" decoding="async">
+      <img src="${base}-480.jpg" srcset="${base}-480.jpg 480w, ${base}-960.jpg 960w" sizes="${PHOTO_SIZES[size]}" width="960" height="720" alt="${image.alt}" ${image.focal ? html`style="object-position: ${image.focal}"` : ""} loading="${size === "hero" ? "eager" : "lazy"}" decoding="async">
       ${credit ? html`<figcaption class="credit">Photo: Pexels, page link pending</figcaption>` : ""}
     </figure>`;
 }

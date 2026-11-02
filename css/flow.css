@@ -1471,3 +1471,186 @@ h3 {
     padding-bottom: var(--s-6);
   }
 }
+
+/* Reflow: enlarged text, 400% zoom and long labels wrap instead of pushing the page wider. */
+.app-header {
+  flex-wrap: wrap;
+}
+
+.btn,
+.view-btn,
+.chip {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.select,
+.input,
+textarea.input {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.field,
+.field-label {
+  min-width: 0;
+  max-width: 100%;
+}
+
+textarea.input {
+  width: 100%;
+}
+
+.view-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: var(--radius-md);
+}
+
+.steps-nav ol {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.25rem), 1fr));
+}
+
+.step-link,
+.step-label {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.section-head,
+.servings-row,
+.group-head,
+.have-row,
+.have-ctl,
+.have-qty,
+.line-qty,
+.planned-row,
+.planned-ctl,
+.row-split,
+.saved-version {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* Quantity moves under the name once the row can't hold them side by side. */
+.line-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.line-row > .line-qty {
+  grid-column: 2 / -1;
+  justify-self: start;
+}
+
+.line-row > .icon-btn {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.pantry-line .line-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.pantry-line .line-row > .line-qty {
+  grid-column: 1 / -1;
+}
+
+.pantry-line .line-row > .icon-btn {
+  grid-column: 2;
+}
+
+@media (min-width: 540px) {
+  .line-row {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+  .line-row > .line-qty {
+    grid-column: auto;
+    justify-self: auto;
+  }
+  .line-row > .icon-btn {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .pantry-line .line-row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .pantry-line .line-row > .line-qty {
+    grid-column: auto;
+  }
+  .pantry-line .line-row > .icon-btn {
+    grid-column: auto;
+  }
+}
+
+.line-reset,
+.planned-row a.row-title,
+.planned-row a.small,
+.plan-idea a.row-title {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+}
+
+.input.line-name {
+  min-height: var(--tap);
+}
+
+.tabbar {
+  flex-wrap: wrap;
+}
+
+@media (min-width: 960px) {
+  .app-header .tabbar {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.dl-fix label {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.dl-fix select {
+  width: 100%;
+}
+
+.compare-grid > *,
+.section-head > * {
+  min-width: 0;
+}
+
+.evidence,
+.tag {
+  max-width: 100%;
+  white-space: normal;
+}
+
+.adapt-section {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.effects > div {
+  min-width: 0;
+}
+
+.nut-table,
+.cmp-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.nut-table th,
+.nut-table td,
+.cmp-table th,
+.cmp-table td {
+  overflow-wrap: anywhere;
+}
+
+.effects > div {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr));
+}

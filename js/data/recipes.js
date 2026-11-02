@@ -15,7 +15,7 @@
 //                rendered as {=key} from the same state as the ingredients.
 //                scaling: "linear" | "liquid" | "fixed"
 //   panNote      why pan-scaled fat is not linear in this dish
-//   image        { file, alt } from assets/images/web (credits in assets/images/manifest.json)
+//   image        { file, alt, focal? (object-position for crops) } from assets/images/web (credits in assets/images/manifest.json)
 //   source       where the recipe text comes from (attribution travels with versions)
 //   accompaniments  supported dishes that can be served alongside (by id)
 // Ingredient fields:
@@ -98,7 +98,7 @@ export const RECIPES = [
   },
   {
     id: "chana-palak",
-    image: { file: "palak-channa-01", alt: "Chickpea and spinach curry in a bowl" },
+    image: { file: "palak-channa-01", alt: "Chickpea curry in a steel dish, with flatbread on a plate", focal: "85% 50%" },
     rev: 1,
     servingDef: { of: "the curry", side: { slot: "rice", label: "uncooked rice" } },
     servingsRange: [1, 8],
@@ -373,7 +373,7 @@ export const RECIPES = [
   },
   {
     id: "aloo-paratha",
-    image: { file: "paratha-01", alt: "Stuffed parathas on a plate" },
+    image: { file: "paratha-01", alt: "Layered parathas on a steel tray, with a glass of chai", focal: "80% 60%" },
     rev: 1,
     servingDef: { fixed: "2 parathas" },
     servingsRange: [1, 8],

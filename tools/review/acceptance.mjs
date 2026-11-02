@@ -124,6 +124,53 @@ await scenario(1, "Fresh browser: chana masala for two, no fresh tomatoes", asyn
   await context.close();
 });
 
+await scenario("1b", "The start row with existing work, and proposals", async () => {
+  const { context, page } = await fresh();
+  await go(page, "#/adapt/chana-masala/needs");
+  await click(page, '[data-action="servings"][data-delta="1"]');
+  await page.waitForTimeout(30);
+  await hash(page, "#/");
+  await page.waitForTimeout(30);
+  check("with work in progress, it offers that work and no scenario row", (await page.locator('[data-action="start-scenario"]').count()) === 0 && /Pick up where you left off/.test(await text(page)));
+  const direct = await page.evaluate(async () => { document.body.insertAdjacentHTML("beforeend", '<button id="t" data-action="start-scenario" data-id="chana-masala"></button>'); document.getElementById("t").click(); await new Promise((r) => setTimeout(r, 60)); return { title: document.getElementById("sheet-title")?.textContent, servings: window.__mise.state.sessions["chana-masala"].servings }; });
+  check("even if triggered, it asks and doesn't overwrite", direct.title === "You have unsaved changes" && direct.servings === 5, direct);
+  await page.keyboard.press("Escape");
+  // A7: a suggestion carries its option and portions
+  await hash(page, "#/adapt/paneer-butter-masala/needs");
+  await page.selectOption('[data-action="c-target"][data-nutrient="protein"]', "35");
+  await hash(page, "#/adapt/paneer-butter-masala/options");
+  await page.waitForTimeout(40);
+  const prop = page.locator('[data-action="review-proposal"][data-id="masoor-dal"]').first();
+  const data = await prop.evaluate((e) => ({ applied: e.dataset.applied, servings: e.dataset.servings }));
+  await prop.click();
+  await page.waitForFunction(() => location.hash === "#/adapt/masoor-dal/compare");
+  const ms = (await S(page)).sessions["masoor-dal"];
+  check("a proposed side opens that option at those portions, for review", ms.applied.join(",") === data.applied && ms.servings === Number(data.servings), { ms: ms.applied, data });
+  // C8: quick add off and back is recoverable, amount and all
+  await hash(page, "#/pantry");
+  await page.fill('[data-action="pantry-search"]', "paneer");
+  await click(page, '[data-action="pantry-add"][data-item="paneer"]');
+  await page.fill('[data-action="pantry-qty"][data-key="paneer"]', "200");
+  await page.press('[data-action="pantry-qty"][data-key="paneer"]', "Tab");
+  await page.waitForTimeout(30);
+  await page.locator('[data-action="pantry-toggle"][data-item="paneer"]').click();
+  await page.waitForTimeout(30);
+  await page.locator("#toast [data-toast-action]").click();
+  await page.waitForTimeout(30);
+  check("quick-add off keeps the amount recoverable", (await S(page)).pantry.paneer.qty === 200);
+  // G9: offline refresh
+  await context.setOffline(true);
+  const loaded = await page.reload({ timeout: 8000 }).then(() => true).catch(() => false);
+  check("offline refresh fails at the browser, as the settings copy says it can", !loaded);
+  await context.setOffline(false);
+  await page.goto(`${base}/#/profile`);
+  await page.waitForFunction(() => window.__miseBooted === true);
+  check("settings state the local-only limits", /isn't set up to work offline/.test(await text(page)) && /no backup/.test(await text(page)));
+  check("data survives the failed refresh", (await S(page)).pantry.paneer.qty === 200);
+  check("no errors", !page.errors.length, page.errors);
+  await context.close();
+});
+
 await scenario(2, "Protein target with no restrictions, then a competing fiber target", async () => {
   const { context, page } = await fresh();
   await go(page, "#/adapt/chana-masala/needs");

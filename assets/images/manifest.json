@@ -1,5 +1,5 @@
 {
-  "policy": "Found photos with a free commercial-use license (Pexels license). An image counts as cleared only once its Pexels page URL is recorded here. Page links are pending for every image; credit lines say so until they are recorded.",
+  "policy": "Found photos with a free commercial-use license (Pexels license). An image counts as cleared only once its Pexels page URL is recorded here. Page links are pending for every image; credit lines say so until they are recorded. Fields stay null until verified: pageUrl, photographer, creator, licenseRef, retrievedAt. Nothing is filled in from memory or from a similar-looking listing.",
   "images": [
     {
       "file": " chai-02.jpg",
@@ -8,7 +8,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "butter-paneer-01.jpg",
@@ -20,7 +23,10 @@
       "web": [
         "web/butter-paneer-01-480.jpg",
         "web/butter-paneer-01-960.jpg"
-      ]
+      ],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "chai-01.jpg",
@@ -32,7 +38,10 @@
       "web": [
         "web/chai-01-480.jpg",
         "web/chai-01-960.jpg"
-      ]
+      ],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "channa-masala-01.jpg",
@@ -44,7 +53,10 @@
       "web": [
         "web/channa-masala-01-480.jpg",
         "web/channa-masala-01-960.jpg"
-      ]
+      ],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "dosa-01.jpg",
@@ -53,7 +65,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "idli-no-bg-01.png",
@@ -62,7 +77,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "mutton-curry-rice-01.jpg",
@@ -74,7 +92,10 @@
       "web": [
         "web/mutton-curry-rice-01-480.jpg",
         "web/mutton-curry-rice-01-960.jpg"
-      ]
+      ],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "palak-channa-01.jpg",
@@ -86,7 +107,10 @@
       "web": [
         "web/palak-channa-01-480.jpg",
         "web/palak-channa-01-960.jpg"
-      ]
+      ],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "paratha-01.jpg",
@@ -98,7 +122,10 @@
       "web": [
         "web/paratha-01-480.jpg",
         "web/paratha-01-960.jpg"
-      ]
+      ],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "pav-bhaji-01.jpg",
@@ -110,7 +137,10 @@
       "web": [
         "web/pav-bhaji-01-480.jpg",
         "web/pav-bhaji-01-960.jpg"
-      ]
+      ],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "punjabi-kadhi-01.jpg",
@@ -122,7 +152,10 @@
       "web": [
         "web/punjabi-kadhi-01-480.jpg",
         "web/punjabi-kadhi-01-960.jpg"
-      ]
+      ],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "spices-01.jpg",
@@ -131,7 +164,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "spices-02.jpg",
@@ -140,7 +176,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "spices-03.jpg",
@@ -149,7 +188,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "spices-04.jpg",
@@ -158,7 +200,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "spices-05.jpg",
@@ -167,7 +212,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "spices-06.jpg",
@@ -179,7 +227,10 @@
       "web": [
         "web/spices-06-480.jpg",
         "web/spices-06-960.jpg"
-      ]
+      ],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "thali-02.jpg",
@@ -191,7 +242,10 @@
       "web": [
         "web/thali-02-480.jpg",
         "web/thali-02-960.jpg"
-      ]
+      ],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "thali-03-01.jpg",
@@ -200,7 +254,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "thali-03-02.jpg",
@@ -209,7 +266,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "thali-04.jpg",
@@ -218,7 +278,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     },
     {
       "file": "thali-no-bg-01.png",
@@ -227,7 +290,10 @@
       "photographer": null,
       "status": "pexels, page link pending",
       "usedFor": null,
-      "web": []
+      "web": [],
+      "creator": null,
+      "licenseRef": null,
+      "retrievedAt": null
     }
   ]
 }

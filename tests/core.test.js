@@ -1570,3 +1570,55 @@ test("G04: a write from another tab is detected before overwriting", async () =>
   assert.equal(hasExternalChange(), false);
   assert.deepEqual(load().saved, ["masoor-dal"]);
 });
+
+test("D10: line transitions through regeneration, with two meals sharing an ingredient", () => {
+  const d = (r, n) => deriveRecipe(r, { servings: n, applied: [] });
+  const meals = (a, b) => [{ id: "a", title: "A", needs: needsFor(d(masalaRecipe, a), {}) }, { id: "b", title: "B", needs: needsFor(d(dal, b), {}) }];
+  const rice = (l) => l.lines.find((x) => x.item === "basmati" && !x.transfer);
+  const base = () => reconcile(addManual(emptyList(), "White basmati rice", "1 bag"), meals(4, 4)).list;
+  // A manual line with the same name stays separate from the generated line
+  let l = base();
+  assert.equal(l.lines.filter((x) => x.manual).length, 1);
+  assert.equal(computedQty(rice(l)).qty, 600);
+  // generated + edited → conflict once; edited value kept
+  l = setOverride(l, rice(l).id, "1000");
+  l = reconcile(l, meals(2, 4)).list;
+  assert.equal(rice(l).conflict.type, "changed");
+  assert.equal(rice(l).override.qty, 1000);
+  // edited + checked, resolved to recipe: the override goes and the check is reset by that explicit choice only
+  l = toggleChecked(l, rice(l).id);
+  assert.equal(rice(l).checked, true);
+  l = reconcile(l, meals(4, 4)).list;
+  assert.equal(rice(l).checked, true);
+  l = resolveConflict(l, rice(l).id, "recipe");
+  assert.equal(rice(l).override, null);
+  // keeping the edit keeps it
+  l = setOverride(l, rice(l).id, "700");
+  l = reconcile(l, meals(2, 2)).list;
+  l = resolveConflict(l, rice(l).id, "mine");
+  assert.equal(rice(l).override.qty, 700);
+  assert.equal(rice(l).conflict, null);
+  // orphan: edited line whose meals both go stays for review, and "remove" drops it
+  l = reconcile(l, [], { removed: ["a", "b"] }).list;
+  assert.equal(rice(l).conflict.type, "orphan");
+  l = resolveConflict(l, rice(l).id, "remove");
+  assert.equal(rice(l), undefined);
+  assert.equal(l.lines.filter((x) => x.manual).length, 1, "the manual line survives everything");
+  // checked orphan
+  let c = base();
+  c = toggleChecked(c, rice(c).id);
+  c = reconcile(c, [], { removed: ["a", "b"] }).list;
+  assert.equal(rice(c).conflict.type, "orphan");
+  assert.equal(rice(c).checked, true);
+  // a dismissed line stays dismissed for its meal, and comes back from the other meal's need only by choice
+  let x = base();
+  x = deleteLine(x, rice(x).id);
+  x = reconcile(x, meals(4, 4)).list;
+  assert.equal(rice(x), undefined);
+  // a finished transfer is left alone by every later regeneration
+  let t = base();
+  t = recordTransfer(t, rice(t).id, { qty: 600, unit: "g" }).list;
+  const frozen = t.lines.find((y) => y.transfer);
+  t = reconcile(t, meals(2, 2)).list;
+  assert.deepEqual(t.lines.find((y) => y.id === frozen.id).sources, frozen.sources);
+});

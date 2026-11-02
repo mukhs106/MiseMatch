@@ -228,7 +228,10 @@ function statusCard(ctx, recipe, res, c) {
   if (res.status === "ok") {
     const hasT = Object.values(c.targets).some((v) => v != null);
     const restricted = hasT || c.diet || c.avoid.length || c.timeLimit;
-    return html`<div class="status status--ok" role="status"><p>${restricted
+    const missing = missingNames(ctx.working(recipe.id), ctx);
+    return html`<div class="status status--ok" role="status"><p>${!restricted && missing.length
+      ? html`<strong>You marked ${missing.join(" and ")} missing, so versions without ${missing.length === 1 ? "it" : "them"} come first.</strong> Pick one to compare it with the original.`
+      : restricted
       ? html`<strong>${hasT ? `${plural(res.fit.meets.length, "version")} ${res.fit.meets.length === 1 ? "reaches" : "reach"} your goals.` : "These versions fit your requirements."}</strong> Pick one to compare it with the original.`
       : html`<strong>No requirements set, so nothing has to change.</strong> Pick a version below, change one ingredient, or <button class="btn btn--quiet" data-action="go-step" data-id="${recipe.id}" data-step="needs">add requirements or a goal</button>.`}</p></div>`;
   }

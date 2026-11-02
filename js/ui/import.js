@@ -11,7 +11,7 @@ import { icon, checkNote } from "./icons.js";
 import { ITEMS } from "../data/items.js";
 import { getRecipe } from "../data/recipes.js";
 import { DEMO_LINKS, FALLBACK_TEXT } from "../core/importer.js";
-import { validateDraft, draftAsDerived, ISSUE_TEXT, INPUT_LIMITS, stateAlternative } from "../core/normalize.js";
+import { validateDraft, draftAsDerived, ISSUE_TEXT, ISSUE_NEED, INPUT_LIMITS, stateAlternative } from "../core/normalize.js";
 import { searchIngredients } from "../core/search.js";
 import { estimate, formatRange, RANGE_NOTE } from "../core/nutrition.js";
 import { formatQty } from "../core/units.js";
@@ -132,7 +132,7 @@ export function draftView(ctx, draft) {
             const c = checks[a];
             return html`<li class="${c.ok ? "can-ok" : "can-no"}">${icon(c.ok ? "check" : "info")} <span><strong>${label}.</strong>
               ${c.ok ? (a === "nutrition" && est ? ` Protein ${formatRange(est.protein)}, fiber ${formatRange(est.fiber, "fiber")} per serving at ${plural(target, "serving")}. ${RANGE_NOTE}${est.protein.incomplete || est.fiber.incomplete ? " “Can't estimate” means a line is kept as unknown." : ""}` : a === "cook" ? html` <a href="#/cook/draft/${draft.id}">Open in cook mode</a>` : a === "scale" ? " Use Make for, under Servings." : " Ready.")
-                : ` Needs: ${[...new Set(c.blocking.map((b) => b.kind === "servings" ? "the number of servings" : b.kind === "unsupported" ? "a supported dish" : b.kind === "steps" ? "instructions" : ISSUE_TEXT[b.kind].replace(/\.$/, "").toLowerCase()))].join("; ")}.`}</span></li>`;
+                : ` Needs: ${[...new Set(c.blocking.map((b) => b.kind === "servings" ? "the number of servings" : b.kind === "unsupported" ? "a supported dish" : b.kind === "steps" ? "instructions" : ISSUE_NEED[b.kind] ?? ISSUE_TEXT[b.kind]))].join("; ")}.`}</span></li>`;
           })}
         </ul>
         ${supported ? html`<p class="small">This looks like <strong>${supported.title}</strong>, which has supported adaptations. Adapting uses our own recipe, ratios and method, not this import's. <a href="#/recipe/${supported.id}">See our version</a>; your import stays here unchanged.</p>` : ""}

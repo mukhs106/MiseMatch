@@ -25,12 +25,8 @@ const args = Object.fromEntries(
 const label = args.label ?? "after";
 const out = resolve(args.out ?? join(repo, "reviews", `${new Date().toISOString().slice(0, 10)}-review`));
 const base = args.base ?? "http://localhost:8080";
-const VIEWPORTS = [
-  { name: "phone-430x932", width: 430, height: 932, mobile: true }, // iPhone 14/15 Pro Max class
-  { name: "phone-393x852", width: 393, height: 852, mobile: true }, // iPhone 14/15 Pro class
-  { name: "small-360x740", width: 360, height: 740, mobile: true },
-  { name: "desktop-1280x860", width: 1280, height: 860, mobile: false },
-];
+// The T10 audit's widths. `pushedNavHidden`: below 960 the tab bar hides on pushed screens.
+const VIEWPORTS = [320, 360, 390, 430, 540, 719, 720, 959, 960, 1024, 1440].map((width) => ({ name: `w${width}`, width, height: width < 720 ? 800 : 900, mobile: width < 720, pushedNavHidden: width < 960 }));
 
 const git = (...a) => execFileSync("git", a, { cwd: repo }).toString().trim();
 // The tested revision: HEAD, flagged if the app itself (not this tooling) has uncommitted changes.
@@ -103,13 +99,13 @@ async function screens(browser, vp) {
   await page.evaluate(() => document.fonts.ready);
   await shoot(page, dir, "01-today-fresh");
   await pageChecks(page, vp, "today, fresh storage", errors);
-  record("today: start-here row for the demo recipe on a fresh start", vp.name, await page.locator('a.row-link[href="#/recipe/chana-masala"]').count() === 1);
+  record("today: start-here row opens the previewed scenario on a fresh start", vp.name, await page.locator('[data-action="start-scenario"]').count() === 1);
 
   await go("#/recipe/chana-masala");
   await shoot(page, dir, "02-overview", false);
   await pageChecks(page, vp, "recipe overview", errors);
   const navShown = await page.locator("#nav").isVisible();
-  record("recipe is a pushed screen (tab bar hidden on small, header nav on wide)", vp.name, navShown === !vp.mobile, `nav visible: ${navShown}`);
+  record("recipe is a pushed screen (tab bar hidden on small, header nav on wide)", vp.name, navShown === !vp.pushedNavHidden, `nav visible: ${navShown}`);
   const img = await page.evaluate(() => { const i = document.querySelector(".photo img"); return i ? { ok: i.complete && i.naturalWidth > 0, alt: i.alt } : null; });
   record("overview photo loads with alt text and a credit", vp.name, !!img?.ok && !!img.alt && (await page.locator(".credit").count()) > 0, JSON.stringify(img));
 
@@ -127,7 +123,7 @@ async function screens(browser, vp) {
   record("swap preview: quantities, texture, acidity, cooking, method, evidence label", vp.name,
     ["Texture", "Acidity", "Cooking", "Step", "not yet cooked by our team"].every((w) => preview.includes(w)) && /200 g canned tomatoes/.test(preview));
   await page.locator(".sheet-foot .btn--primary").click();
-  await page.waitForTimeout(6500);
+  await page.locator("#toast [data-toast-close]").click();
   await visible(page, '.action-bar [data-action="go-step"]').click();
   await shoot(page, dir, "05-compare");
   await pageChecks(page, vp, "compare", errors);
@@ -144,11 +140,11 @@ async function screens(browser, vp) {
   await visible(page, '[data-action="add-plan"]').click();
   await page.locator('#sheet [data-action="plan-add-copy"]').click();
   await go("#/list");
-  await page.waitForTimeout(6500);
   await shoot(page, dir, "07-list");
   await pageChecks(page, vp, "shopping list", errors);
   const rice = await page.locator(".line", { hasText: "basmati" }).locator('input[data-action="list-qty"]').inputValue();
   record("list: rice is 150 − 100 = 50 g", vp.name, rice === "50", `rice ${rice}`);
+  record("list: optional cilantro is not a default purchase", vp.name, !(await page.locator(".line .line-name").allInnerTexts()).includes("Cilantro"));
   record("list: onion waits for a confirmation, not added", vp.name, !(await page.locator(".line .line-name").allInnerTexts()).includes("Onion"));
 
   // Requirements that conflict: vegan, nut-free, protein 30 g on paneer butter masala
@@ -156,7 +152,9 @@ async function screens(browser, vp) {
   await visible(page, '[data-action="c-diet"][data-value="vegan"]').click();
   await visible(page, '[data-action="c-avoid"][data-value="nuts"]').click();
   await shoot(page, dir, "08-requirements-questions");
-  for (const [a, k, v] of [["c-nutscope", null, "both"], ["c-answer", "soy", "ok"], ["c-answer", "sesame", "ok"], ["c-answer", "coconut", "ok"]]) {
+  // Only questions a candidate depends on are asked: sesame appears in no option of this dish.
+  record("questions: sesame isn't asked for a dish that has none", vp.name, await page.locator('[data-action="c-answer"][data-key="sesame"]').count() === 0);
+  for (const [a, k, v] of [["c-nutscope", null, "both"], ["c-answer", "soy", "ok"], ["c-answer", "coconut", "ok"]]) {
     await visible(page, `[data-action="${a}"]${k ? `[data-key="${k}"]` : ""}[data-value="${v}"]`).click();
   }
   await page.selectOption('[data-action="c-target"][data-nutrient="protein"]', "30");
@@ -252,7 +250,9 @@ async function walkthrough(browser) {
   record("keyboard: wordmark, Today, Recipes, Pantry, Saved, avatar", vp.name, order.join(" > ") === "mise & match, Today > Today > Recipes > Pantry > Saved > Requirements and settings", order.join(" > "));
 
   // Keyboard through the adaptation flow
-  await page.focus('a.row-link[href="#/recipe/chana-masala"]');
+  await page.evaluate(() => { location.hash = "#/recipes"; });
+  await page.waitForFunction(() => document.title.startsWith("Recipes"));
+  await page.focus('a.recipe-row[href="#/recipe/chana-masala"]');
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => document.title.startsWith("Chana masala"));
   const kb = await page.evaluate(() => ({ tag: document.activeElement.tagName, outline: getComputedStyle(document.activeElement).outlineStyle }));
@@ -328,6 +328,9 @@ async function walkthrough(browser) {
   await pause(600);
   await page.locator('#sheet [data-action="save-feedback"]').click();
   await pause();
+  // The optional pantry review follows; this run skips it.
+  if (await page.locator('#sheet [data-action="apply-cook-pantry"]').count()) await page.keyboard.press("Escape");
+  await pause(300);
   const cook = await page.evaluate(() => window.__mise.state.cooks.at(-1));
   record("cook: record keeps the exact rules and servings, versions unchanged", vp.name, cook.applied.includes("cm-spinach") && cook.servings === 2 && cook.versionId === null && cook.feedback.again === "yes", JSON.stringify({ applied: cook.applied, versionId: cook.versionId }));
   await pageChecks(page, vp, "walkthrough end", errors);

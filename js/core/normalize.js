@@ -58,6 +58,20 @@ export const ISSUE_TEXT = {
   range: "A range was given; the larger amount is used for shopping.",
 };
 
+// The same issues, as short needs for a summary line.
+export const ISSUE_NEED = {
+  "invalid-quantity": "a usable amount",
+  "signed-quantity": "a usable amount",
+  "drained-unknown": "a drained amount",
+  compound: "the mixture's proportions, or keeping it as unknown",
+  "no-quantity": "an amount",
+  "vague-unit": "a standard measure",
+  unmatched: "a matching ingredient",
+  ambiguous: "which ingredient is meant",
+  state: "whether it's raw or cooked",
+  "state-mismatch": "an amount in a state we have values for",
+};
+
 // Which actions each issue blocks. An optional line's issues never block.
 const BLOCKS = {
   "invalid-quantity": ["nutrition", "shopping", "scale"],

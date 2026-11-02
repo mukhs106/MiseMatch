@@ -241,3 +241,122 @@ Keep imports honest and repairable. Distinguish demo links and unavailable scree
 Translate all audit rows into an implementation checklist with IDs, priorities, affected behavior, and acceptance checks. Have Claude Code inspect and reuse existing modules, tokens, conflict handling, migrations, accessibility states, and tests. It must address storage failures and recoverable corruption, stale or mismatched routes, cross-tab conflicts, contextual accessible action names, modal backdrop/focus, timed Undo recovery, failed-image fallbacks, credits, long content, and responsive shell/action layouts. Require meaningful tests for calculations, migrations, shopping allocation, version history, and state transitions, plus rendered checks at the audit's listed widths and on supported mobile browsers where available. Do not invent passed checks, missing tokens, licensed assets, kitchen validation, or allergy safety. Each item must finish as fixed, verified already working, or explicitly deferred with reason and impact.
 
 First give me a concise synthesis of what changes and why, including any necessary compromises. Then provide one self-contained Claude Code prompt in concise connected paragraphs, with the audit attached as the detailed acceptance contract. Tell Claude Code to read its available project instructions, inspect the working tree, preserve unrelated work, use the existing stack, implement in connected increments, and continue through verification rather than stopping at a plan. Update the existing product-context and decision records instead of creating competing specifications. Do not carry forward old merge or publication authorization from historical handoff documents; this request is to prepare and verify the implementation. Finish with the actual changes, checks run, unresolved limits, and remaining blockers. The iteration must not be declared complete with unresolved P0 defects or unreported verification gaps.
+
+
+## T10 status (November 2, 2026, branch `claude/t10-integrity-refinement`)
+
+Evidence: "Test" is `tests/core.test.js`; "S" is a scenario in `tools/review/acceptance.mjs`; "Matrix" is `tools/review/matrix.mjs`. All browser evidence is desktop Chrome 156 on macOS. Evidence files are in `reviews/2026-11-02-t10/` (git-ignored).
+
+| ID | Priority | Status | What was done, or why not | User impact and limits | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| A01 | P1 | fixed | Step 1 has an optional "What needs changing?": Have it / Missing for key ingredients and alternatives. Missing is today-only; ranking puts avoiding it first. | The no-tomato case shapes the first recommendation. | Test A01; S1 |
+| A02 | P1 | fixed | Start row opens a previewed 2-serving canned tomato session, labelled, without touching pantry or collection. With unsaved work it asks; the row is hidden once work exists. | The promise matches the destination. | S1, S1b |
+| A03 | P1 | fixed | Not checked, don't have, have unknown, have measured are distinct. Unchecked needs count as "to check". | No false claim of absence, no inventory required. | Test A03; S1 |
+| A04 | P0 | fixed | `groupByFit`: Meets, May meet, Closest supported, Can't estimate; eligibility is settled separately. | A goal isn't implied to be met. | Test A04-06; S2 |
+| A05 | P1 | fixed | `resolve` returns a `cause`; copy follows it. "Within your requirements" only appears when requirements exist. | No blame on requirements that don't exist. | Tests A04-06, A05; S2 |
+| A06 | P0 | fixed | Lower targets come from one eligible candidate, as a set; competing goals are named per version. | No promise of joint feasibility from separate maxima. | Test A04-06; S2 |
+| A07 | P1 | fixed | Sides and other dishes open a session with the proposed option and portions, for review. Combined totals are stated as not computed until both are planned. | Links keep the proposal. Limit: no combined quantity, time or nutrition view for two dishes before planning them. | S1b |
+| A08 | P1 | fixed | `timingFor`: active, elapsed, advance. Advance time counts against limits; times don't scale with portions. | A soak can't pass as a quick dinner. | Test B10 A08 |
+| A09 | P1 | fixed | `relevantQuestions`: asked only when a candidate depends on the answer. Settings show only nut scope and eggs; explicit exclusions unchanged. | No unrelated questions before proceeding. | Test A09 A10; capture |
+| A10 | P1 | fixed | Semantics documented: hard exclusions and time filter; goals rank and label, never hide. Time-only and protein-only profiles are evaluated. | The filter means what it says. | Test A09 A10 |
+| A11 | P1 | fixed | Today's requirements are labelled as dish-only; cook mode re-evaluates under current requirements; records keep a short "made under" note. | Scope is visible; earlier requirements aren't implied to be permanent. | S8; Saved view |
+| A12 | P0 | fixed | `comboStatus` needs an exact bundle for 3+ rules; `wholeSetUntested` is labelled everywhere. Pairs from inside larger bundles no longer count. | Pairwise authoring doesn't upgrade a set. | Test A12 |
+| B01 | P0 | fixed | `servingDescription` and `{q:slot}`/`{n}` effect tokens render from active state. | No mixed serving bases. | Test B01; S1, S3 |
+| B02 | P0 | fixed | `methodQty` with `{=key}` tokens; no literal liquid amounts remain in steps (enforced by test). | Method and ingredients agree. | Test B02 B09; S3 |
+| B03 | P0 | fixed | Counts keep ⅛ and ¼ steps; ¼ count shows ¼. | Counted ingredients don't double. | Test B03-05 |
+| B04 | P0 | fixed | Eighth-teaspoon display; below that, "a pinch". | Doses don't double. | Test B03-05; S3 |
+| B05 | P0 | fixed | Sub-gram amounts show one decimal. | No one-gram floor. | Test B03-05 |
+| B06 | P0 | fixed | `estimate` uses `practical` amounts; large roundings are named on Compare. | Estimate and recipe describe the same food. | Test B06 |
+| B07 | P0 | fixed | Serving-weight claim removed; `rawWeightChange` says uncooked weight going in, not on the plate. | No unsupported cooked weight. | Test B07; S1 |
+| B08 | P0 | fixed | `RANGE_NOTE` next to estimates: illustrative band around fixtures, not measured uncertainty. | Band no longer reads as a confidence bound. | Test B06; S1 |
+| B09 | P1 | fixed | Pan fat stays within the authored range with a dish pan note showing the amount; liquids get a three-quarter rate; both are authored assumptions, not measured. | Scaling assumptions are visible. Rates are not kitchen-tested. | Test B02 B09 |
+| B10 | P1 | fixed | `servingsRange` per dish, shown beside the control; stepper bounded; out-of-range rules named with a remove action. | No invalid batch without explanation. | Tests B10, portions; S3 |
+| B11 | P1 | fixed | `optional` carried through lines, method, needs and estimates; not a purchase unless added. | Garnish isn't a default buy. | Test B11; S1 |
+| B12 | P1 | fixed | State mismatches keep estimates unknown; cup-to-mass only with an item density; counted weights only for counted units. | Unknown stays unknown. Regional cup sizes aren't modelled: a cup is 240 ml. | Test F03 F08 F10 B12 |
+| C01 | P0 | fixed | `parseAmount`, `applyAmountInput`: zero is out, invalid and exponent rejected inline, blank needs Clear amount. | No invented stock. | Test C01 D09; S5 |
+| C02 | P0 | fixed | `changeUnit` converts; incompatible units ask. | 500 g never becomes 500 kg. | Test C02 C07; S5 |
+| C03 | P0 | fixed | Answers are keyed by fingerprint of combined requirement, entry and pantry revision. | A stale yes can't hide a shortfall. | Test C03 C04; S5 |
+| C04 | P0 | fixed | One question about the combined total across meals. | Repeated yeses can't imply finite stock. | Test C03 C04; S5 |
+| C05 | P0 | fixed | Optional "Update pantry after cooking" from the exact snapshot; once per record; unknown stays unknown; only the intended plan entry; Undo. Never automatic. | Light-pantry decision kept. | Test C05; S6 |
+| C06 | P0 | fixed | `line.transfer` persisted; repeat refused; "Bought more" is separate. | No double inventory after reload. | Test C06 D02; S6 |
+| C07 | P0 | fixed | Incompatible purchases go in `also`; on unknown stock, `atLeast`. | No measured amount lost. | Test C02 C07 |
+| C08 | P1 | fixed | Quick-add off leaves a recovery record with the amount. | Removal is recoverable. | S1b |
+| C09 | P1 | fixed | Free text has a Match path with likely candidates; wording and amount stay until chosen. | Free text can join calculations. | Test C09-11; S10 |
+| C10 | P1 | fixed | `core/search.js` used by pantry, import repair and recipe search. | Regional names work everywhere. | Test C09-11; S10 |
+| C11 | P1 | fixed | Enter adds only an unambiguous exact match. | No accidental first-substring adds. | Test C09-11; S10 |
+| D01 | P1 | fixed | `samePlanned` asks instead of doubling; "Add another meal" is explicit. | No accidental double shopping. | Test D01 etc; S4 |
+| D02 | P0 | fixed | Needed, to buy and bought are separate; the bought amount is confirmed and transferred. | ½ lemon needed, 1 bought, 1 stored. | Test C06 D02; S6 |
+| D03 | P1 | fixed | Preview states its scope; a session already planned stands in for that meal; update vs add another is a choice. | No double-counting in preview. | Shop view; S1 |
+| D04 | P0 | fixed | `listStatus` with separate states and copy. | Pending checks never read as done. | Test D04 D05; S10 |
+| D05 | P1 | fixed | `dismissedReview` shows was and now, with Add back. | Dismissal isn't silently treated as enough. | Test D04 D05 |
+| D06 | P1 | fixed | Removal reconciles all remaining meals together. | Freed stock applies at once. | Test D01 etc; S4 |
+| D07 | P1 | fixed | Signatures use canonical amounts with a 0.01 tolerance. | Small changes are seen. | Test D01 etc |
+| D08 | P1 | fixed | `reconcile` places every contribution, then compares each line once. | One conflict from the final total. | Test D01 etc; S4 |
+| D09 | P1 | fixed | Blank is an unfinished edit; 0 is deliberate and labelled. | Blank isn't zero. | Test C01 D09 |
+| D10 | P1 | fixed | Precedence defined in `shopping.js`; transitions tested with two shared-ingredient meals. | Edits and checks survive. Covers the main transitions, not an exhaustive pair matrix. | Test D10; S4 |
+| E01 | P0 | fixed | Revisions and `deriveSnapshot` on saved, planned and cooked records; changed rules read from the snapshot. | History isn't rewritten. | Test E01 G07; S7 |
+| E02 | P1 | fixed | Decision: a version saves the recipe outcome, not requirements; stated in the save sheet; dirty check stays recipe-only. | No false impression either way. | Save sheet |
+| E03 | P1 | fixed | `uid` via crypto.randomUUID with fallback. | No collisions at one timestamp. | Test E03 |
+| E04 | P1 | fixed | `repeatable` keeps unsaved records; `repeat-cook` restores them, or opens the record if rules changed. | A positive meal has a destination. | Test E04; S8 |
+| E05 | P1 | fixed | Checks live on a per-visit `cooking` record. | Progress can't transfer between recipes. | S8 |
+| E06 | P1 | fixed | Persisted; resume or Start again; ticking patches one row. | Reload keeps progress. | S8 |
+| E07 | P1 | fixed | Snapshot frozen at entry, with a notice if the working version moved. | Instructions don't change mid-cook. | S8 |
+| E08 | P1 | fixed | Remove ingredient changes keeps portions; Reset everything is separate. | Portions aren't lost by accident. | Options view |
+| E09 | P0 | fixed | `core/recovery.js` narrow inverses replace whole-state snapshots. | Undo doesn't erase later work. | Test E09; S4, S6 |
+| E10 | P1 | fixed | Entry re-evaluates; conflicts, questions, unsupported portions and untested sets are shown with Review or as written. | An unresolved result is never labelled as fitting. | `cookChecks`; S7 |
+| F01 | P1 | fixed | Tabs say Link (demo only), Screenshot (unavailable); paste first; text and URL kept. | No effort wasted before the limit shows. | S9 |
+| F02 | P0 | fixed | `pack` tracks package, net and drained; a drained amount is asked for. | No 800 g from two cans. | Test F02-05; S9 |
+| F03 | P0 | fixed | `compound` stays compound; keep unknown, exclude, or split with stated amounts. | No half-identity resolution. | Test F03 etc; S9 |
+| F04 | P0 | fixed | Finite-positive check at parse and repair. | No infinite or zero amounts. | Test F02-05; S9 |
+| F05 | P1 | fixed | Bullets need a space; signed numbers are flagged. | "-2 g" isn't 2 g. | Test F02-05 |
+| F06 | P1 | fixed | `parseYield` keeps ranges, fractions and implausible values unresolved; picks offered. | No silent truncation. | Test F06 F07 |
+| F07 | P1 | fixed | `targetServings` separate from source yield, with a Make for control. | Scaling is real. | Test F06 F07; S9 |
+| F08 | P0 | fixed | State answers can't clear a mismatch; such lines stay unknown in estimates. | No dry values on cooked amounts. | Test F03 etc; S9 |
+| F09 | P1 | fixed | Edit on every row: match, amount, unit, state, optional, exclude, remove, reset. Undo and recovery. | Wrong readings can be corrected. | Test F11 F09; S9 |
+| F10 | P1 | fixed | Every blocking issue has actions; `calc: unknown` is an honest answer. | No forced false match. | Test F03 etc; S9 |
+| F11 | P1 | fixed | `excluded` vs `removed`; cook mode keeps excluded lines, labelled. | Cooking keeps the recipe intact. | Test F11 F09; S9 |
+| F12 | P1 | fixed | Preview before a draft; raw text kept; Markdown, parts, combine; no instructions and blank handled. | No silent mis-grouping. Grouping is heuristic: odd pastes can still need Combine or editing. | Test F12 F14; S9 |
+| F13 | P1 | fixed | Kidney beans added with fixture data; the adaptation boundary is stated on the draft. | Reference and our version stay distinct. | Test F12 F14 |
+| F14 | P1 | fixed | `INPUT_LIMITS`; duplicate choice; long content and literal HTML harmless. | Bad input is contained. Repeated lines aren't consolidated. | Test F12 F14; S9; matrix |
+| G01 | P0 | fixed | `save` reports; persistent notice with Try again; `durable()` copy. | No false durable-save claim. | Test G01; S10 |
+| G02 | P0 | fixed | Quarantine and protect; recovery route with export; Start fresh is explicit. | Unreadable data is never overwritten. | Test G02; S10 |
+| G03 | P0 | fixed | `validateState` per record; skipped kept and explained. | A bad record can't crash views. | Test G03; S10 |
+| G04 | P0 | fixed | Revision key, storage event, conflict review. | No silent last-write-wins. The choice is whole-state, not a per-record merge. | Test G04; S10 |
+| G05 | P1 | fixed | Draft h1 and title; `titleFor` on all routes. | No undefined tab titles. | S9, S10; matrix |
+| G06 | P0 | fixed | `parseCookRoute` validates relationships and shows a recoverable error. | No hybrid recipes. | S10 |
+| G07 | P1 | fixed | Snapshots and migration; records with unknown recipes go to Saved with explanation. | Saved content is preserved. A record for a removed recipe can't be opened as a recipe, only exported. | Tests E01; G03 |
+| G08 | P1 | fixed | Render try/catch, action guard, boot-failure message, loading state. | No blank shell. | S10 |
+| G09 | P1 | fixed | Local-only copy near Save, Saved and Settings; offline stated as not supported. | Not mistaken for backup. Offline caching stays out of scope. | S1b |
+| G10 | P1 | fixed | Stable focus signatures, kept inputs, disclosures, scroll, composition guard. Still full-root rendering, not patching, except cook ticks. | State survives redraws. IME checked with simulated events only. | Matrix |
+| H01 | P1 | fixed | Contextual aria-labels on Choose and Compare. | Buttons make sense out of context. | Matrix |
+| H02 | P1 | fixed | Native modal: inert background, focus containment, Escape, visible close, 2 px border. Backdrop stays transparent per Part 9. **Dimming is the owner's decision.** | Works without dimming; the page behind is still visible. | Matrix |
+| H03 | P1 | fixed | Trigger stored as a signature; falls back to the page heading. | Focus isn't lost. | Matrix |
+| H04 | P1 | fixed | 10 s, pauses on hover and focus, has a close control; Saved lists Recently removed. | Recovery doesn't depend on a timer. | Matrix |
+| H05 | P1 | fixed | Item, meal and version in repeated action names. | Clear in a screen reader's list of controls. Not verified with a real screen reader. | Matrix (names only) |
+| H06 | P1 | fixed | Measured at all widths; exceptions fixed. Native checkboxes and radios are excluded from that measure. | Targets and focus rings measured. | Matrix |
+| H07 | P1 | deferred | Live region added for portions, search counts, fit counts and list changes, but no real screen reader was available. | Announcements are unverified for screen reader users. | Code only; needs VoiceOver or NVDA |
+| H08 | P1 | fixed | Captions, scoped headers, names and labels checked on every route; aria states kept. | DOM semantics hold. Real screen reader reading order not verified (see H07). | Matrix |
+| H09 | P1 | verified already working | Part 9 treatments measured as distinct for selected, neutral, disabled, edited, changed. Warnings use icon and lead word. Nothing had collapsed. | No color needed. | Matrix: states |
+| H10 | P1 | fixed | Reflow fixes, then 200% text, 400% zoom layout, text spacing, reduced motion, forced colors pass. Zoom is a 320×200 viewport, not browser zoom UI. | No clipped or lost controls in Chrome. | Matrix; screenshots |
+| I01 | P1 | fixed | All 11 widths, 17 routes: no overflow, off-screen control or missing h1. | Layouts hold. | Matrix; capture |
+| I02 | P1 | fixed | Step grid uses auto-fit, so it wraps at large text. | Long labels fit. | Matrix |
+| I03 | P1 | fixed | Action bar and controls wrap. | All actions reachable. | Matrix |
+| I04 | P1 | fixed | `--h-tabbar`, `--h-actionbar`, `--safe-bottom`, `--z-*`. Safe areas not seen on a real device. | Offsets come from one place. | Matrix: landscape |
+| I05 | P1 | deferred | Short landscape handled and measured (bars stop being sticky; dialog body scrolls), but a real on-screen keyboard wasn't available. | Keyboard-open editing on phones is unverified. | Matrix: landscape; needs a device |
+| I06 | P1 | fixed | 120-character titles, 200-character lines and long URLs wrap. | No stretched grids. Long text in a single-line input scrolls inside it. | Matrix |
+| I07 | P1 | fixed | Comparison tables fixed-layout with wrapping; labels kept. | Readable at large text. Columns stay side by side, not stacked. | Matrix; screenshots |
+| I08 | P1 | verified already working | 100 versions, 100+ pantry, 20 meals, ~200 lines: routes draw in about 25-45 ms; no virtualization needed. | Fast on this Mac; not measured on a phone. | Matrix: large |
+| I09 | P2 | fixed | `sizes` corrected; `focal` added for two crops. | Dish stays in frame. Reviewed at thumbnail size on a 430 layout. | Screenshots |
+| I10 | P1 | deferred | Only desktop Chrome 156 was available. iOS Safari, Android Chrome, Safari and Firefox weren't run. | `:has()`, `dvh`, safe areas and dialog behavior there are unverified. | Needs those browsers |
+| J01 | P1 | fixed | `--photo-filter: none`; the single consumer checked; hover, saved and cook contexts scanned; sources verified colored. | Food is in color. | S12 |
+| J02 | P2 | fixed | Error listener swaps a failed photo for the same tile. | Intentional fallback, no layout jump. | S10 |
+| J03 | P2 | fixed | Tile also on overview heroes. **Owner check:** the aloo paratha photo shows plain layered parathas with chai, and the chana palak photo shows no visible spinach. Alt text corrected; photos kept pending your decision. | Consistent fallback. Two photos may breach the no-stand-in rule. | S12; visual review |
+| J04 | P1 | deferred | No verified page links exist. Fields added as null; "page link pending" stays; nothing invented. | Photos still aren't cleared for use beyond the prototype. | Manifest; needs the page links from the owner |
+| J05 | P1 | fixed | width and height on img; hero eager, others lazy. LCP not measured. | Stable loading. | S12; matrix |
+| J06 | P1 | fixed | State contract in Part 9; undefined-variable scan repeated. | Contract recorded. | Part 9 |
+| J07 | P1 | fixed | Shell tokens only. | Offsets and layers named. | `css/tokens.css` |
+| J08 | P2 | verified already working | Fraction glyphs measured as present in the font by width comparison; fallback font works. OFL 1.1 license file present. | Fractions render in the brand face. | Matrix: fonts; S10 |
+| J09 | P2 | fixed | Repeated prototype notes moved to disclosures; limits stay at the decision and in settings. | Less noise, limits kept. | Today, Recipes |
+| J10 | P1 | fixed | Inventory in Part 9, marking what's inapplicable. | Contract recorded. | Part 9 |
+
+Totals: 102 fixed, 3 verified already working, 4 deferred. No P0 row is deferred. No real kitchen test has happened: amounts, scaling rates, times and rules remain untested suggestions. Nutrition values remain fixtures. Nothing here is an allergy-safety, accessibility or production-import claim.
