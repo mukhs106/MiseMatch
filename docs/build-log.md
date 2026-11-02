@@ -40,4 +40,4 @@
 - Found in review: "I cooked this" left a placeholder behind the dialog; skip-feedback lost its record id; status copy ignored what was marked missing.
 - Not checked: iOS Safari, Android Chrome, Safari, Firefox, a physical phone, a real on-screen keyboard, a real IME, a screen reader, a real kitchen. Deferred: H07, I05, I10, J04.
 - Owner decisions: dimmed modal backdrop (H02); whether `paratha-01` and `palak-channa-01` count as stand-ins; Pexels page links.
-- Not pushed.
+- Merged in PR #3 as `39c0e71` and live on GitHub Pages. Scenarios 1 and 12 of `acceptance.mjs` were rerun against the live URL in desktop Chrome 156 after deployment; the other suites ran locally before the merge.
