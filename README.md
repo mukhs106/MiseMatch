@@ -1,8 +1,8 @@
 # mise & match
 
-A first working version of a recipe app that helps you adapt recipes to the ingredients you have, how many people you're feeding, and optional protein or fiber goals, while explaining what each change does to the dish.
+A recipe adaptation app for familiar Indian and South Asian comfort food. It fits a dish to your pantry, portions, dietary requirements and optional nutrition goals, and shows what changes in the dish before you cook it. Saving, planning and the shopping list support that.
 
-**Status:** class MVP prototype. Recipes, swaps and nutrition values are demo data.
+**Status:** class MVP prototype. The 10 recipes and their adaptation rules are written for this prototype and not kitchen-tested; nutrition values are hand-entered fixtures, not verified food data; link import works only with labelled demo pages. See `docs/product-context.md`, section "Version 0.6".
 
 ## Run it locally
 
@@ -53,12 +53,16 @@ If it doesn't load, check both devices are on the same network (guest or office 
 
 ## Try this (the demo path)
 
-1. On **Recipes**, search for an ingredient (for example "chickpea"), or switch to **Use what you have**.
-2. Open **Chana masala** (the "Start here" row). Set servings to 2 and set rice to **Some** with 100 g.
-3. Go back and open the **Pantry** tab: rice shows 100 g. Recipes and Pantry share it.
-4. Back in the recipe, under **Ways to adapt**, choose **Tomatoes**, compare canned tomatoes, then apply it. Try **Undo** on a change.
-5. Choose **Add to list**, then open the **Grocery list**: rice is 50 g (150 − 100). Check off an item and choose **Add to pantry**.
-6. Reload: everything is kept. **Reset demo** is under the avatar (Profile and settings).
+1. On **Today**, choose **Start here: Chana masala for 2, with no fresh tomatoes**, then **Adapt this dish**.
+2. **Portions and needs**: set servings to 2. Requirements are optional.
+3. **Options**: under **Change one thing**, choose **Tomatoes**, preview **Canned tomatoes** (texture, acidity, cooking, method, all labelled as a suggestion we haven't cooked) and apply it. Try **Undo** in the bottom bar.
+4. **Compare**: original and your version side by side at the same servings: ingredients, expected changes, method, and the optional nutrition estimate.
+5. **Pantry and shopping**: set rice to **Have this much… 100 g** and onion to **Have, amount unknown**. Onion asks whether you have enough instead of assuming. Choose **Add to shopping list**, then **Save version and add** or **Add without saving**.
+6. Open **Pantry → Shopping list**: rice is 50 g (150 − 100). Then **Saved → Make again**, add frozen spinach, **Save… → Update**: the shopping list offers the update for review instead of changing.
+7. **Cook now**, then **I cooked this** to leave optional feedback on that exact version.
+8. Conflicting needs: open **Paneer butter masala → Adapt**, choose **Plant-based (vegan)** and **Nuts**, answer the questions, set protein to 30 g, and see **Options** explain the gap with real choices. Avoid soy too and it says no supported version fits.
+9. **Import**: Today → Import a recipe → Link → a demo link. The draft keeps original wording and blocks only the actions an issue affects.
+10. Reload at any point: your session resumes from **Today → Pick up where you left off**. **Reset demo** is under the avatar.
 
 ## Replacing placeholder art
 
@@ -75,7 +79,7 @@ npm install
 node capture.mjs --label after --video --out ../../reviews/2026-10-29-visual-refresh
 ```
 
-It uses your installed Google Chrome and saves PNGs, an MP4 walkthrough and `results.json` (viewport, revision, scenario, pass/fail) under `reviews/`, which git ignores.
+It uses your installed Google Chrome (or Playwright's Chromium) and saves PNGs at 430, 393, 360 and 1280 px wide, an MP4 walkthrough and `results.json` (viewport, revision, scenario, pass/fail) under `reviews/`, which git ignores.
 
 ## Docs
 
@@ -83,5 +87,7 @@ It uses your installed Google Chrome and saves PNGs, an MP4 walkthrough and `res
 - `docs/product-context.md`: product and design decision record, scope, limitations and next priorities.
 
 ## Credits
+
+Photos: Pexels (free license). Individual page links are pending and are tracked in `assets/images/manifest.json` and `docs/image-sources.md`; web-sized copies are in `assets/images/web/`.
 
 Apfel Grotezk by Collletttivo (Luigi Gorlero), SIL Open Font License 1.1. See `fonts/OFL-ApfelGrotezk.txt`.

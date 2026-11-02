@@ -20,6 +20,12 @@
 - Incident: `ec84eef` (committed outside the session mid-task) imported uncommitted views and broke GitHub Pages; `2706654` restored it.
 - Not checked: Safari, Firefox, a physical phone, a screen reader.
 
+## 2026-11-02 · Version 0.6 adaptation-first refinement (owner prompt, not a queued task)
+- Changed: Today / Recipes / Pantry (+ shopping list) / Saved; four-step adaptation flow on an autosaved session with undo and explicit Save; Original and Your version side by side; deterministic engine (`engine.js`, `constraints.js`) with authored rules and bundles, untested-combination labelling, conflicts explained with real choices; 10 South Asian recipes with serving definitions and photos; import as drafts (JSON-LD, pasted text, labelled demo links) with per-action validation; planned meals with reviewable version updates; unknown pantry amounts ask for confirmation; cook mode and feedback on the exact version. Store v2 with v1 migration. Review script rewritten for the new flow.
+- Verified: `npm test` 34 pass; capture 223/223 at 430, 393, 360, 1280 + walkthrough MP4 (`reviews/2026-11-02-adaptation-flow/`); overflow 320–1280; image, storage and corrupt-save fallbacks; contrast.
+- Not checked: Safari, Firefox, a physical phone, a screen reader. Not pushed (pushing updates GitHub Pages).
+- Follow-up: Pexels page links; cooking trials before any "team-tested" label; T01 screenshots need the new flow.
+
 ## 2026-11-02 · Black and white stage
 - Changed: every color token set to black or white with its reserved value alongside; one typeface (fake italic and the Arial favicon removed). Selected, changed, warning, status, disabled and hover states redesigned to read without color (`docs/product-context.md` Part 9). Accents are black line only; sheet has a 2 px border and no dimming. Secondary buttons are outlined for this stage, temporarily overriding C1.
 - Copy: "Check:" lead on warnings, "Before" and "After" labels in the swap sheet, bold lead on the no-longer-needed list notice.
