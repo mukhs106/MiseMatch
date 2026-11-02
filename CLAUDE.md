@@ -31,9 +31,11 @@ Queued work lives in docs/queue/QUEUE.md; run one task per session with /next an
 - Missing nutrition data is unknown, never zero. Ranges only, per serving of the same serving definition; report serving-size changes. Nutrition values are fixtures (`NUTRITION_SOURCE`), not verified data. Nutrition stays optional and collapsed unless a goal is set.
 - Never convert between mass, volume and count. List regeneration keeps manual items and edits; changed edited/checked lines get a conflict; deleted lines are remembered.
 - Photos: only from `assets/images/web/` with the "Photo: Pexels, page link pending" credit until page links are recorded in `assets/images/manifest.json`. Never show a different dish as a stand-in; recipes without a suitable photo use the typographic tile.
-- `#FEBD02` and `#A0B9C4` are fills behind dark text only. Meaning is never carried by color alone. No outlined buttons; reuse `.btn--primary/--secondary/--quiet`.
+- Black and white stage (`docs/product-context.md` Part 9): every color token is black or white, one typeface, no greys or reduced opacity in the interface. Hierarchy, state and emphasis come from size, weight, spacing, rules, borders, position and wording. Reserved color values are kept beside the tokens; color may return only as an addition, and nothing may depend on it. Recipe photos show in greyscale for this stage and carry no meaning.
+- Reuse `.btn--primary/--secondary/--quiet`. Secondary is outlined for this stage only (temporarily overrides C1, which returns with color).
+- Reserved rule for when color returns: `#FEBD02` and `#A0B9C4` are fills behind dark text only.
 - Chana masala (`HERO_RECIPE_ID`) is the demo's hero recipe; keep the demo path in README working.
-- Touch targets ≥ 44px, visible focus, labeled controls. Mobile first: check 430 (iPhone 14/15 Pro Max), 393, 360 and 1280. White surfaces; `#F3F2E7` only for small tonal controls.
+- Touch targets ≥ 44px, visible focus, labeled controls. Mobile first: check 430 (iPhone 14/15 Pro Max), 393, 360 and 1280. White surfaces.
 - Focus: script-moved focus (page titles, dialog title, `main`) shows a ring only for keyboard users; never remove `:focus-visible` from controls.
 - Visual evidence is required for substantive UI work: `tools/review/capture.mjs` into a dated `reviews/` folder (git-ignored). If capture is unavailable, say so.
 - Add a test in `tests/core.test.js` for any change to `js/core/` or the seed data.

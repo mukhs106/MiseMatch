@@ -7,7 +7,7 @@
 // Every change autosaves to the session with undo. Saving to the collection is separate.
 
 import { html, plural } from "./html.js";
-import { icon } from "./icons.js";
+import { icon, checkNote } from "./icons.js";
 import { ITEMS, shortName } from "../data/items.js";
 import { getSwap, swapsForRecipe } from "../data/swaps.js";
 import { getBundle, bundlesForRecipe } from "../data/bundles.js";
@@ -175,7 +175,7 @@ function optionCard(recipe, o, selected) {
         <span>About ${ev.minutes} min</span>
         ${ev.planAhead.length ? html`<span>${icon("clock")} Plan ahead</span>` : ""}
       </p>
-      ${ev.check.dislikes.length ? html`<p class="small warn">Includes ${ev.check.dislikes.map(shortName).join(", ")}, which you'd rather avoid.</p>` : ""}
+      ${ev.check.dislikes.length ? html`<p class="small warn">${checkNote(`includes ${ev.check.dislikes.map(shortName).join(", ")}, which you'd rather avoid.`)}</p>` : ""}
       <div class="oc-foot">
         ${swaps.length ? evidence("suggested") : html`<span class="small muted">${recipe.source.label}</span>`}
         ${chosen
@@ -192,7 +192,7 @@ function ownCombination(ctx, recipe, s) {
     <div class="status ${untested ? "status--conflict" : ""}" role="status">
       <p><strong>Your own combination:</strong> ${s.applied.map((id) => getSwap(id).label).join(" · ")}.</p>
       ${untested ? html`<p class="small">Untested combination: ${ev.combo.untested.map((p) => `${p.a.label} with ${p.b.label}`).join("; ")} ${ev.combo.untested.length === 1 ? "hasn't" : "haven't"} been written to go together. Each rule is supported on its own; together, the result is a guess.</p>` : ""}
-      ${ev.check.conflicts.length ? html`<p class="small warn">It conflicts with your requirements: ${ev.check.conflicts.map((x) => x.reason).join("; ")}.</p>` : ""}
+      ${ev.check.conflicts.length ? html`<p class="small warn">${checkNote(`${ev.check.conflicts.map((x) => x.reason).join("; ")}.`, "It conflicts with your requirements:")}</p>` : ""}
     </div>`;
 }
 
@@ -260,7 +260,7 @@ function compareStep(ctx, recipe, s) {
         ${changed.length ? html`
           <table class="cmp-table">
             <thead><tr><th scope="col">Original</th><th scope="col">Your version</th></tr></thead>
-            <tbody>${changed.map((r) => html`<tr class="is-changed"><td>${r.before ?? html`<span class="muted">Not in the recipe</span>`}</td><td>${r.after ?? html`<span class="muted">Left out</span>`}</td></tr>`)}</tbody>
+            <tbody>${changed.map((r) => html`<tr class="is-changed"><td>${r.before ? html`<s>${r.before}</s>` : html`<span class="muted">Not in the recipe</span>`}</td><td>${r.after ?? html`<span class="muted">Left out</span>`}</td></tr>`)}</tbody>
           </table>` : html`<p class="small muted">No ingredient changes${s.servings !== recipe.servings ? ", only scaled quantities" : ""}.</p>`}
         ${same.length ? html`
           <details class="more" data-open-key="same-${recipe.id}" ${ctx.ui.open[`same-${recipe.id}`] ? "open" : ""}>
@@ -328,7 +328,7 @@ function shopStep(ctx, recipe, s) {
       </section>` : ""}
     <section class="adapt-section" aria-labelledby="short-h">
       <div class="section-head"><h2 id="short-h">${buy.length ? `${plural(buy.length, "thing")} to buy` : "Nothing to buy"}</h2></div>
-      ${buy.length ? html`<ul class="short-list">${buy.map((n) => html`<li><span class="num">${formatQty(n.qty, n.unit, n.step)}</span> <span>${n.name}</span>${n.note ? html`<span class="small muted">${n.note}</span>` : ""}${n.uncertain ? html`<span class="small warn">Check before buying</span>` : ""}</li>`)}</ul>` : ""}
+      ${buy.length ? html`<ul class="short-list">${buy.map((n) => html`<li><span class="num">${formatQty(n.qty, n.unit, n.step)}</span> <span>${n.name}</span>${n.note ? html`<span class="small muted">${n.note}</span>` : ""}${n.uncertain ? html`<span class="small warn">${checkNote("", "Check before buying")}</span>` : ""}</li>`)}</ul>` : ""}
       ${planned.length ? html`<p class="small">${icon("list")} Already planned: ${planned.map((p) => `${p.label}, ${plural(p.servings, "serving")}`).join("; ")}. <a href="#/list">Shopping list</a></p>` : ""}
       <div class="actions">
         <button class="btn btn--secondary" data-action="add-plan" data-id="${recipe.id}" ${buy.length || check.length ? "" : ""}>${icon("list")} Add to shopping list</button>

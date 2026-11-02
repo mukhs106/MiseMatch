@@ -16,6 +16,7 @@
 
 .meta-line {
   color: var(--text-muted);
+  font-size: var(--fs-sm);
 }
 
 .break {
@@ -36,6 +37,13 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: var(--photo-filter);
+}
+
+/* No photo to show: an outlined tile, so it doesn't read as blank space. */
+.photo--none,
+.photo.is-missing {
+  border: var(--rule);
 }
 
 .photo--hero {
@@ -64,7 +72,7 @@
   bottom: var(--s-2);
   padding: 1px var(--s-2);
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  background: var(--surface);
   color: var(--text);
   font-size: var(--fs-xs);
 }
@@ -79,6 +87,7 @@
   display: inline-flex;
   align-items: center;
   padding: 2px var(--s-2);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-pill);
   background: var(--cool-soft);
   color: var(--text);
@@ -379,9 +388,9 @@ a.row-title {
   gap: 2px;
   width: 100%;
   min-height: var(--tap);
-  padding: var(--s-2) 0 var(--s-1);
+  padding: calc(var(--s-2) + 2px) 0 var(--s-1);
   border: 0;
-  border-top: 3px solid var(--border-subtle);
+  border-top: 1px solid var(--border-subtle);
   background: none;
   text-align: left;
   font-size: var(--fs-xs);
@@ -389,7 +398,8 @@ a.row-title {
 }
 
 .step-link[aria-current="step"] {
-  border-top-color: var(--action);
+  padding-top: var(--s-2);
+  border-top: var(--rule-mark);
   color: var(--text);
   font-weight: var(--fw-bold);
 }
@@ -451,31 +461,27 @@ body:has(.action-bar) .toast-region {
   bottom: calc(76px + env(safe-area-inset-bottom));
 }
 
-/* Status messages: one per screen at most, plain language. */
+/* Status messages: one per screen at most, plain language. The border gets heavier
+   as more is asked of the person; the wording says what happened. */
 .status {
   display: grid;
   gap: var(--s-2);
   padding: var(--s-4);
   border-radius: var(--radius-md);
-  border-left: 4px solid var(--border-control);
+  border: 1px solid var(--border-subtle);
   background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--border-subtle);
   margin-bottom: var(--s-4);
-}
-
-.status--ok {
-  border-left-color: var(--cool);
 }
 
 .status--ask,
 .status--conflict {
-  border-left-color: var(--highlight);
+  border: var(--border-w-strong) solid var(--text);
   background: var(--highlight-soft);
-  box-shadow: none;
 }
 
 .status--none {
-  border-left-color: var(--action);
+  border: var(--border-w-strong) solid var(--text);
+  border-left: var(--rule-mark);
 }
 
 .choices {
@@ -520,6 +526,7 @@ body:has(.action-bar) .toast-region {
 
 .oc-rules {
   color: var(--text-muted);
+  font-size: var(--fs-sm);
 }
 
 .oc-effects {
@@ -597,6 +604,7 @@ body:has(.action-bar) .toast-region {
   display: grid;
   gap: var(--s-3);
   padding: var(--s-3) var(--s-4);
+  border: var(--border-w-strong) solid var(--text);
   border-radius: var(--radius-md);
   background: var(--highlight-soft);
 }
@@ -628,11 +636,13 @@ body:has(.action-bar) .toast-region {
   display: grid;
   gap: 2px;
   padding: var(--s-3);
+  border: var(--rule);
   border-radius: var(--radius-md);
   background: var(--surface-support);
 }
 
 .compare-summary > div:last-child {
+  border: var(--border-w-strong) solid var(--text);
   background: var(--highlight-soft);
 }
 
@@ -693,8 +703,7 @@ body:has(.action-bar) .toast-region {
 }
 
 .cmp-table tr.is-changed td:last-child {
-  background: var(--highlight-soft);
-  padding-left: var(--s-2);
+  font-weight: var(--fw-bold);
 }
 
 .effects {
@@ -719,11 +728,12 @@ body:has(.action-bar) .toast-region {
 
 .effects-same dt {
   color: var(--text-muted);
+  font-weight: var(--fw-medium);
 }
 
 .combo-note {
   padding-left: var(--s-3);
-  border-left: 3px solid var(--highlight);
+  border-left: var(--rule-mark);
   font-size: var(--fs-sm);
 }
 
@@ -916,10 +926,20 @@ body:has(.action-bar) .toast-region {
 
 .check-row input {
   flex: none;
+  appearance: none;
   width: 22px;
   height: 22px;
-  margin-top: 2px;
-  accent-color: var(--action);
+  margin: 2px 0 0;
+  border: var(--border-w) solid var(--border-control);
+  border-radius: 5px;
+  background: var(--surface) center / 16px no-repeat;
+  cursor: pointer;
+}
+
+.check-row input:checked {
+  background-color: var(--action);
+  border-color: var(--action);
+  background-image: var(--check-mark);
 }
 
 .cook-steps .is-done .check-row > span {
@@ -990,9 +1010,9 @@ a.view-btn {
 }
 
 a.view-btn[aria-current="page"] {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 1px 3px rgb(31 26 23 / 0.18);
+  background: var(--selected);
+  color: var(--text-on-selected);
+  font-weight: var(--fw-bold);
 }
 
 .list-meals,
@@ -1122,12 +1142,26 @@ a.view-btn[aria-current="page"] {
 }
 
 .radio-chips .chip:has(input:checked) {
-  background: var(--highlight);
-  border-color: var(--c-ink);
+  background: var(--selected);
+  border-color: var(--selected);
+  color: var(--text-on-selected);
+  font-weight: var(--fw-bold);
 }
 
 .radio-chips input {
-  accent-color: var(--action);
+  appearance: none;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0 var(--s-1) 0 0;
+  border: var(--border-w) solid currentColor;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.radio-chips input:checked {
+  background: currentColor;
+  box-shadow: inset 0 0 0 3px var(--selected);
 }
 
 .about-list {

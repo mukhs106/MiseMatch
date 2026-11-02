@@ -26,21 +26,24 @@
 
 .btn--primary {
   background: var(--action);
+  border-color: var(--action);
   color: var(--text-on-action);
 }
 
+/* Hover adds an inner ring and keeps the fill, so it never reads as secondary. */
 .btn--primary:hover {
-  background: var(--action-hover);
+  box-shadow: inset 0 0 0 2px var(--text-on-action);
 }
 
-/* Tonal, no outline: oat on white. */
+/* Outlined for the black and white stage (a tonal fill can't exist without grey). */
 .btn--secondary {
   background: var(--surface-support);
+  border-color: var(--border-control);
   color: var(--text);
 }
 
 .btn--secondary:hover {
-  background: var(--border-subtle);
+  box-shadow: var(--hover-ring);
 }
 
 
@@ -55,6 +58,10 @@
   text-underline-offset: 0.2em;
 }
 
+.btn--quiet:hover {
+  text-decoration-thickness: 3px;
+}
+
 .btn--small {
   min-height: var(--tap);
   padding: 0 var(--s-4);
@@ -67,7 +74,11 @@
 
 .btn[disabled],
 .btn[aria-disabled="true"] {
-  opacity: 0.5;
+  background: var(--surface);
+  border: var(--border-w) dashed var(--border-control);
+  box-shadow: none;
+  color: var(--text);
+  font-weight: var(--fw-regular);
   cursor: not-allowed;
 }
 
@@ -83,7 +94,7 @@
 }
 
 .icon-btn:hover {
-  background: var(--surface-support);
+  box-shadow: var(--hover-ring);
 }
 
 /* One size for every icon so drawn replacements line up. */
@@ -94,7 +105,17 @@
   display: inline-block;
 }
 
-/* Chips: toggle buttons. Pressed state is shown by fill + check icon, not color alone. */
+/* Icons are black files, so they are inverted wherever they sit on a black fill. */
+.btn--primary:not([disabled], [aria-disabled="true"]) .icon,
+.chip[aria-pressed="true"] .icon,
+.radio-chips .chip:has(input:checked) .icon,
+.seg label:has(input:checked) .icon,
+.tag--yolk .icon,
+.toast .icon {
+  filter: var(--icon-on-fill);
+}
+
+/* Chips: toggle buttons. Pressed state is shown by fill, heavier label and check icon. */
 
 .chips {
   display: flex;
@@ -117,22 +138,21 @@
 
 
 .chip[aria-pressed="true"] {
-  background: var(--highlight);
-  border-color: var(--c-ink);
+  background: var(--selected);
+  border-color: var(--selected);
+  color: var(--text-on-selected);
+  font-weight: var(--fw-bold);
 }
 
-.chip[data-state="some"] {
-  background: linear-gradient(90deg, var(--highlight) 50%, var(--surface) 50%);
-  border-color: var(--c-ink);
-}
-
-/* Tag: non-interactive label */
+/* Tag: non-interactive label. Plain outline for information, solid fill for status,
+   dashed for demo data. */
 
 .tag {
   display: inline-flex;
   align-items: center;
   gap: 0.3em;
   padding: 0.1em 0.6em;
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-pill);
   background: var(--surface-support);
   font-size: var(--fs-xs);
@@ -147,7 +167,8 @@
 
 .tag--yolk {
   background: var(--highlight);
-  color: var(--c-ink);
+  border-color: var(--highlight);
+  color: var(--text-on-highlight);
 }
 
 .tag--demo {
@@ -177,7 +198,13 @@
 }
 
 .stepper button:hover {
-  background: var(--surface-support);
+  box-shadow: var(--hover-ring);
+}
+
+.stepper button[disabled] {
+  border: 1px dashed var(--border-control);
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
 .stepper output {
@@ -222,14 +249,14 @@
 }
 
 .seg label:has(input:checked) {
-  background: var(--cool);
-  color: var(--c-ink);
-  font-weight: var(--fw-medium);
+  background: var(--selected);
+  color: var(--text-on-selected);
+  font-weight: var(--fw-bold);
 }
 
 .seg label:has(input:focus-visible) {
   outline: 3px solid var(--focus);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .seg .icon {
@@ -260,6 +287,14 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
   font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+}
+
+/* Browsers default to a grey placeholder. Lighter weight sets it apart from typed text. */
+.input::placeholder {
+  color: var(--text);
+  font-weight: var(--fw-regular);
+  opacity: 1;
 }
 
 .input:focus-visible,
@@ -296,7 +331,7 @@
 .check input:checked {
   background-color: var(--action);
   border-color: var(--action);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E");
+  background-image: var(--check-mark);
 }
 
 /* Cards and panels */
@@ -328,18 +363,21 @@ a.card:hover {
   display: grid;
   gap: var(--s-2);
   padding: var(--s-3) var(--s-4);
+  border: var(--border-w-strong) solid var(--text);
   border-radius: var(--radius-md);
   background: var(--highlight-soft);
   color: var(--c-ink);
   font-size: var(--fs-sm);
 }
 
+/* Information rather than something to act on: a lighter border. */
 .notice--cool {
+  border-width: 1px;
   background: var(--cool-soft);
 }
 
 .notice strong {
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-bold);
 }
 
 .notice .actions {
@@ -372,7 +410,7 @@ dialog.sheet {
   max-height: 92dvh;
   margin: auto auto 0;
   padding: 0;
-  border: 0;
+  border: var(--border-w-strong) solid var(--text);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   background: var(--surface);
   color: var(--text);
@@ -387,13 +425,12 @@ dialog.sheet[open] {
 }
 
 dialog.sheet::backdrop {
-  background: rgb(31 26 23 / 0.45);
+  background: var(--backdrop);
 }
 
 @keyframes sheet-in {
   from {
     transform: translateY(24px);
-    opacity: 0;
   }
 }
 
@@ -465,11 +502,11 @@ dialog.sheet::backdrop {
 }
 
 .toast .btn--quiet {
-  color: var(--highlight);
+  color: var(--text-on-action);
 }
 
 .toast .btn--quiet:focus-visible {
-  outline-color: var(--highlight);
+  outline-color: var(--text-on-action);
 }
 
 /* Sit above the recipe's sticky shopping bar when it's present. */

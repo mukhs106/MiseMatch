@@ -113,7 +113,7 @@ function compareSheet(ctx, { recipeId, swapId, from }) {
       <section aria-labelledby="cmp-qty">
         <h3 id="cmp-qty" class="eyebrow">Ingredients, for ${after.servings}</h3>
         <ul class="diff">${rows.map((r) => html`
-          <li class="diff-row"><span class="diff-before">${r.before ?? "Not in the recipe"}</span><span class="diff-arrow">${doodle.arrow}<span class="visually-hidden">becomes</span></span><span class="diff-after">${r.after ?? "Removed"}</span></li>`)}</ul>
+          <li class="diff-row"><span class="diff-before"><span class="eyebrow diff-label">Before</span>${r.before ? html`<s>${r.before}</s>` : "Not in the recipe"}</span><span class="diff-arrow">${doodle.arrow}<span class="visually-hidden">becomes</span></span><span class="diff-after"><span class="eyebrow diff-label">After</span>${r.after ?? "Removed"}</span></li>`)}</ul>
       </section>
       <section aria-labelledby="cmp-fx">
         <h3 id="cmp-fx" class="eyebrow">What changes in the dish</h3>

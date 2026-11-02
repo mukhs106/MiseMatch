@@ -3,7 +3,7 @@
 // kept; changes underneath them are flagged, never applied silently.
 
 import { html, plural } from "./html.js";
-import { icon, doodle } from "./icons.js";
+import { icon, doodle, checkNote } from "./icons.js";
 import { getRecipe } from "../data/recipes.js";
 import { computedQty, displayQty, formatShopQty, isListCurrent } from "../core/shopping.js";
 import { practical, unitFamily } from "../core/units.js";
@@ -126,7 +126,7 @@ function lineView(line, ctx) {
             ${line.override && !line.conflict ? html` · <span class="edited">edited</span>
               <button class="btn btn--quiet line-reset" data-action="list-resolve" data-line="${id}" data-choice="recipe">Use recipe amount</button>` : ""}
           </span>
-          ${uncertain ? html`<span class="line-meta small warn">Your pantry amount couldn't be counted here. Check before buying.</span>` : ""}
+          ${uncertain ? html`<span class="line-meta small warn">${checkNote("your pantry amount couldn't be counted here.", "Check before buying:")}</span>` : ""}
           ${line.checked ? (ctx.ui.bought[id]
             ? html`<span class="line-meta small">${icon("check")} Added to your pantry</span>`
             : html`<button class="btn btn--quiet line-to-pantry" data-action="list-to-pantry" data-line="${id}">Add to pantry</button>`) : ""}
@@ -149,7 +149,7 @@ function conflictView(line) {
   if (line.conflict.type === "orphan") {
     return html`
       <div class="notice line-conflict" role="status">
-        <p>No planned meal needs this anymore. You ${line.checked ? "checked it off" : "edited it"}, so it's still here.</p>
+        <p><strong>No planned meal needs this anymore.</strong> You ${line.checked ? "checked it off" : "edited it"}, so it's still here.</p>
         <div class="actions">
           <button class="btn btn--secondary btn--small" data-action="list-resolve" data-line="${id}" data-choice="remove">Remove</button>
           <button class="btn btn--quiet" data-action="list-resolve" data-line="${id}" data-choice="mine">Keep it</button>

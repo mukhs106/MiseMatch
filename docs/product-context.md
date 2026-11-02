@@ -7,7 +7,7 @@ Status: living document. Provisional decisions are expected to change.
 
 ## How to use this file
 
-Read this before changing product behavior, data structure, copy, or visual styling. Parts 1 to 6 are the decision record (from v0.4): what the product is for, which decisions are confirmed versus provisional, and the behavior rules that keep adaptation trustworthy. Part 7 records what is actually built, including contrast checks, limitations and verification. Part 8 records how the contradictions found during the v0.4 merge (C1 to C10) were resolved by T04.
+Read this before changing product behavior, data structure, copy, or visual styling. Parts 1 to 6 are the decision record (from v0.4): what the product is for, which decisions are confirmed versus provisional, and the behavior rules that keep adaptation trustworthy. Part 7 records what is actually built, including contrast checks, limitations and verification. Part 8 records how the contradictions found during the v0.4 merge (C1 to C10) were resolved by T04. Part 9 records the current black and white stage, which takes precedence over color guidance while it lasts.
 
 Statuses used throughout: **Confirmed** (explicit owner decision), **Working** (accepted, still refinable), **Provisional** (a default chosen so the build can proceed; expect revision), **Proposed** (a recommendation awaiting owner approval), **Superseded** or **Rejected** (kept so the project does not loop back), **Open** (unresolved).
 
@@ -85,7 +85,7 @@ Drafts, never assurances. Extraction (`js/core/importer.js`) is separate from no
 
 ### Visual
 
-Pure white surfaces, Apfel Grotezk, burgundy actions, restrained yellow and blue fills, mobile first. Smaller page headings in the flow, photo thumbnails instead of repeated cards, one status message per step, evidence shown as one small label, nutrition and technical detail collapsed. Checked at 430 × 932 (iPhone 14/15 Pro Max class), 393 × 852 (14/15 Pro), 360 × 740 and 1280 × 860, plus 320 px for overflow.
+(Color is on hold for the black and white stage, Part 9.) Pure white surfaces, Apfel Grotezk, burgundy actions, restrained yellow and blue fills, mobile first. Smaller page headings in the flow, photo thumbnails instead of repeated cards, one status message per step, evidence shown as one small label, nutrition and technical detail collapsed. Checked at 430 × 932 (iPhone 14/15 Pro Max class), 393 × 852 (14/15 Pro), 360 × 740 and 1280 × 860, plus 320 px for overflow.
 
 ### Limitations
 
@@ -158,6 +158,7 @@ Not inspected by anyone working in the repository: the Figma file and its eight 
 | Nov 2 | Collection is 10 Indian and South Asian dishes; tomato and egg stir-fry removed | Confirmed; built |
 | Nov 2 | Eight Pexels photos displayed (page links pending); dishes without a suitable photo use a typographic tile | Working |
 | Oct 29 | Copy rule: at most one line of wordplay per screen; navigation, buttons, quantities, consequences, errors and allergy text stay plain. Assigned lines: Recipes header "Blend the rules."; swap sheet title "Thyme for a swap."; Pantry header "Turn 'what's left?' into 'what's next.'"; empty grocery list "Nacho average grocery list."; all list items checked "Bean there, done that."; Use what you have with no matches "Dinner, off-script." followed by a plain next step. | Confirmed (T05) |
+| Nov 2 | Black and white stage: every color token black or white, one typeface, no greys or reduced opacity. Color values stay recorded (Part 9) and may return only as an addition. Secondary buttons are outlined for this stage, temporarily overriding C1. | Confirmed for this stage of development |
 
 ### October 22 testing: observations, revisions, and next question
 
@@ -270,6 +271,8 @@ Rejected naming territory: names implying portions or abundance (Feast, Potluck,
 Earlier explorations (Source Serif, Lastik, Instrument Serif) were references, not an approved pairing.
 
 ### Color (Provisional; the build's tokens are the record, C2)
+
+On hold for the black and white stage (Part 9). The values below are reserved.
 
 The build prompt's defaults, as implemented in `css/tokens.css`. They are not final brand approvals. Measured contrast for every pair in use is in Part 7.
 
@@ -518,6 +521,64 @@ Found while merging v0.4; each decision is in the decision log and is now reflec
 | C8 | Partial amounts are per recipe; shared presence only. The double-counting limitation and its list note are gone. |
 | C9 | No generic "No change." text; a dimension shows only when the data says something. |
 | C10 | One short note when servings differ: cooking times, pan size and oil may need adjusting. |
+
+## 9. Black and white stage (November 2)
+
+For this stage of development the interface uses one typeface and black and white only. The design system is simplified, not removed: tokens, spacing, type scale, grid and component structure all stay. Where this conflicts with color guidance elsewhere in this file, this part wins until color returns; that guidance stays as the record for later.
+
+### State without color
+
+| Meaning | Treatment |
+|---|---|
+| Primary action | Black fill, white text; hover adds an inner white ring |
+| Secondary action | White fill, 1.5 px black outline; hover thickens the border |
+| Selected chip, segment or toggle | Black fill, white bold text, check icon where the control has one |
+| Current tab | Bold label and indicator bar; others regular |
+| Changed by you | 3 px left rule, bold "Changed:" or "Added:" label, struck-through "was" text; changed steps get a black number circle |
+| Something to check | Info icon and bold lead word ("Check:"), via `checkNote` |
+| Status tag | Black fill. Information tag: 1 px outline. Demo data: dashed outline |
+| Notice | 2 px border to act on, 1 px border for information |
+| Status message | 1 px border when all is well; 2 px when it asks something or flags a conflict; 2 px plus a heavy left rule when nothing fits. The wording says what happened |
+| Current adaptation step | Heavy top rule and bold label; other steps 1 px and regular |
+| Original and Your version | 1 px and 2 px borders, labeled; in comparison tables the old value is struck through and the new value is bold |
+| Radio chips and cook checkboxes | Drawn in black and white, because browser defaults are grey |
+| Recipe photos | Greyscale for this stage, through `--photo-filter`. They carry no meaning. Dishes without a photo keep the outlined typographic tile |
+| Idea matching a goal | 2 px border and a black tag with a check |
+| Disabled | Dashed border, regular weight |
+| Secondary text | Smaller size and regular weight, never lighter |
+| Before and after in the swap sheet | Labeled, with the old value struck through |
+| Sheet | 2 px border; no shadow and no dimmed backdrop |
+
+Icons are black files, so they are inverted with `--icon-on-fill` where they sit on a black fill. The favicon is a plain black disc, because an "&" there would need a second typeface.
+
+### Reserved values
+
+These are also kept beside each token in `css/tokens.css`.
+
+| Token | Reserved value |
+|---|---|
+| `--c-oat` | `#F3F2E7` |
+| `--c-wine` | `#59000E` |
+| `--c-wine-hover` | `#420009` |
+| `--c-yolk` | `#FEBD02` |
+| `--c-yolk-soft` | `#FFF3C4` |
+| `--c-sky` | `#A0B9C4` |
+| `--c-sky-soft` | `#E6EEF1` |
+| `--c-ink` | `#1F1A17` |
+| `--c-ink-muted` | `#5E5650` |
+| `--c-line-strong` | `#8A8178` |
+| `--c-line` | `#DCD8C8` |
+| `--c-warn` | `#7A5200` |
+| `--text-on-highlight`, `--text-on-selected` | `--c-ink` |
+| `--backdrop` | `rgb(31 26 23 / 0.45)` |
+| `--shadow-sheet` | `0 -8px 32px rgb(31 26 23 / 0.14)` |
+| `--photo-filter` | `none` |
+| `assets/accents/arrow.svg` | stroke `#59000E` |
+| `assets/accents/squiggle.svg`, `spark.svg` | stroke `#FEBD02` |
+| `assets/accents/pot.svg` | stroke `#59000E`, filled dots `#FEBD02` and `#A0B9C4` |
+| Favicon | `#FEBD02` disc, `#59000E` "&" |
+
+To reintroduce color, restore these values and add color on top of the treatments above. The treatments stay, so nothing depends on color. Restoring tonal secondary buttons (C1) is a separate decision.
 
 ## Root CLAUDE.md guidance
 

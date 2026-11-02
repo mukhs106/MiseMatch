@@ -53,7 +53,7 @@ export function recipesView(ctx) {
               <span class="row-title">${r.title}</span>
               <span class="small muted">${r.subtitle}</span>
               <span class="small meta-line">${r.minutes} min · ${plural(r.servings, "serving")}
-                ${g ? html` · <span class="${fits ? "" : "warn"}">${fits ? (g.eligible[0].kind === "original" ? "Fits as written" : `Fits with changes`) : pending ? "Needs an answer" : "No supported version fits"}</span>` : ""}
+                ${g ? html` · <span class="${fits ? "" : "warn-inline"}">${fits ? (g.eligible[0].kind === "original" ? "Fits as written" : `Fits with changes`) : pending ? "Needs an answer" : "No supported version fits"}</span>` : ""}
                 ${Object.values(state.versions).some((v) => v.recipeId === r.id) ? html` · <span>Your versions</span>` : ""}</span>
             </span>${icon("next")}</a></li>`)}
         </ul>` : html`

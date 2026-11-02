@@ -3,7 +3,7 @@
 // pantry, counted once, and the shopping list is the consolidated shortfall.
 
 import { html, plural } from "./html.js";
-import { icon } from "./icons.js";
+import { icon, checkNote } from "./icons.js";
 import { RECIPES, getRecipe } from "../data/recipes.js";
 import { ITEMS, shortName } from "../data/items.js";
 import { getSwap } from "../data/swaps.js";
@@ -72,7 +72,7 @@ export function plannedList(ctx) {
         <div class="row-text">
           <a class="row-title" href="#/recipe/${r.id}">${r.title}</a>
           <span class="small muted">${p.label}${p.applied.length ? `: ${p.applied.map((id) => getSwap(id)?.label).join(", ")}` : ""}</span>
-          ${updated ? html`<span class="small warn">“${v.name}” changed since you planned it. <button class="btn btn--quiet" data-action="plan-review-update" data-plan="${p.id}">Review update</button></span>` : ""}
+          ${updated ? html`<span class="small warn">${checkNote(html`“${v.name}” changed since you planned it. <button class="btn btn--quiet" data-action="plan-review-update" data-plan="${p.id}">Review update</button>`)}</span>` : ""}
           ${p.versionId && !v ? html`<span class="small muted">That saved version was removed; this meal keeps its own copy.</span>` : ""}
         </div>
         <div class="planned-ctl">
