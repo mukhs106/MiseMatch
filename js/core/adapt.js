@@ -4,15 +4,25 @@
 
 import { getSwap } from "../data/swaps.js";
 import { comboStatus } from "./engine.js";
-import { shortName } from "../data/items.js";
+import { ITEMS, shortName } from "../data/items.js";
+import { formatQty, isApproximated } from "./units.js";
 
 export function defaultAdaptation(recipe) {
   return { servings: recipe.servings, applied: [] };
 }
 
+/** Portions a dish is written to scale across. Outside it, the result isn't derived as supported. */
+export function servingsBounds(recipe) {
+  return recipe?.servingsRange ?? [1, 12];
+}
+
 function scaleFactor(scaling, factor) {
-  // Pan-based fat doesn't need to double when the food does.
+  // Pan-based fat doesn't need to double when the food does. Only within the
+  // dish's authored range, with its pan note shown beside the amount.
   if (scaling === "pan") return 1 + (factor - 1) * 0.5;
+  // Evaporation follows the pan, not the amount of food, so water moves more slowly than food.
+  if (scaling === "liquid") return 1 + (factor - 1) * 0.75;
+  if (scaling === "fixed") return 1;
   return factor;
 }
 
@@ -29,7 +39,8 @@ export function deriveRecipe(recipe, adaptation) {
     slot: ing.slot,
     group: ing.group,
     scaling: ing.scaling ?? "linear",
-    entries: [{ item: ing.item, qty: ing.qty, unit: ing.unit, prep: ing.prep, step: ing.step }],
+    optional: !!ing.optional,
+    entries: [{ item: ing.item, qty: ing.qty, unit: ing.unit, prep: ing.prep, step: ing.step, optional: !!ing.optional }],
     original: ing,
     changedBy: [],
     addedBy: null,
@@ -42,7 +53,7 @@ export function deriveRecipe(recipe, adaptation) {
   for (const swap of applied) {
     if (swap.replace) {
       const line = bySlot.get(swap.replace.slot);
-      line.entries = swap.replace.with.map((w) => ({ ...w }));
+      line.entries = swap.replace.with.map((w) => ({ ...w, optional: line.optional }));
       line.changedBy.push(swap.id);
     }
     if (swap.omit) {
@@ -56,7 +67,8 @@ export function deriveRecipe(recipe, adaptation) {
         slot: add.item,
         group: add.group ?? "main",
         scaling: "linear",
-        entries: [{ item: add.item, qty: add.qty, unit: add.unit, prep: add.prep, step: add.step }],
+        optional: !!add.optional,
+        entries: [{ item: add.item, qty: add.qty, unit: add.unit, prep: add.prep, step: add.step, optional: !!add.optional }],
         original: null,
         changedBy: [swap.id],
         addedBy: swap.id,
@@ -94,7 +106,11 @@ export function deriveRecipe(recipe, adaptation) {
       steps.splice(ins.after === "start" ? 0 : at === -1 ? steps.length : at + 1, 0, step);
     }
   }
-  steps = steps.map((s) => ({ ...s, text: renderTemplate(s.template, bySlot) }));
+  const method = {};
+  for (const [key, def] of Object.entries(recipe.methodQty ?? {})) {
+    method[key] = { qty: def.qty * scaleFactor(def.scaling ?? "linear", factor), unit: def.unit, step: def.step, scaling: def.scaling ?? "linear" };
+  }
+  steps = steps.map((s) => ({ ...s, text: renderTemplate(s.template, bySlot, method) }));
 
   return {
     recipe,
@@ -102,18 +118,77 @@ export function deriveRecipe(recipe, adaptation) {
     factor,
     ingredients: lines,
     steps,
+    method,
     applied,
     cautions: applied.filter((s) => s.caution).map((s) => s.caution),
   };
 }
 
-function renderTemplate(text, bySlot) {
-  return text.replace(/\{([\w-]+)\}/g, (_, key) => {
-    const line = bySlot.get(key);
-    if (!line) return key;
-    if (line.omitted || !line.entries.length) return "(left out)";
-    return line.entries.map((e) => shortName(e.item)).join(" and ");
-  });
+function renderTemplate(text, bySlot, method) {
+  return text
+    .replace(/\{=([\w-]+)\}/g, (_, key) => (method[key] ? formatQty(method[key].qty, method[key].unit, method[key].step) : "some"))
+    .replace(/\{([\w-]+)\}/g, (_, key) => {
+      const line = bySlot.get(key);
+      if (!line) return key;
+      if (line.omitted || !line.entries.length) return "(left out)";
+      return `${line.entries.map((e) => shortName(e.item)).join(" and ")}${line.optional ? " (optional)" : ""}`;
+    });
+}
+
+const SHARE_WORD = { 1: "all of", 2: "half of", 3: "a third of", 4: "a quarter of", 5: "a fifth of", 6: "a sixth of", 8: "an eighth of", 10: "a tenth of" };
+
+/** What one serving is at the active portions, from the same state as the ingredients. */
+export function servingDescription(derived) {
+  const def = derived.recipe?.servingDef;
+  if (!def) return "";
+  if (def.fixed) return def.fixed;
+  const n = derived.servings;
+  const parts = [`${SHARE_WORD[n] ?? `1/${n} of`} ${def.of}`];
+  const side = def.side && derived.ingredients.find((l) => l.slot === def.side.slot);
+  if (side && !side.omitted && side.entries.length) {
+    const e = side.entries[0];
+    parts.push(`${formatQty(e.qty / n, e.unit, e.step)} ${def.side.label}`);
+  }
+  return parts.join(" with ");
+}
+
+/** Effect text with {q:slot} and {n} rendered from the active state, so it never mixes serving bases. */
+export function renderEffect(text, derived) {
+  if (!derived) return text.replace(/\{q:[\w-]+\} ?|\{n\}/g, "");
+  const n = derived.servings;
+  return text
+    .replace(/\{n\}/g, `${n} ${n === 1 ? "serving" : "servings"}`)
+    .replace(/\{q:([\w-]+)\}/g, (_, slot) => {
+      const line = derived.ingredients.find((l) => l.slot === slot);
+      if (!line || !line.entries.length) return "The amount";
+      return line.entries.map((e) => formatQty(e.qty, e.unit, e.step)).join(" + ");
+    });
+}
+
+/**
+ * Plain notes for what does not scale in step with the food. Empty at the
+ * written yield. Names the practical amount of each pan-scaled fat.
+ */
+export function scalingNotes(derived) {
+  const recipe = derived.recipe;
+  if (!recipe || derived.servings === recipe.servings) return [];
+  const notes = [];
+  const pan = derived.ingredients.filter((l) => l.scaling === "pan" && l.entries.length);
+  if (pan.length) {
+    const amounts = pan.flatMap((l) => l.entries.map((e) => `${formatQty(e.qty, e.unit, e.step)} ${shortName(e.item)}`)).join(", ");
+    notes.push({ kind: "pan", text: `${amounts}. ${recipe.panNote ?? "Fat in the pan scales at half rate."}` });
+  }
+  if (derived.ingredients.some((l) => l.scaling === "liquid") || Object.values(derived.method ?? {}).some((m) => m.scaling === "liquid")) {
+    notes.push({ kind: "liquid", text: "Water and simmering liquid scale at about three-quarter rate, because evaporation follows the pan and not the food. Adjust by eye." });
+  }
+  notes.push({ kind: "time", text: `Cooking times are for the written ${recipe.servings} servings and aren't scaled. Go by the cues in each step.` });
+  if (derived.ingredients.some((l) => l.scaling === "taste")) notes.push({ kind: "taste", text: "Spices and salt are scaled as a starting point. Season to taste." });
+  return notes;
+}
+
+/** Ingredients whose measurable amount differs noticeably from the exact derived amount. */
+export function approximations(derived) {
+  return derived.ingredients.flatMap((l) => l.entries.filter((e) => e.qty != null && isApproximated(e.qty, e.unit, e.step)).map((e) => ITEMS[e.item]?.name ?? e.item));
 }
 
 /**
@@ -131,6 +206,7 @@ export function checkSwap(recipe, adaptation, swapId) {
   if (adaptation.applied.includes(swapId)) return { ok: false, blockers: [], untested: [], already: true };
   const blockers = [];
   const untested = [];
+  const whole = comboStatus(recipe.id, [...adaptation.applied, swapId]);
   for (const otherId of adaptation.applied) {
     const other = getSwap(otherId);
     if (!other) continue;
@@ -138,7 +214,7 @@ export function checkSwap(recipe, adaptation, swapId) {
     if (pair.blocked.length) blockers.push({ swap: other, reason: pair.blocked[0].reason });
     else if (pair.untested.length) untested.push(other);
   }
-  return { ok: blockers.length === 0, blockers, untested: untested.filter((u) => !blockers.some((b) => b.swap.id === u.id)) };
+  return { ok: blockers.length === 0, blockers, untested: untested.filter((u) => !blockers.some((b) => b.swap.id === u.id)), wholeSetUntested: !!whole.wholeSetUntested };
 }
 
 /** Apply a swap, optionally removing named blockers first. Returns a new state. */
@@ -151,8 +227,9 @@ export function removeSwap(adaptation, swapId) {
   return { ...adaptation, applied: adaptation.applied.filter((id) => id !== swapId) };
 }
 
-export function setServings(adaptation, servings) {
-  const n = Math.min(12, Math.max(1, Math.round(servings)));
+export function setServings(adaptation, servings, recipe = null) {
+  const [min, max] = servingsBounds(recipe);
+  const n = Math.min(max, Math.max(min, Math.round(servings)));
   return { ...adaptation, servings: n };
 }
 

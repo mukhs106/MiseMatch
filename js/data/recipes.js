@@ -3,8 +3,18 @@
 // and not a claim of regional expertise. Treat them as demo data.
 //
 // Recipe fields:
-//   servings     how many the recipe makes as written
-//   servingDef   what one serving is, so comparisons use the same portion
+//   rev          revision of this recipe's text and quantities; bump on any change.
+//                Saved, planned and cooked records store it with their own snapshot.
+//   servings     how many the recipe makes as written (the source yield)
+//   servingsRange [min, max] portions this dish is written to scale across
+//   servingDef   what one serving is: { of, side?: { slot, label }, fixed? }.
+//                Rendered from the active state (core/adapt.js), never fixed fractions.
+//   timing       { active, elapsed } minutes at the written yield. Times do not scale
+//                with portions. `minutes` stays the elapsed total.
+//   methodQty    { key: { qty, unit, scaling, step? } } amounts named in the method,
+//                rendered as {=key} from the same state as the ingredients.
+//                scaling: "linear" | "liquid" | "fixed"
+//   panNote      why pan-scaled fat is not linear in this dish
 //   image        { file, alt } from assets/images/web (credits in assets/images/manifest.json)
 //   source       where the recipe text comes from (attribution travels with versions)
 //   accompaniments  supported dishes that can be served alongside (by id)
@@ -13,7 +23,8 @@
 //   item     id in ITEMS
 //   qty/unit quantity at the recipe's base servings ("" unit = count)
 //   group    "main" | "spices" | "staples" | "serve"
-//   scaling  "linear" (default) | "taste" (scales, flagged to taste) | "pan" (scales at half rate)
+//   scaling  "linear" (default) | "taste" (scales, flagged to taste) | "pan" (half rate, authored
+//            range and pan note) | "liquid" (three-quarter rate: evaporation doesn't scale with food)
 //   prep     optional preparation note; state: "dry" | "raw" | "cooked" where it matters
 //   optional true for garnishes the dish works without
 // Steps use {slot} tokens, rendered with the slot's current ingredient name.
@@ -32,7 +43,12 @@ export const RECIPES = [
   {
     id: "chana-masala",
     image: { file: "channa-masala-01", alt: "Chana masala in a bowl with rice" },
-    servingDef: "1 of 4: about a quarter of the curry with 75 g uncooked rice",
+    rev: 1,
+    servingDef: { of: "the curry", side: { slot: "rice", label: "uncooked rice" } },
+    servingsRange: [1, 10],
+    timing: { active: 30, elapsed: 45 },
+    methodQty: { simmer: { qty: 250, unit: "ml", scaling: "liquid" } },
+    panNote: "Fat coats the pan, not the food, so it scales at half rate. Use a pan that fits the batch; a much wider or narrower pan changes how much you need.",
     source: HOUSE,
     accompaniments: ["masoor-dal"],
     title: "Chana masala",
@@ -65,7 +81,7 @@ export const RECIPES = [
       { id: "s3", text: "Add the {onion} and cook, stirring often, until deep golden, 10 to 12 minutes." },
       { id: "s4", text: "Stir in the {garlic}, {ginger} and {chili}. Cook for 1 minute until fragrant." },
       { id: "s5", text: "Add the {coriander}, {chilipowder} and {turmeric} for 30 seconds, then the {tomatoes} and {salt}. Cook until thick and the oil separates, 10 to 12 minutes." },
-      { id: "s6", text: "Add the {chickpeas} and about 250 ml water. Simmer for 10 to 15 minutes, mashing a few chickpeas to thicken the sauce." },
+      { id: "s6", text: "Add the {chickpeas} and about {=simmer} water. Simmer for 10 to 15 minutes, mashing a few chickpeas to thicken the sauce." },
       { id: "s7", text: "Finish with the {garam}, a squeeze of {lemon} and the {cilantro}." },
     ],
     noSwap: {
@@ -83,7 +99,11 @@ export const RECIPES = [
   {
     id: "chana-palak",
     image: { file: "palak-channa-01", alt: "Chickpea and spinach curry in a bowl" },
-    servingDef: "1 of 4: about a quarter of the curry with 75 g uncooked rice",
+    rev: 1,
+    servingDef: { of: "the curry", side: { slot: "rice", label: "uncooked rice" } },
+    servingsRange: [1, 8],
+    timing: { active: 25, elapsed: 40 },
+    panNote: "Fat coats the pan, not the food, so it scales at half rate. Use a pan that fits the batch; a much wider or narrower pan changes how much you need.",
     source: HOUSE,
     accompaniments: [],
     title: "Chana palak",
@@ -127,7 +147,11 @@ export const RECIPES = [
   {
     id: "paneer-bhurji",
     image: null,
-    servingDef: "1 of 2: half the bhurji with 2 rotis",
+    rev: 1,
+    servingDef: { of: "the bhurji", side: { slot: "roti", label: "rotis" } },
+    servingsRange: [1, 6],
+    timing: { active: 20, elapsed: 25 },
+    panNote: "Fat coats the pan, not the food, so it scales at half rate. Use a pan that fits the batch; a much wider or narrower pan changes how much you need.",
     source: HOUSE,
     accompaniments: [],
     title: "Paneer bhurji",
@@ -166,7 +190,11 @@ export const RECIPES = [
   {
     id: "masoor-dal",
     image: null,
-    servingDef: "1 of 4: about a quarter of the dal with 75 g uncooked rice",
+    rev: 1,
+    servingDef: { of: "the dal", side: { slot: "rice", label: "uncooked rice" } },
+    servingsRange: [1, 10],
+    timing: { active: 15, elapsed: 35 },
+    panNote: "Fat coats the pan, not the food, so it scales at half rate. Use a pan that fits the batch; a much wider or narrower pan changes how much you need.",
     source: HOUSE,
     accompaniments: [],
     title: "Masoor dal tadka",
@@ -177,7 +205,7 @@ export const RECIPES = [
     blurb: "Soft red lentils finished with sizzling spiced ghee. Mostly hands-off while the lentils simmer.",
     ingredients: [
       { slot: "lentils", item: "red-lentils", qty: 200, unit: "g", group: "main", prep: "rinsed", state: "dry" },
-      { slot: "water", item: "water", qty: 900, unit: "ml", group: "main" },
+      { slot: "water", item: "water", qty: 900, unit: "ml", group: "main", scaling: "liquid" },
       { slot: "tomato", item: "fresh-tomatoes", qty: 1, unit: "", group: "main", prep: "chopped" },
       { slot: "garlic", item: "garlic", qty: 4, unit: "cloves", group: "main", prep: "thinly sliced" },
       { slot: "cilantro", item: "cilantro", qty: 2, unit: "tbsp", group: "main", prep: "chopped", optional: true },
@@ -203,7 +231,12 @@ export const RECIPES = [
   {
     id: "paneer-butter-masala",
     image: { file: "butter-paneer-01", alt: "Paneer butter masala in an orange tomato sauce" },
-    servingDef: "1 of 4: a quarter of the curry with 2 rotis",
+    rev: 1,
+    servingDef: { of: "the curry", side: { slot: "roti", label: "rotis" } },
+    servingsRange: [1, 8],
+    timing: { active: 25, elapsed: 40 },
+    methodQty: { blend: { qty: 60, unit: "ml", scaling: "linear" } },
+    panNote: "Fat coats the pan, not the food, so it scales at half rate. Use a pan that fits the batch; a much wider or narrower pan changes how much you need.",
     source: HOUSE,
     accompaniments: ["masoor-dal"],
     title: "Paneer butter masala",
@@ -235,7 +268,7 @@ export const RECIPES = [
       { id: "s2", text: "Melt the {butter} with the {oil} in a wide pan over medium heat. Cook the {onion} until soft and lightly golden, 6 to 8 minutes." },
       { id: "s3", text: "Add the {garlic} and {ginger} for 1 minute, then the {chilipowder} and {coriander} for 30 seconds." },
       { id: "s4", text: "Pour in the {tomatoes} with the {salt}. Simmer, stirring now and then, until thick and glossy, about 10 minutes." },
-      { id: "s5", text: "Blend the soaked cashews with about 60 ml of their water until completely smooth. Stir into the sauce and simmer for 3 minutes, loosening with water if it catches." },
+      { id: "s5", text: "Blend the soaked cashews with about {=blend} of their water until completely smooth. Stir into the sauce and simmer for 3 minutes, loosening with water if it catches." },
       { id: "s6", text: "Add the {paneer} and simmer gently for 3 minutes so it softens without breaking." },
       { id: "s7", text: "Lower the heat. Stir in the {cream}, {methi}, {garam} and {sugar}, and warm through without boiling." },
       { id: "s8", text: "Serve with warm {roti}." },
@@ -250,7 +283,11 @@ export const RECIPES = [
   {
     id: "punjabi-kadhi",
     image: { file: "punjabi-kadhi-01", alt: "Yellow yogurt kadhi in a bowl" },
-    servingDef: "1 of 4: a quarter of the kadhi with 75 g uncooked rice",
+    rev: 1,
+    servingDef: { of: "the kadhi", side: { slot: "rice", label: "uncooked rice" } },
+    servingsRange: [1, 8],
+    timing: { active: 15, elapsed: 45 },
+    panNote: "Fat coats the pan, not the food, so it scales at half rate. Use a pan that fits the batch; a much wider or narrower pan changes how much you need.",
     source: HOUSE,
     accompaniments: [],
     title: "Punjabi kadhi",
@@ -262,7 +299,7 @@ export const RECIPES = [
     ingredients: [
       { slot: "yogurt", item: "yogurt", qty: 500, unit: "g", group: "main", prep: "slightly sour is best" },
       { slot: "besan", item: "besan", qty: 50, unit: "g", group: "main" },
-      { slot: "water", item: "water", qty: 900, unit: "ml", group: "main" },
+      { slot: "water", item: "water", qty: 900, unit: "ml", group: "main", scaling: "liquid" },
       { slot: "onion", item: "onion", qty: 1, unit: "", group: "main", prep: "thinly sliced" },
       { slot: "ginger", item: "ginger", qty: 1, unit: "tbsp", group: "main", prep: "grated" },
       { slot: "chili", item: "green-chili", qty: 2, unit: "", group: "main", scaling: "taste", prep: "slit" },
@@ -293,7 +330,11 @@ export const RECIPES = [
   {
     id: "pav-bhaji",
     image: { file: "pav-bhaji-01", alt: "Pav bhaji with buttered bread rolls" },
-    servingDef: "1 of 4: a quarter of the bhaji with 2 pav",
+    rev: 1,
+    servingDef: { of: "the bhaji", side: { slot: "pav", label: "pav" } },
+    servingsRange: [2, 10],
+    timing: { active: 30, elapsed: 50 },
+    panNote: "Fat coats the pan, not the food, so it scales at half rate. Use a pan that fits the batch; a much wider or narrower pan changes how much you need.",
     source: HOUSE,
     accompaniments: [],
     title: "Pav bhaji",
@@ -333,7 +374,12 @@ export const RECIPES = [
   {
     id: "aloo-paratha",
     image: { file: "paratha-01", alt: "Stuffed parathas on a plate" },
-    servingDef: "1 of 4: 2 parathas",
+    rev: 1,
+    servingDef: { fixed: "2 parathas" },
+    servingsRange: [1, 8],
+    timing: { active: 40, elapsed: 60 },
+    methodQty: { pieces: { qty: 8, unit: "", scaling: "linear", step: 1 } },
+    panNote: "This is brushing fat for each paratha, and it scales at about half rate because you reuse the same hot pan.",
     source: HOUSE,
     accompaniments: [],
     title: "Aloo paratha",
@@ -341,7 +387,7 @@ export const RECIPES = [
     cuisine: "Punjabi, home style",
     minutes: 60,
     servings: 4,
-    blurb: "Soft wheat dough wrapped round a spiced potato filling and cooked on a hot pan with ghee. Makes 8.",
+    blurb: "Soft wheat dough wrapped round a spiced potato filling and cooked on a hot pan with ghee.",
     ingredients: [
       { slot: "atta", item: "atta", qty: 300, unit: "g", group: "main", prep: "plus a little for rolling" },
       { slot: "water", item: "water", qty: 180, unit: "ml", group: "main", prep: "roughly; add gradually" },
@@ -358,7 +404,7 @@ export const RECIPES = [
     steps: [
       { id: "s1", text: "Mix the {atta} with a pinch of salt and add the {water} gradually, kneading into a soft dough. Cover and rest for 20 minutes." },
       { id: "s2", text: "Mix the {potato} with the {onion}, {chili}, {cilantro}, {cumin}, {chilipowder}, {garam} and the rest of the {salt}. Keep the filling dry and lump-free." },
-      { id: "s3", text: "Divide the dough and filling into 8 each. Roll a ball of dough to 10 cm, put filling in the center, gather the edges to seal, flatten, and roll gently to about 16 cm." },
+      { id: "s3", text: "Divide the dough and filling into {=pieces} each. Roll a ball of dough to 10 cm, put filling in the center, gather the edges to seal, flatten, and roll gently to about 16 cm." },
       { id: "s4", text: "Cook on a hot pan for about 1 minute a side, then brush with {ghee} and press until golden spots appear on both sides." },
     ],
     noSwap: {
@@ -368,7 +414,12 @@ export const RECIPES = [
   {
     id: "goat-curry",
     image: { file: "mutton-curry-rice-01", alt: "Goat curry with rice" },
-    servingDef: "1 of 4: a quarter of the curry with 75 g uncooked rice",
+    rev: 1,
+    servingDef: { of: "the curry", side: { slot: "rice", label: "uncooked rice" } },
+    servingsRange: [2, 8],
+    timing: { active: 35, elapsed: 120 },
+    methodQty: { water: { qty: 500, unit: "ml", scaling: "liquid" } },
+    panNote: "Fat coats the pan, not the food, so it scales at half rate. Use a pan that fits the batch; a much wider or narrower pan changes how much you need.",
     source: HOUSE,
     accompaniments: [],
     title: "Goat curry (mutton curry)",
@@ -397,7 +448,7 @@ export const RECIPES = [
       { id: "s2", text: "Heat the {oil} in a heavy pot and cook the {onion} until deep brown, 15 to 20 minutes." },
       { id: "s3", text: "Add the rest of the garlic and ginger for 1 minute, then the {chilipowder} and {coriander}, then the {tomatoes}. Cook until the oil separates, about 8 minutes." },
       { id: "s4", text: "Add the meat and its marinade. Sear over high heat, stirring, for 10 minutes." },
-      { id: "s5", text: "Add 500 ml hot water, cover and simmer on low until the meat is tender, 75 to 90 minutes (about 25 minutes at pressure in a pressure cooker)." },
+      { id: "s5", text: "Add {=water} hot water, cover and simmer on low until the meat is tender, 75 to 90 minutes (about 25 minutes at pressure in a pressure cooker)." },
       { id: "s6", text: "Meanwhile, rinse the {rice} and cook it with 1.5 times its volume of water. Finish the curry with the {garam}." },
     ],
     noSwap: {
@@ -410,7 +461,10 @@ export const RECIPES = [
   {
     id: "masala-chai",
     image: { file: "chai-01", alt: "Masala chai in a glass" },
-    servingDef: "1 of 2: one cup, about 200 ml",
+    rev: 1,
+    servingDef: { fixed: "one cup, about 200 ml" },
+    servingsRange: [1, 6],
+    timing: { active: 5, elapsed: 10 },
     source: HOUSE,
     accompaniments: [],
     title: "Masala chai",

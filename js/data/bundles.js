@@ -1,7 +1,8 @@
 // Authored adaptation bundles: combinations of rules that were written to be
-// used together, with notes on how they interact. The engine only treats a
-// multi-rule result as supported when it is one of these bundles or every
-// pair in it is declared in `combinesWith`. Anything else is untested.
+// used together, with notes on how they interact. The engine treats a set of
+// three or more rules as supported only when it is exactly one of these bundles;
+// a pair needs a bundle or `combinesWith`. Declared pairs alone never make a
+// larger set supported, so anything else is untested.
 //
 // Every bundle is a suggested, untested combination (evidence: "suggested").
 
@@ -60,7 +61,7 @@ export const BUNDLES = [
     recipe: "paneer-butter-masala",
     label: "Plant-based, nut-free, with coconut, more tofu",
     swaps: ["pbm-tofu", "pbm-coconut", "pbm-oil", "pbm-sunflower", "pbm-more-protein"],
-    notes: "As the coconut version, with 600 g tofu. The sauce is stretched over more pieces, so it's less saucy.",
+    notes: "As the coconut version, with half as much tofu again. The sauce is stretched over more pieces, so it's less saucy.",
   },
   {
     id: "pbm-b-vegan-nutfree-oat",
@@ -74,7 +75,7 @@ export const BUNDLES = [
     recipe: "paneer-butter-masala",
     label: "Plant-based, nut-free, no coconut, more tofu",
     swaps: ["pbm-tofu", "pbm-oat", "pbm-oil", "pbm-no-cashew", "pbm-more-protein"],
-    notes: "As the no-coconut version, with 600 g tofu and less sauce around each piece.",
+    notes: "As the no-coconut version, with half as much tofu again and less sauce around each piece.",
   },
   {
     id: "pbm-b-vegan-cashew",

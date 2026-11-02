@@ -15,8 +15,9 @@
 // fallback that keeps what was entered. A real importer needs a server-side
 // fetcher, permission checks and per-site extraction (documented as deferred).
 
-import { parseLine } from "./normalize.js";
+import { parseLine, INPUT_LIMITS } from "./normalize.js";
 import { RECIPES } from "../data/recipes.js";
+import { uid } from "./versions.js";
 
 const ATTRIBUTION_NOTE = "Imported for your private use. Keep the creator's credit, and don't republish their recipe without permission.";
 
@@ -56,17 +57,34 @@ function instructions(v) {
   return out;
 }
 
-/** Servings from "4", 4, "Serves 4", ["4", "4 servings"]. null when absent or not a serving count. */
-export function parseServings(v) {
+const MAX_YIELD = 100;
+
+/**
+ * Read a stated yield without silently truncating it.
+ * @returns {{ servings: number|null, text: string|null, issue: null|"range"|"fraction"|"too-large", range?: [low, high], value?: number }}
+ *   Ranges, fractions and implausible values stay as unresolved source data; the
+ *   person says which number calculations should use.
+ */
+export function parseYield(v) {
   for (const y of asArray(v)) {
-    const s = String(y);
-    const m = s.match(/(\d+)/);
-    if (!m) continue;
+    const s = String(y).trim();
     // "Makes 12 parathas" is a yield, not a serving count.
+    if (!/\d/.test(s)) continue;
     if (/\b(makes|pieces|parathas|rotis|cookies|cups?)\b/i.test(s) && !/serv/i.test(s)) continue;
-    return Number(m[1]);
+    const range = s.match(/(\d+(?:[.,]\d+)?)\s*(?:-|–|—|to)\s*(\d+(?:[.,]\d+)?)/i);
+    if (range) return { servings: null, text: s, issue: "range", range: [Number(range[1].replace(",", ".")), Number(range[2].replace(",", "."))] };
+    const fraction = s.match(/(\d+[.,]\d+|\d+\s*\d*\/\d+|\d*[½¼¾⅓⅔])/);
+    if (fraction) return { servings: null, text: s, issue: "fraction", value: Number(fraction[1].replace(",", ".")) || null };
+    const n = Number(s.match(/\d+/)[0]);
+    if (!(n >= 1) || n > MAX_YIELD) return { servings: null, text: s, issue: "too-large", value: n };
+    return { servings: n, text: s, issue: null };
   }
-  return null;
+  return { servings: null, text: null, issue: null };
+}
+
+/** The usable serving count from a stated yield, or null when it's absent or unresolved. */
+export function parseServings(v) {
+  return parseYield(v).servings;
 }
 
 /**
@@ -89,6 +107,7 @@ export function extractJsonLd(html, url = null) {
     ingredients: asArray(r.recipeIngredient ?? r.ingredients).map(text).filter(Boolean),
     steps: instructions(r.recipeInstructions),
     servings: parseServings(r.recipeYield),
+    yield: parseYield(r.recipeYield),
     servingsText: asArray(r.recipeYield).map(String).join(", ") || null,
     creator: asArray(r.author).map(text).filter(Boolean).join(", ") || null,
     site: text(r.publisher) || null,
@@ -98,56 +117,98 @@ export function extractJsonLd(html, url = null) {
 
 // ---------- pasted text ----------
 
+const clean = (l) => l.replace(/^#+\s*/, "").replace(/^\*\*(.*)\*\*$/, "$1").replace(/^__(.*)__$/, "$1").trim();
 const ING_HEAD = /^\s*(ingredients?|you(?:'|’)ll need|what you need)\s*:?\s*$/i;
 const STEP_HEAD = /^\s*(method|instructions?|directions?|steps?|preparation|how to make( it)?)\s*:?\s*$/i;
-const SERVES = /\b(?:serves|servings?|for|yield)\s*:?\s*(\d+)/i;
+const SERVES = /\b(?:serves|servings?|for|yield)\s*:?\s*\d/i;
+// "For the tadka:" or "Masala:" inside an ingredient list names a part of the recipe, not an ingredient.
+const SUBHEAD = /^(?:for (?:the )?[^\d,]{2,40}|[A-Za-z][^\d,]{1,30}):$/;
 
 /**
- * Split pasted text into recipes. Each recipe needs an Ingredients heading;
- * more than one heading means more than one recipe, and the person chooses.
- * @returns { recipes: [...same shape as extractJsonLd], problem?: string }
+ * Split pasted text into recipes. Each recipe needs an Ingredients heading; more
+ * than one heading means more than one recipe or more than one part of a recipe,
+ * and the person chooses from a preview. The raw text is kept with the result.
+ * @returns { recipes: [...same shape as extractJsonLd], raw, problem?: string, truncated?: boolean }
  */
 export function parsePastedText(input) {
-  const lines = input.replace(/\r/g, "").split("\n").map((l) => l.trim());
+  const truncated = input.length > INPUT_LIMITS.text;
+  const raw = input.slice(0, INPUT_LIMITS.text);
+  const lines = raw.replace(/\r/g, "").split("\n").map((l) => clean(l));
   const heads = lines.map((l, i) => (ING_HEAD.test(l) ? i : -1)).filter((i) => i >= 0);
-  if (!lines.some(Boolean)) return { recipes: [], problem: "empty" };
-  if (!heads.length) return { recipes: [], problem: "no-sections" };
+  if (!lines.some(Boolean)) return { recipes: [], raw, problem: "empty" };
+  if (!heads.length) return { recipes: [], raw, problem: "no-sections" };
   const recipes = heads.map((h, k) => {
     const end = heads[k + 1] ?? lines.length;
     // Title: the last non-empty line before the heading that isn't a serves line.
     let title = null;
-    let servings = null;
-    let servingsText = null;
-    for (let i = h - 1; i >= (heads[k - 1] ?? -1) + 1; i--) {
-      if (!lines[i]) continue;
-      if (SERVES.test(lines[i]) && servings == null) {
-        servings = Number(lines[i].match(SERVES)[1]);
-        servingsText = lines[i];
+    let yieldInfo = { servings: null, text: null, issue: null };
+    const prevEnd = heads[k - 1] ?? -1;
+    const prevSteps = prevEnd >= 0 ? lines.slice(prevEnd + 1, h).findIndex((l) => STEP_HEAD.test(l)) : -1;
+    // Only look back to the blank line that starts this recipe, so a previous method isn't taken for a title.
+    for (let i = h - 1; i > prevEnd; i--) {
+      if (!lines[i]) {
+        if (title) break;
+        if (prevSteps >= 0) continue;
         continue;
       }
-      if (!title && !STEP_HEAD.test(lines[i])) title = lines[i].replace(/^#+\s*/, "");
+      if (SERVES.test(lines[i]) && !yieldInfo.text) {
+        yieldInfo = parseYield(lines[i]);
+        continue;
+      }
+      if (!title && !STEP_HEAD.test(lines[i])) {
+        title = lines[i];
+        if (prevEnd >= 0) break;
+      }
     }
     const body = lines.slice(h + 1, end);
-    const stepAt = body.findIndex((l) => STEP_HEAD.test(l));
-    const ingLines = (stepAt >= 0 ? body.slice(0, stepAt) : body).filter(Boolean);
-    const stepLines = stepAt >= 0 ? body.slice(stepAt + 1).filter(Boolean) : [];
+    let stepAt = body.findIndex((l) => STEP_HEAD.test(l));
+    // The next recipe's title and serves line belong to the next recipe, not this method.
+    let bodyEnd = body.length;
+    if (k + 1 < heads.length) {
+      const blank = body.lastIndexOf("");
+      if (blank >= 0 && blank > stepAt) bodyEnd = blank;
+    }
+    const ingRaw = (stepAt >= 0 ? body.slice(0, stepAt) : body.slice(0, bodyEnd)).filter(Boolean);
+    const stepLines = stepAt >= 0 ? body.slice(stepAt + 1, bodyEnd).filter(Boolean) : [];
     // A serves line may also sit inside the body.
-    for (const l of body) if (servings == null && SERVES.test(l) && !/\d+\s*(g|ml|tsp|tbsp|cup)/i.test(l)) {
-      servings = Number(l.match(SERVES)[1]);
-      servingsText = l;
+    for (const l of body) if (!yieldInfo.text && SERVES.test(l) && !/\d+\s*(g|ml|tsp|tbsp|cup)/i.test(l)) yieldInfo = parseYield(l);
+    let section = null;
+    const ingredients = [];
+    const sections = [];
+    for (const l of ingRaw) {
+      if (SUBHEAD.test(l)) {
+        section = l.replace(/:$/, "");
+        sections.push(section);
+        continue;
+      }
+      if (SERVES.test(l) && !/\d+\s*(g|ml|tsp|tbsp|cup)/i.test(l)) continue;
+      ingredients.push({ raw: l, section });
     }
     return {
-      title: title ?? "Untitled recipe",
-      ingredients: ingLines.filter((l) => !SERVES.test(l) || /\d+\s*(g|ml|tsp|tbsp|cup)/i.test(l)),
-      steps: stepLines.map((l) => l.replace(/^(\d+[.)]|step\s*\d+:?)\s*/i, "")),
-      servings,
-      servingsText,
+      title: (title ?? "Untitled recipe").slice(0, INPUT_LIMITS.title),
+      ingredients: ingredients.slice(0, INPUT_LIMITS.lines),
+      steps: stepLines.map((l) => l.replace(/^(\d+[.)]|step\s*\d+:?)\s*/i, "")).slice(0, INPUT_LIMITS.steps),
+      sections,
+      servings: yieldInfo.servings,
+      yield: yieldInfo,
+      servingsText: yieldInfo.text,
       creator: null,
       site: null,
       url: null,
     };
   });
-  return { recipes };
+  return { recipes, raw, ...(truncated ? { truncated: true } : {}) };
+}
+
+/** When a paste's several "Ingredients" headings were parts of one recipe, not separate recipes. */
+export function combineExtracted(recipes) {
+  const first = recipes[0];
+  return {
+    ...first,
+    ingredients: recipes.flatMap((r) => r.ingredients.map((i) => (typeof i === "string" ? { raw: i, section: r.title } : { ...i, section: i.section ?? r.title }))),
+    steps: recipes.flatMap((r) => r.steps),
+    sections: recipes.map((r) => r.title),
+  };
 }
 
 // ---------- demo link fixtures ----------
@@ -237,16 +298,16 @@ export const FALLBACK_TEXT = {
  * keeps the URL so it can travel with a pasted version.
  */
 export function extractFromLink(url) {
-  const clean = url.trim();
-  if (!/^https?:\/\//i.test(clean)) return { recipes: [], problem: "not-fetchable", url: clean };
-  const demo = DEMO_LINKS[clean];
-  if (!demo) return { recipes: [], problem: "not-fetchable", url: clean };
+  const address = url.trim().slice(0, INPUT_LIMITS.url);
+  if (!/^https?:\/\//i.test(address)) return { recipes: [], problem: "not-fetchable", url: address };
+  const demo = DEMO_LINKS[address];
+  if (!demo) return { recipes: [], problem: "not-fetchable", url: address };
   if (demo.kind === "structured") {
-    const recipes = extractJsonLd(demo.html, clean);
-    return recipes.length ? { recipes, method: "structured", url: clean, demo: true } : { recipes: [], problem: "no-structured", url: clean, demo: true };
+    const recipes = extractJsonLd(demo.html, address);
+    return recipes.length ? { recipes, method: "structured", url: address, demo: true } : { recipes: [], problem: "no-structured", url: address, demo: true };
   }
-  if (demo.kind === "multiple") return { ...parsePastedText(demo.text), method: "page", url: clean, demo: true };
-  return { recipes: [], problem: demo.kind, url: clean, demo: true };
+  if (demo.kind === "multiple") return { ...parsePastedText(demo.text), method: "page", url: address, demo: true };
+  return { recipes: [], problem: demo.kind, url: address, demo: true };
 }
 
 // ---------- drafts ----------
@@ -257,17 +318,26 @@ export function suggestSupported(title) {
   return RECIPES.find((r) => t.includes(r.title.toLowerCase()) || r.title.toLowerCase().split(" (")[0] === t)?.id ?? null;
 }
 
-let seq = 0;
+/** An earlier import of the same thing, so importing twice is a choice rather than an accident. */
+export function findDuplicateDraft(drafts, extracted, url = null) {
+  const lines = (r) => r.map((x) => (typeof x === "string" ? x : x.raw)).join("|").toLowerCase();
+  return Object.values(drafts).find((d) => (url && d.source.url === url) || (d.title.toLowerCase() === extracted.title.toLowerCase() && lines(d.lines.map((l) => l.raw)) === lines(extracted.ingredients))) ?? null;
+}
+
 /** Build a draft from one extracted recipe. Missing pieces stay missing. */
-export function buildDraft(extracted, { method, url = null, now = Date.now() } = {}) {
-  const id = `d${now.toString(36)}${(seq++).toString(36)}`;
+export function buildDraft(extracted, { method, url = null, raw = null, now = Date.now() } = {}) {
   return {
-    id,
+    id: uid("d"),
     title: extracted.title,
-    servings: extracted.servings ?? null,
+    servings: extracted.servings ?? null, // the source yield: the denominator for scaling
+    targetServings: null, // portions to make; never changes the source yield
+    yield: extracted.yield ?? { servings: extracted.servings ?? null, text: extracted.servingsText ?? null, issue: null },
     servingsText: extracted.servingsText ?? null,
-    lines: extracted.ingredients.map((raw, i) => parseLine(raw, { section: "Ingredients", source: method, index: i })),
+    lines: extracted.ingredients.map((ing, i) => (typeof ing === "string"
+      ? parseLine(ing, { section: "Ingredients", source: method, index: i })
+      : parseLine(ing.raw, { section: ing.section ?? "Ingredients", source: method, index: i }))),
     steps: extracted.steps,
+    rawText: raw,
     source: {
       method, // "structured" | "page" | "paste"
       url: url ?? extracted.url ?? null,

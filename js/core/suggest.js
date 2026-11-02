@@ -7,9 +7,10 @@
 import { ITEMS, shortName } from "../data/items.js";
 import { swapsForRecipe } from "../data/swaps.js";
 import { candidates } from "./engine.js";
+import { isOut } from "./pantry.js";
 
-// In the pantry at all (any amount, or amount unknown). Free-text items never match.
-const onHand = (pantry, item) => pantry[item] != null && !pantry[item].free;
+// In the pantry and not marked as out (any amount, or amount unknown). Free-text items never match.
+const onHand = (pantry, item) => pantry[item] != null && !pantry[item].free && !isOut(pantry[item]);
 
 /** Key ingredients: the main things you'd shop for, not spices or staples. */
 export function keyLines(recipe) {

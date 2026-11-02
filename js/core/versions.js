@@ -12,10 +12,96 @@
 //             is offered as a reviewable update instead of changing the list.
 //   cook      a record of what was actually cooked (exact rules and servings),
 //             with optional feedback attached to that exact version.
+//   cooking   a cook mode visit in progress: frozen at entry, with its own checklist.
+//
+// Saved, planned and cooked records carry recipe and rule revisions and a
+// reproducible snapshot of the derived result. While the catalogue still matches,
+// the live derivation is identical. If a rule is renamed or changed later, the
+// record's snapshot still says exactly what was saved, planned or cooked.
 
 import { getRecipe } from "../data/recipes.js";
+import { getSwap } from "../data/swaps.js";
+import { ITEMS } from "../data/items.js";
+import { deriveRecipe } from "./adapt.js";
 
 const HISTORY = 20;
+const REVISION_DEFAULT = 1;
+
+/** Collision-resistant id, with a fallback for browsers without crypto.randomUUID. */
+export function uid(prefix) {
+  const random = globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+  return `${prefix}-${random}`;
+}
+
+export const recipeRev = (recipe) => recipe?.rev ?? REVISION_DEFAULT;
+export const ruleRev = (swap) => swap?.rev ?? REVISION_DEFAULT;
+
+/** A reproducible copy of what this adaptation derives to right now. */
+export function deriveSnapshot(recipe, adaptation, now = Date.now(), basis = "recorded") {
+  const d = deriveRecipe(recipe, adaptation);
+  return {
+    recipeId: recipe.id,
+    recipeRev: recipeRev(recipe),
+    title: recipe.title,
+    servings: adaptation.servings,
+    basis, // "recorded" when it happened; "migrated" when written during a later store migration
+    takenAt: now,
+    rules: adaptation.applied.map((id) => {
+      const swap = getSwap(id);
+      return { id, rev: swap ? ruleRev(swap) : null, label: swap?.label ?? id };
+    }),
+    ingredients: d.ingredients.map((l) => ({
+      slot: l.slot,
+      group: l.group,
+      scaling: l.scaling,
+      optional: !!l.optional,
+      omitted: l.omitted,
+      added: !!l.addedBy,
+      changed: l.changedBy.length > 0,
+      entries: l.entries.map((e) => ({ item: e.item, name: ITEMS[e.item]?.name ?? e.item, qty: e.qty, unit: e.unit, prep: e.prep ?? null, step: e.step ?? null, optional: !!e.optional })),
+    })),
+    steps: d.steps.map((st) => ({ id: st.id, text: st.text, changed: st.changedBy.length > 0, added: st.added })),
+  };
+}
+
+/**
+ * Whether a record still matches the catalogue. `intact` means deriving it live
+ * reproduces its snapshot; otherwise the snapshot is the truth and the differences are named.
+ */
+export function recordStatus(rec) {
+  const recipe = getRecipe(rec.recipeId);
+  const missingRules = (rec.applied ?? []).filter((id) => !getSwap(id));
+  const stored = rec.snapshot?.rules ?? [];
+  const changedRules = stored.filter((r) => r.rev != null && getSwap(r.id) && ruleRev(getSwap(r.id)) !== r.rev).map((r) => r.id);
+  const recipeChanged = !!rec.snapshot && recipeRev(recipe) !== rec.snapshot.recipeRev;
+  return { intact: !!recipe && !missingRules.length && !changedRules.length && !recipeChanged, missingRules, changedRules, recipeChanged };
+}
+
+/** A derived-recipe shaped view of a stored snapshot. */
+export function hydrateSnapshot(snap) {
+  return {
+    recipe: getRecipe(snap.recipeId),
+    servings: snap.servings,
+    factor: 1,
+    fromSnapshot: true,
+    ingredients: snap.ingredients.map((l) => ({ ...l, changedBy: l.changed ? ["snapshot"] : [], addedBy: l.added ? "snapshot" : null, entries: l.entries.map((e) => ({ ...e, prep: e.prep ?? undefined, step: e.step ?? undefined })) })),
+    steps: snap.steps.map((st) => ({ ...st, changedBy: st.changed ? ["snapshot"] : [] })),
+    method: {},
+    applied: snap.rules.map((r) => ({ id: r.id, label: r.label })),
+    cautions: [],
+  };
+}
+
+/** The derived result for a saved, planned or cooked record. Never silently drops a changed rule. */
+export function derivedForRecord(rec) {
+  if (rec.snapshot && !recordStatus(rec).intact) return hydrateSnapshot(rec.snapshot);
+  return deriveRecipe(getRecipe(rec.recipeId), rec);
+}
+
+/** Labels for a record's rules, from its own snapshot when the catalogue no longer has them. */
+export function ruleLabels(rec) {
+  return (rec.applied ?? []).map((id) => getSwap(id)?.label ?? rec.snapshot?.rules.find((r) => r.id === id)?.label ?? `${id} (no longer in the catalogue)`);
+}
 
 export function snapshotOf(x) {
   return { servings: x.servings, applied: [...x.applied] };
@@ -28,12 +114,15 @@ export function sameSnapshot(a, b) {
 /** Start a session from the original or from a saved version. */
 export function startSession(recipe, version = null, now = Date.now()) {
   const base = version ? snapshotOf(version) : { servings: recipe.servings, applied: [] };
-  return { recipeId: recipe.id, baseVersion: version?.id ?? null, ...base, history: [], step: "needs", updatedAt: now, constraints: null };
+  // A rule that no longer exists can't be worked with; it's named, and the saved version keeps it.
+  const droppedRules = base.applied.filter((id) => !getSwap(id)).map((id) => version?.snapshot?.rules.find((r) => r.id === id)?.label ?? id);
+  base.applied = base.applied.filter((id) => getSwap(id));
+  return { recipeId: recipe.id, baseVersion: version?.id ?? null, ...base, history: [], step: "needs", updatedAt: now, constraints: null, missing: [], ...(droppedRules.length ? { droppedRules } : {}) };
 }
 
 /** Record a change; the previous state goes on the undo history. */
 export function changeSession(session, patch, now = Date.now()) {
-  const prev = { servings: session.servings, applied: [...session.applied], constraints: session.constraints };
+  const prev = { servings: session.servings, applied: [...session.applied], constraints: session.constraints, missing: [...(session.missing ?? [])] };
   return { ...session, ...patch, history: [...session.history, prev].slice(-HISTORY), updatedAt: now };
 }
 
@@ -71,11 +160,11 @@ export function saveSession(versions, session, { mode = "new", name, now = Date.
   const next = { ...versions };
   if (mode === "update" && session.baseVersion && next[session.baseVersion]) {
     const v = next[session.baseVersion];
-    next[v.id] = { ...v, ...snapshotOf(session), name: name ?? v.name, rev: v.rev + 1, updatedAt: now };
+    next[v.id] = { ...v, ...snapshotOf(session), name: name ?? v.name, rev: v.rev + 1, updatedAt: now, recipeRev: recipeRev(recipe), snapshot: deriveSnapshot(recipe, session, now) };
     return { versions: next, session: { ...session, history: [], updatedAt: now }, id: v.id };
   }
   const count = Object.values(versions).filter((v) => v.recipeId === recipe.id).length;
-  const id = `v${now.toString(36)}${count}`;
+  const id = uid("v");
   next[id] = {
     id,
     recipeId: recipe.id,
@@ -87,6 +176,8 @@ export function saveSession(versions, session, { mode = "new", name, now = Date.
     createdAt: now,
     updatedAt: now,
     visibility: "private", // publishing is a separate, later action
+    recipeRev: recipeRev(recipe),
+    snapshot: deriveSnapshot(recipe, session, now),
   };
   return { versions: next, session: { ...session, baseVersion: id, history: [], updatedAt: now }, id };
 }
@@ -100,9 +191,10 @@ export function lineage(version, versions) {
 
 // ---------- planned meals ----------
 
-export function planEntry({ recipeId, version = null, snapshot, servings, now = Date.now() }) {
+export function planEntry({ recipeId, version = null, snapshot, servings, fromSession = false, now = Date.now() }) {
+  const recipe = getRecipe(recipeId);
   return {
-    id: `p${now.toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`,
+    id: uid("p"),
     recipeId,
     versionId: version?.id ?? null,
     rev: version?.rev ?? null,
@@ -110,7 +202,21 @@ export function planEntry({ recipeId, version = null, snapshot, servings, now = 
     applied: [...snapshot.applied],
     servings,
     addedAt: now,
+    fromSession,
+    includeOptional: [...(snapshot.includeOptional ?? [])],
+    recipeRev: recipeRev(recipe),
+    snapshot: deriveSnapshot(recipe, { servings, applied: snapshot.applied }, now),
   };
+}
+
+/** Same dish, same rules, same portions: adding it again is the same action, not another meal. */
+export function samePlanned(a, b) {
+  return a.recipeId === b.recipeId && a.servings === b.servings && a.applied.length === b.applied.length && a.applied.every((id) => b.applied.includes(id));
+}
+
+/** Change a planned meal's portions, refreshing its snapshot. */
+export function setPlanServings(entry, servings, now = Date.now()) {
+  return { ...entry, servings, snapshot: deriveSnapshot(getRecipe(entry.recipeId), { servings, applied: entry.applied }, now) };
 }
 
 /**
@@ -118,6 +224,8 @@ export function planEntry({ recipeId, version = null, snapshot, servings, now = 
  * @returns null | { kind: "updated", version } | { kind: "removed" }
  */
 export function planUpdate(entry, versions) {
+  const status = recordStatus(entry);
+  if (entry.snapshot && !status.intact) return { kind: "catalogue", status };
   if (!entry.versionId) return null;
   const v = versions[entry.versionId];
   if (!v) return { kind: "removed" };
@@ -127,25 +235,55 @@ export function planUpdate(entry, versions) {
 
 /** Accept a reviewed update: take the version's current rules; keep the planned servings. */
 export function acceptPlanUpdate(entry, version) {
-  return { ...entry, applied: [...version.applied], rev: version.rev, label: version.name };
+  const applied = version.applied.filter((id) => getSwap(id));
+  return { ...entry, applied, rev: version.rev, label: version.name, keptCopy: false, snapshot: deriveSnapshot(getRecipe(entry.recipeId), { servings: entry.servings, applied }) };
 }
 
 // ---------- cooking records ----------
 
-export function cookRecord({ recipeId, versionId = null, rev = null, snapshot, now = Date.now() }) {
+export function cookRecord({ recipeId, versionId = null, rev = null, snapshot, derived = null, planId = null, madeUnder = null, now = Date.now() }) {
   return {
-    id: `c${now.toString(36)}`,
+    id: uid("c"),
     recipeId,
     versionId,
     rev,
+    planId,
+    madeUnder, // a short "made under these requirements" note. Not a claim about today's.
     servings: snapshot.servings,
     applied: [...snapshot.applied],
     cookedAt: now,
+    recipeRev: derived?.recipeRev ?? recipeRev(getRecipe(recipeId)),
+    snapshot: derived ?? deriveSnapshot(getRecipe(recipeId), snapshot, now),
+    pantryUpdate: null, // { at, takes } once the optional pantry review was applied
     feedback: null, // { again: "yes"|"maybe"|"no", familiar: "very"|"somewhat"|"not", differed, changedIngredients, followedMethod }
   };
 }
 
-/** Versions you said you'd make again, most recent first. */
+// ---------- cook mode in progress ----------
+
+/**
+ * Freeze what's being cooked at entry. Later edits elsewhere don't change it, and
+ * its checklist belongs to this visit alone, so switching recipes can't mix progress.
+ */
+export function beginCooking({ key, recipeId, versionId = null, rev = null, planId = null, label, adaptation, derived = null, now = Date.now() }) {
+  const recipe = getRecipe(recipeId);
+  return {
+    id: uid("k"),
+    key,
+    recipeId,
+    versionId,
+    rev,
+    planId,
+    label,
+    servings: adaptation.servings,
+    applied: [...adaptation.applied],
+    snapshot: derived ?? deriveSnapshot(recipe, adaptation, now),
+    checks: {},
+    startedAt: now,
+  };
+}
+
+/** Versions you said you'd make again, most recent first. Unsaved meals stay repeatable from their own record. */
 export function repeatable(cooks, versions) {
   const seen = new Set();
   const out = [];
@@ -154,7 +292,6 @@ export function repeatable(cooks, versions) {
     const key = c.versionId ?? `${c.recipeId}:${c.applied.join("+")}:${c.servings}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    if (c.versionId && !versions[c.versionId]) continue;
     out.push(c);
   }
   return out;

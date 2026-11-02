@@ -17,7 +17,11 @@
 //   balance      [{ change, why }] every balancing adjustment with its recipe-specific reason
 //   requires     preparation or equipment the rule depends on
 //   servingsRange [min, max] servings the rule is written for (quantity range)
-//   minutesDelta extra active or simmer minutes; planAhead: text when it needs starting early
+//   minutesDelta extra elapsed minutes; activeDelta extra hands-on minutes
+//   advanceMinutes  unattended preparation before cooking starts (soaking); planAhead: its text
+//   rev          revision of this rule; bump on any change (absent means 1)
+//   Text tokens: {slot} names, {=key} method amounts. In effects: {q:slot} is the
+//   slot's amount at the active servings, {n} is the active serving count.
 //   conflicts    [{ swap, reason }] combinations that don't work
 //   combinesWith ids this rule has been written to combine with. Any other
 //                pairing is an untested combination, never assumed to work.
@@ -43,7 +47,7 @@ export const SWAPS = [
       texture: "A smoother, more even sauce with no tomato skins.",
       acidity: "Can be slightly more acidic, with a more concentrated, cooked taste and less fresh brightness.",
       cooking: "No chopping, and the masala comes together a couple of minutes faster.",
-      quantity: "One 400 g can stands in for 3 medium tomatoes.",
+      quantity: "{q:tomatoes} for {n}. As written, one 400 g can stands in for 3 medium tomatoes at 4 servings.",
       unchanged: "The spice base, the chickpeas and the method order.",
     },
     combinesWith: ["cm-paneer", "cm-tofu", "cm-spinach", "cm-ground-ginger", "cm-dried-chickpeas"],
@@ -58,16 +62,18 @@ export const SWAPS = [
     addSteps: [{
       after: "start",
       id: "cm-soak-step",
-      text: "The night before, cover the {chickpeas} with plenty of water and soak for 8 to 12 hours. Drain, cover with fresh water and simmer until completely tender, 60 to 90 minutes (about 35 minutes in a pressure cooker). Keep a cup of the cooking liquid.",
+      text: "The night before, cover the {chickpeas} with plenty of water and soak for 8 to 12 hours. Drain, cover with fresh water and simmer until completely tender, 60 to 90 minutes (about 35 minutes in a pressure cooker). Keep about {=simmer} of the cooking liquid.",
     }],
-    steps: { s6: "Add the cooked chickpeas and about 250 ml of their cooking liquid. Simmer for 10 to 15 minutes, mashing a few chickpeas to thicken the sauce." },
+    steps: { s6: "Add the cooked chickpeas and about {=simmer} of their cooking liquid. Simmer for 10 to 15 minutes, mashing a few chickpeas to thicken the sauce." },
     minutesDelta: 75,
+    activeDelta: 5,
+    advanceMinutes: 480,
     planAhead: "Soak for 8 to 12 hours the day before.",
     effects: {
       texture: "Creamier inside while holding their shape. The cooking liquid gives the sauce more body.",
       aroma: "A nuttier, more savory chickpea taste.",
       cooking: "The big change: soak, then simmer for 60 to 90 minutes (about 35 in a pressure cooker).",
-      quantity: "About 200 g dried chickpeas cook up to the 480 g the recipe uses.",
+      quantity: "{q:chickpeas} dried for {n}. As written, about 200 g dried cook up to the 480 g the recipe uses at 4 servings.",
       unchanged: "The masala and seasoning.",
     },
     combinesWith: ["cm-canned-tomatoes", "cm-ground-ginger"],
@@ -83,7 +89,7 @@ export const SWAPS = [
     effects: {
       aroma: "Warmer and more muted. You lose fresh ginger's bright, zesty bite.",
       cooking: "Nothing to grate. Cook it only briefly so it doesn't scorch.",
-      quantity: "About ¼ tsp ground replaces 1 tbsp grated fresh.",
+      quantity: "{q:ginger} ground for {n}. As written, about ¼ tsp ground replaces 1 tbsp grated fresh at 4 servings.",
     },
     combinesWith: ["cm-canned-tomatoes", "cm-dried-chickpeas", "cm-paneer", "cm-tofu", "cm-spinach"],
   },
@@ -100,7 +106,7 @@ export const SWAPS = [
       texture: "Soft, chewy cubes alongside the chickpeas.",
       richness: "Milky and a little richer, softening the spice slightly.",
       cooking: "One extra step, about 3 minutes.",
-      quantity: "Adds 200 g paneer for 4 servings, so each serving is larger.",
+      quantity: "Adds {q:paneer} for {n}, so there is more food in each serving.",
       unchanged: "The sauce and its seasoning.",
     },
     conflicts: [{ swap: "cm-tofu", reason: "Pick one protein addition. With both, there's too little sauce to coat everything." }],
@@ -115,12 +121,13 @@ export const SWAPS = [
     add: [{ item: "tofu", qty: 200, unit: "g", group: "main", prep: "pressed and cubed" }],
     addSteps: [{ after: "s6", id: "cm-tofu-step", text: "Pan-fry the {tofu} in a little oil until golden, about 6 minutes, then fold it in for the last 2 minutes." }],
     minutesDelta: 15,
+    activeDelta: 8,
     requires: ["Press the tofu for 10 minutes before frying."],
     effects: {
       texture: "Firm cubes with a light crust.",
       aroma: "Neutral. It takes on the masala rather than adding its own taste.",
       cooking: "Press for 10 minutes and pan-fry separately, about 15 minutes in total.",
-      quantity: "Adds 200 g tofu for 4 servings, so each serving is larger.",
+      quantity: "Adds {q:tofu} for {n}, so there is more food in each serving.",
       unchanged: "The sauce and its seasoning.",
     },
     conflicts: [{ swap: "cm-paneer", reason: "Pick one protein addition. With both, there's too little sauce to coat everything." }],
@@ -139,7 +146,7 @@ export const SWAPS = [
       texture: "Soft greens through the sauce.",
       aroma: "Green and slightly mineral; the masala still leads.",
       cooking: "Thaw it first, then squeeze out the water so the sauce doesn't turn thin.",
-      quantity: "Adds 130 g frozen spinach for 4 servings.",
+      quantity: "Adds {q:spinach-frozen} for {n}.",
     },
     combinesWith: ["cm-canned-tomatoes", "cm-ground-ginger", "cm-paneer", "cm-tofu"],
   },
@@ -157,7 +164,7 @@ export const SWAPS = [
       texture: "Softer and more broken down, with less leafy bite.",
       aroma: "A little more muted and mineral. The masala carries the dish either way.",
       cooking: "Thaw it first and squeeze out the water so the curry doesn't turn thin.",
-      quantity: "Frozen spinach is already wilted and denser, so about 130 g replaces 200 g fresh.",
+      quantity: "{q:spinach} for {n}. Frozen spinach is already wilted and denser: as written, about 130 g replaces 200 g fresh at 4 servings.",
     },
     combinesWith: ["cp-fresh-tomatoes", "cp-paneer", "cp-peas", "cp-brown-rice"],
   },
@@ -174,7 +181,7 @@ export const SWAPS = [
       texture: "Chewier, with more structure than spinach.",
       aroma: "Earthier and slightly bitter.",
       cooking: "Strip the stems, chop finely, and cook several minutes longer.",
-      quantity: "Kale shrinks less, so 150 g is enough.",
+      quantity: "{q:spinach} for {n}. Kale shrinks less, so as written 150 g replaces 200 g spinach at 4 servings.",
     },
     balance: [{ change: "Taste before serving and add the full squeeze of lemon", why: "Kale's bitterness reads stronger than spinach in this sauce, and the lemon already in the recipe is what softens it." }],
     combinesWith: ["cp-fresh-tomatoes", "cp-brown-rice"],
@@ -192,7 +199,7 @@ export const SWAPS = [
       texture: "A slightly looser masala with some tomato skin.",
       acidity: "Brighter and fresher, sometimes sharper, depending on the tomatoes.",
       cooking: "Adds about 5 minutes of cooking.",
-      quantity: "3 medium tomatoes stand in for one 400 g can.",
+      quantity: "{q:tomatoes} for {n}. As written, 3 medium tomatoes stand in for one 400 g can at 4 servings.",
     },
     combinesWith: ["cp-frozen-spinach", "cp-kale", "cp-paneer", "cp-peas", "cp-brown-rice"],
   },
@@ -208,7 +215,7 @@ export const SWAPS = [
     effects: {
       texture: "Soft, chewy cubes alongside the chickpeas.",
       richness: "Milky and a little richer.",
-      quantity: "Adds 200 g paneer for 4 servings, so each serving is larger.",
+      quantity: "Adds {q:paneer} for {n}, so there is more food in each serving.",
       unchanged: "The spinach and masala.",
     },
     combinesWith: ["cp-frozen-spinach", "cp-fresh-tomatoes", "cp-peas", "cp-brown-rice"],
@@ -224,7 +231,7 @@ export const SWAPS = [
     effects: {
       texture: "Small pops of texture; the curry feels heartier.",
       aroma: "A little sweetness against the spice.",
-      quantity: "Adds 150 g frozen peas for 4 servings.",
+      quantity: "Adds {q:frozen-peas} for {n}.",
     },
     combinesWith: ["cp-frozen-spinach", "cp-fresh-tomatoes", "cp-paneer", "cp-brown-rice"],
   },
@@ -284,7 +291,7 @@ export const SWAPS = [
     effects: {
       texture: "Mixed: creamy paneer crumbs with firmer tofu.",
       richness: "A little lighter; still recognizably paneer bhurji.",
-      quantity: "100 g of each instead of 200 g paneer.",
+      quantity: "{q:paneer} for {n}: half paneer and half tofu by weight.",
       cooking: "Press the tofu first. The tofu goes in before the paneer.",
     },
     combinesWith: ["pb-canned-tomatoes", "pb-peas"],
@@ -301,7 +308,7 @@ export const SWAPS = [
     effects: {
       texture: "Saucier, so it needs cooking down a little longer.",
       acidity: "More concentrated and cooked-tasting, sometimes slightly sharper.",
-      quantity: "About half a 400 g can replaces 2 medium tomatoes.",
+      quantity: "{q:tomatoes} for {n}. As written, about half a 400 g can replaces 2 medium tomatoes at 2 servings.",
     },
     combinesWith: ["pb-tofu", "pb-half-tofu", "pb-eggs", "pb-peas"],
   },
@@ -317,7 +324,7 @@ export const SWAPS = [
     effects: {
       texture: "Softer, with egg curds through the paneer.",
       richness: "Richer and more savory; a familiar home combination.",
-      quantity: "Adds 2 eggs for 2 servings, so each serving is larger.",
+      quantity: "Adds {q:eggs} for {n}, so there is more food in each serving.",
     },
     combinesWith: ["pb-canned-tomatoes", "pb-peas"],
   },
@@ -332,7 +339,7 @@ export const SWAPS = [
     effects: {
       texture: "More body and bite.",
       aroma: "A little sweetness; a common home variation.",
-      quantity: "Adds 100 g frozen peas for 2 servings.",
+      quantity: "Adds {q:frozen-peas} for {n}.",
     },
     combinesWith: ["pb-tofu", "pb-half-tofu", "pb-canned-tomatoes", "pb-eggs"],
   },
@@ -401,7 +408,7 @@ export const SWAPS = [
     effects: {
       texture: "Soft greens through the dal.",
       aroma: "Green and slightly earthy; a familiar variation.",
-      quantity: "Adds 100 g fresh spinach for 4 servings.",
+      quantity: "Adds {q:spinach-fresh} for {n}.",
     },
     combinesWith: ["md-moong", "md-oil", "md-more-dal", "md-brown-rice"],
   },
@@ -434,6 +441,7 @@ export const SWAPS = [
     addSteps: [{ after: "s1", id: "pbm-tofu-step", text: "Press the {paneer} for 15 minutes, then pan-fry in a little oil until golden on most sides, 6 to 8 minutes. Set aside." }],
     steps: { s6: "Add the browned tofu and simmer gently for 3 minutes so it takes on the sauce." },
     minutesDelta: 20,
+    activeDelta: 8,
     requires: ["Press the tofu for 15 minutes so it browns instead of steaming."],
     effects: {
       texture: "Springier, firmer cubes with a light crust, instead of paneer's soft milky chew.",
@@ -502,7 +510,7 @@ export const SWAPS = [
     summary: "Soaked sunflower seeds blended into the sauce instead of cashews.",
     reasons: ["dietary", "missing"],
     replace: { slot: "cashews", with: [{ item: "sunflower-seeds", qty: 30, unit: "g", prep: "soaked in hot water for 15 minutes" }] },
-    steps: { s5: "Blend the soaked sunflower seeds with about 60 ml water for 2 to 3 minutes, until as smooth as your blender allows. Stir into the sauce and simmer for 3 minutes." },
+    steps: { s5: "Blend the soaked sunflower seeds with about {=blend} water for 2 to 3 minutes, until as smooth as your blender allows. Stir into the sauce and simmer for 3 minutes." },
     servingsRange: [2, 8],
     servingsReason: "Below 2 servings there are only about 8 g of seeds, too few for most blenders to make smooth.",
     requires: ["A blender that can make a smooth paste from a small amount."],
@@ -544,7 +552,7 @@ export const SWAPS = [
     adjust: [{ slot: "paneer", factor: 1.5 }],
     effects: {
       texture: "Less sauce around each piece.",
-      quantity: "Half as much again of whatever fills the paneer slot, so each serving is larger.",
+      quantity: "Half as much again of whatever fills the paneer slot, {q:paneer} for {n}, so there is more food in each serving.",
       unchanged: "The sauce recipe.",
     },
     combinesWith: ["pbm-tofu", "pbm-coconut", "pbm-oat", "pbm-oil", "pbm-sunflower", "pbm-no-cashew"],
@@ -576,7 +584,7 @@ export const SWAPS = [
     effects: {
       texture: "Soft greens through the kadhi.",
       aroma: "Green and earthy against the sourness.",
-      quantity: "Adds 150 g spinach for 4 servings.",
+      quantity: "Adds {q:spinach-fresh} for {n}.",
     },
     combinesWith: ["pk-oil"],
   },
@@ -592,7 +600,7 @@ export const SWAPS = [
     effects: {
       texture: "Smoother, with no skins to mash.",
       acidity: "Slightly sharper and more cooked-tasting.",
-      quantity: "One 400 g can for 4 medium tomatoes.",
+      quantity: "{q:tomatoes} for {n}. As written, one 400 g can replaces 4 medium tomatoes at 4 servings.",
     },
     combinesWith: ["pv-oil", "pv-more-peas"],
   },
@@ -653,7 +661,7 @@ export const SWAPS = [
       texture: "A slightly wetter filling that can tear the dough if not dried well.",
       aroma: "Sweeter.",
       cooking: "Mash and dry the peas well before mixing.",
-      quantity: "Adds 100 g peas and uses a fifth less potato, so the filling amount stays about the same.",
+      quantity: "Adds {q:frozen-peas} for {n} and uses a fifth less potato, so the filling amount stays about the same.",
     },
     combinesWith: ["ap-oil"],
   },
@@ -666,7 +674,7 @@ export const SWAPS = [
     summary: "Bone-in lamb curry cut, which cooks faster.",
     reasons: ["missing"],
     replace: { slot: "meat", with: [{ item: "lamb-bone-in", qty: 750, unit: "g", prep: "curry cut, bone-in" }] },
-    steps: { s5: "Add 500 ml hot water, cover and simmer on low until the lamb is tender, 50 to 70 minutes (about 15 minutes at pressure)." },
+    steps: { s5: "Add {=water} hot water, cover and simmer on low until the lamb is tender, 50 to 70 minutes (about 15 minutes at pressure)." },
     minutesDelta: -20,
     effects: {
       richness: "Fattier and richer than goat.",

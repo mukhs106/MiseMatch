@@ -85,6 +85,20 @@ export function openQuestions(c) {
 }
 
 /**
+ * Open questions that matter for these ingredients. A question is only asked
+ * when a candidate depends on the answer. Hard exclusions already chosen stay in force.
+ */
+export function relevantQuestions(c, itemIds) {
+  const items = [...new Set(itemIds)].map((id) => ITEMS[id]).filter(Boolean);
+  const contains = (tag) => items.some((it) => (it.contains ?? []).includes(tag));
+  return openQuestions(c).filter((q) => {
+    if (q.key === "nutScope") return contains("tree-nut") || contains("peanut");
+    if (q.key === "eggs") return items.some((it) => it.animal === "egg");
+    return contains(q.key);
+  });
+}
+
+/**
  * Check a set of ingredients against the constraints.
  * @returns {{ conflicts: [{ item, reason }], questions: [{ item, key, text }], labelChecks: [{ item, text }], dislikes: string[] }}
  */
@@ -112,6 +126,14 @@ export function checkItems(itemIds, c) {
     if (c.dislikes.includes(id)) dislikes.push(id);
   }
   return { conflicts, questions, labelChecks, dislikes };
+}
+
+/**
+ * Whether a profile sets anything a "fits" filter can act on. Hard exclusions and
+ * time limits decide inclusion; nutrition targets and dislikes only rank and label.
+ */
+export function hasFilterCriteria(c) {
+  return hasRestrictions(c) || c.timeLimit != null || Object.values(c.answers).includes("avoid");
 }
 
 /** Short description of the hard constraints, for headings and explanations. */
