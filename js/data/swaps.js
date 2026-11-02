@@ -538,7 +538,7 @@ export const SWAPS = [
   {
     id: "pbm-more-protein",
     recipe: "paneer-butter-masala",
-    label: "Half as much again of the paneer or tofu",
+    label: "More paneer or tofu",
     summary: "More of the main protein in the same amount of sauce.",
     reasons: ["protein"],
     adjust: [{ slot: "paneer", factor: 1.5 }],

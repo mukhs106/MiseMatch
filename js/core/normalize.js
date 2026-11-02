@@ -92,6 +92,12 @@ export function matchItem(name) {
       const a = AMBIGUOUS[entry.ambiguous];
       return { item: null, candidates: a.candidates, confidence: "ambiguous", why: a.why, term: entry.ambiguous };
     }
+    // "Ginger garlic paste" names two ingredients; picking one would quietly drop the other.
+    const rest = text.replace(entry.term, " ");
+    const other = INDEX.find((x) => !x.ambiguous && x.id !== entry.id && x.term.length > 3 && containsTerm(rest, x.term));
+    if (other) {
+      return { item: null, candidates: [entry.id, other.id], confidence: "ambiguous", why: "This combines more than one ingredient. Choose the main one, or leave it out of calculations.", term: entry.term };
+    }
     const exact = ITEMS[entry.id].name.toLowerCase() === text || ITEMS[entry.id].short === text;
     return { item: entry.id, candidates: [entry.id], confidence: exact ? "exact" : "alias", term: entry.term };
   }

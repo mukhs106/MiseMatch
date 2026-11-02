@@ -28,7 +28,7 @@ export function suggest(recipes, pantry, constraints, { focus = [], servings = n
     if (!g.eligible.length) continue;
     // Prefer the version that buys least among those that reach the targets as well as the best one does.
     const top = g.eligible[0].targetStatus;
-    const option = g.eligible.filter((c) => c.targetStatus === top).sort((a, b) => a.ev.purchases - b.ev.purchases)[0];
+    const option = g.eligible.filter((c) => c.targetStatus === top).sort((a, b) => a.ev.purchases - b.ev.purchases || a.applied.length - b.applied.length)[0];
     const items = new Set(option.ev.derived.ingredients.flatMap((l) => l.entries.map((e) => e.item)));
     const uses = [...items].filter((id) => ITEMS[id]?.key && onHand(pantry, id));
     const focusUsed = focus.filter((id) => items.has(id));

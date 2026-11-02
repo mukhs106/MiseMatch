@@ -59,7 +59,7 @@ export const ITEMS = {
   // Produce
   "onion": { name: "Onion", aliases: ["pyaz", "pyaaz", "kanda"], aisle: "Produce", state: "raw", nutrition: { protein: 1.1, fiber: 1.7, fat: 0.1, kcal: 40 }, gPerUnit: 150, key: true },
   "garlic": { name: "Garlic", aliases: ["lehsun", "lasun"], aisle: "Produce", negligible: true },
-  "ginger": { name: "Fresh ginger", aliases: ["adrak"], aisle: "Produce", negligible: true },
+  "ginger": { name: "Fresh ginger", aliases: ["adrak", "ginger"], aisle: "Produce", negligible: true },
   "ground-ginger": { name: "Ground ginger", aliases: ["saunth", "sonth"], aisle: "Spices", negligible: true },
   "green-chili": { name: "Green chili", aliases: ["hari mirch", "green chilli", "green chilly", "green chile"], aisle: "Produce", negligible: true },
   "lemon": { name: "Lemon", aliases: ["nimbu", "lime"], aisle: "Produce", negligible: true },

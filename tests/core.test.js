@@ -621,3 +621,11 @@ test("cooking feedback attaches to the exact version, and repeatable versions co
   const cooks = [{ ...rec, feedback: { again: "yes", familiar: "somewhat" } }, { ...rec, id: "c2", versionId: "v2", feedback: { again: "no" } }];
   assert.deepEqual(V.repeatable(cooks, { v1: {}, v2: {} }).map((c) => c.versionId), ["v1"]);
 });
+
+test("combined ingredients like ginger garlic paste are not collapsed into one", () => {
+  const m = matchItem("ginger garlic paste");
+  assert.equal(m.item, null);
+  assert.equal(m.confidence, "ambiguous");
+  assert.deepEqual(m.candidates.sort(), ["garlic", "ginger"]);
+  assert.equal(matchItem("ground ginger").item, "ground-ginger");
+});

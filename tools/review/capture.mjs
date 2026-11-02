@@ -7,12 +7,13 @@
 // Each viewport runs in a fresh browser context, i.e. fresh localStorage.
 
 import { chromium } from "playwright";
-import ffmpegPath from "ffmpeg-static";
+import ffmpegStatic from "ffmpeg-static";
 import { execFileSync, spawn } from "node:child_process";
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+const ffmpegPath = process.env.FFMPEG ?? ffmpegStatic;
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");
 const args = Object.fromEntries(
@@ -25,7 +26,8 @@ const label = args.label ?? "after";
 const out = resolve(args.out ?? join(repo, "reviews", `${new Date().toISOString().slice(0, 10)}-review`));
 const base = args.base ?? "http://localhost:8080";
 const VIEWPORTS = [
-  { name: "phone-430x932", width: 430, height: 932, mobile: true },
+  { name: "phone-430x932", width: 430, height: 932, mobile: true }, // iPhone 14/15 Pro Max class
+  { name: "phone-393x852", width: 393, height: 852, mobile: true }, // iPhone 14/15 Pro class
   { name: "small-360x740", width: 360, height: 740, mobile: true },
   { name: "desktop-1280x860", width: 1280, height: 860, mobile: false },
 ];
@@ -92,87 +94,112 @@ async function screens(browser, vp) {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  const go = async (hash) => {
+    await page.goto(`${base}/${hash}`);
+    await page.waitForSelector("h1");
+  };
 
-  await page.goto(`${base}/#/`);
-  await page.waitForSelector("h1");
+  await go("#/");
   await page.evaluate(() => document.fonts.ready);
-  await shoot(page, dir, "01-home-fresh");
-  await pageChecks(page, vp, "home, fresh storage", errors);
+  await shoot(page, dir, "01-today-fresh");
+  await pageChecks(page, vp, "today, fresh storage", errors);
+  record("today: start-here row for the demo recipe on a fresh start", vp.name, await page.locator('a.row-link[href="#/recipe/chana-masala"]').count() === 1);
 
-  await page.goto(`${base}/#/recipe/chana-masala`);
-  await page.waitForSelector("h1");
-  await shoot(page, dir, "02-recipe-top", false);
-  await pageChecks(page, vp, "recipe, after navigation", errors);
-  if (label !== "before") {
-    // Pushed screen: no tab bar on small screens; header navigation stays on wide ones.
-    const navShown = await page.locator("#nav").isVisible();
-    record("recipe is a pushed screen (tab bar hidden on small, header nav on wide)", vp.name, navShown === !vp.mobile, `nav visible: ${navShown}`);
-  }
+  await go("#/recipe/chana-masala");
+  await shoot(page, dir, "02-overview", false);
+  await pageChecks(page, vp, "recipe overview", errors);
+  const navShown = await page.locator("#nav").isVisible();
+  record("recipe is a pushed screen (tab bar hidden on small, header nav on wide)", vp.name, navShown === !vp.mobile, `nav visible: ${navShown}`);
+  const img = await page.evaluate(() => { const i = document.querySelector(".photo img"); return i ? { ok: i.complete && i.naturalWidth > 0, alt: i.alt } : null; });
+  record("overview photo loads with alt text and a credit", vp.name, !!img?.ok && !!img.alt && (await page.locator(".credit").count()) > 0, JSON.stringify(img));
 
-  // Adapt: portions, availability with a partial amount, swap preview, apply.
+  // Adapt: portions, one swap, compare, pantry, list
+  await visible(page, '[data-action="start-adapt"]').click();
+  await page.waitForFunction(() => location.hash.startsWith("#/adapt/chana-masala"));
   await visible(page, '[data-action="servings"][data-delta="-1"]').click();
   await visible(page, '[data-action="servings"][data-delta="-1"]').click();
-  await page.locator('input[data-action="avail"][data-item="chickpeas"][value="have"]').check({ force: true });
-  await page.locator('input[data-action="avail"][data-item="basmati"][value="some"]').check({ force: true });
-  const qty = page.locator('input[data-action="avail-qty"][data-item="basmati"]');
-  await qty.fill("100");
-  await qty.press("Tab");
+  await shoot(page, dir, "03-adapt-needs");
+  await visible(page, '.action-bar [data-action="go-step"]').click();
   await visible(page, '[data-action="open-swaps"][data-slot="tomatoes"]').click();
   await page.locator('.option[data-swap="cm-canned-tomatoes"]').click();
-  await shoot(page, dir, "03-swap-preview", false);
+  await shoot(page, dir, "04-swap-preview", false);
+  const preview = await page.locator(".sheet-body").innerText();
+  record("swap preview: quantities, texture, acidity, cooking, method, evidence label", vp.name,
+    ["Texture", "Acidity", "Cooking", "Step", "not yet cooked by our team"].every((w) => preview.includes(w)) && /200 g canned tomatoes/.test(preview));
   await page.locator(".sheet-foot .btn--primary").click();
-  await visible(page, '[data-action="preview-swap"][data-swap="cm-paneer"]').click();
-  await page.locator(".sheet-foot .btn--primary").click();
-  await page.waitForTimeout(6500); // let the toast clear
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await shoot(page, dir, "04-recipe-adapted");
-  await pageChecks(page, vp, "recipe, adapted", errors);
-
-  await visible(page, '[data-action="sync-list"]').click();
-  await page.goto(`${base}/#/list`);
-  await page.waitForSelector("h1");
-  const rice = page.locator(".line", { hasText: "basmati" }).locator('input[data-action="list-qty"]');
-  await rice.fill("100");
-  await rice.press("Tab");
-  await page.locator('.add-item input[name="name"]').fill("Mango");
-  await page.locator('.add-item input[name="qty"]').fill("2");
-  await page.locator('.add-item button[type="submit"]').click();
   await page.waitForTimeout(6500);
-  await page.evaluate(() => document.activeElement?.blur()); // the Tab above was intentional keyboard use
-  if (label !== "before") {
-    await page.locator(".line", { hasText: "Onion" }).locator('input[type="checkbox"]').check();
-    await page.waitForTimeout(300);
-  }
-  await shoot(page, dir, "05-list-populated");
-  await pageChecks(page, vp, "grocery list, populated", errors);
+  await visible(page, '.action-bar [data-action="go-step"]').click();
+  await shoot(page, dir, "05-compare");
+  await pageChecks(page, vp, "compare", errors);
+  const cmp = await page.locator(".cmp-table").innerText();
+  record("compare: original and your version side by side at the same servings", vp.name, /tomatoes, medium/i.test(cmp) && /200 g canned tomatoes/i.test(cmp));
+  await visible(page, '.action-bar [data-action="go-step"]').click();
+  await page.selectOption("#have-basmati", "some");
+  await page.fill('[data-action="pantry-qty"][data-key="basmati"]', "100");
+  await page.press('[data-action="pantry-qty"][data-key="basmati"]', "Tab");
+  await page.selectOption("#have-onion", "have");
+  await page.evaluate(() => document.activeElement?.blur());
+  await shoot(page, dir, "06-pantry-and-shopping");
+  record("unknown pantry amount asks for confirmation instead of counting as enough", vp.name, await page.locator('.confirm-row', { hasText: "Onion" }).count() === 1);
+  await visible(page, '[data-action="add-plan"]').click();
+  await page.locator('#sheet [data-action="plan-add-copy"]').click();
+  await go("#/list");
+  await page.waitForTimeout(6500);
+  await shoot(page, dir, "07-list");
+  await pageChecks(page, vp, "shopping list", errors);
+  const rice = await page.locator(".line", { hasText: "basmati" }).locator('input[data-action="list-qty"]').inputValue();
+  record("list: rice is 150 − 100 = 50 g", vp.name, rice === "50", `rice ${rice}`);
+  record("list: onion waits for a confirmation, not added", vp.name, !(await page.locator(".line .line-name").allInnerTexts()).includes("Onion"));
 
-  if (label !== "before") {
-    await page.goto(`${base}/#/pantry`);
-    await page.waitForSelector("h1");
-    await shoot(page, dir, "07-pantry");
-    await pageChecks(page, vp, "pantry", errors);
-    await page.goto(`${base}/#/`);
-    await page.waitForSelector("h1");
-    await page.locator('[data-action="set-mode"][data-mode="have"]').click();
-    await page.waitForTimeout(300);
-    await shoot(page, dir, "08-use-what-you-have");
-    await pageChecks(page, vp, "recipes, use what you have", errors);
-    await page.locator(".avatar").click();
-    await page.waitForFunction(() => document.title.startsWith("Profile"));
-    await shoot(page, dir, "09-profile");
-    await pageChecks(page, vp, "profile and settings", errors);
+  // Requirements that conflict: vegan, nut-free, protein 30 g on paneer butter masala
+  await go("#/adapt/paneer-butter-masala/needs");
+  await visible(page, '[data-action="c-diet"][data-value="vegan"]').click();
+  await visible(page, '[data-action="c-avoid"][data-value="nuts"]').click();
+  await shoot(page, dir, "08-requirements-questions");
+  for (const [a, k, v] of [["c-nutscope", null, "both"], ["c-answer", "soy", "ok"], ["c-answer", "sesame", "ok"], ["c-answer", "coconut", "ok"]]) {
+    await visible(page, `[data-action="${a}"]${k ? `[data-key="${k}"]` : ""}[data-value="${v}"]`).click();
   }
+  await page.selectOption('[data-action="c-target"][data-nutrient="protein"]', "30");
+  await visible(page, '.action-bar [data-action="go-step"]').click();
+  await shoot(page, dir, "09-target-conflict");
+  const status = await page.locator(".status").first().innerText();
+  record("conflict: explains the protein gap and offers real choices, requirements unchanged", vp.name, /30 g target/.test(status) && /Lower the protein goal/.test(status) && /Masoor dal/.test(status));
+  await go("#/adapt/paneer-butter-masala/needs");
+  await visible(page, '[data-action="c-avoid"][data-value="soy"]').click();
+  await go("#/adapt/paneer-butter-masala/options");
+  await shoot(page, dir, "10-no-supported");
+  record("no supported result says why and offers other dishes", vp.name, /No supported version fits/.test(await page.locator(".status").first().innerText()));
 
+  // Import: structured demo page, then the draft
+  await go("#/import");
+  await visible(page, '[data-action="import-tab"][data-tab="link"]').click();
+  await visible(page, '[data-action="import-demo"][data-url="https://example.com/demo/weeknight-rajma"]').click();
+  await visible(page, '[data-action="import-pick"]').click();
+  await page.waitForFunction(() => location.hash.startsWith("#/draft/"));
+  await shoot(page, dir, "11-draft");
+  await pageChecks(page, vp, "imported draft", errors);
+  const draft = await page.locator(".draft-page").innerText();
+  record("draft: original wording kept, cream quantity blocks nutrition, saving as reference allowed", vp.name, draft.includes("Fresh cream, to finish") && /No quantity given/.test(draft) && /Save as a reference/.test(draft));
+
+  for (const [hash, name] of [["#/saved", "12-saved"], ["#/pantry", "13-pantry"], ["#/plan", "14-plan"], ["#/profile", "15-profile"]]) {
+    await go(hash);
+    await shoot(page, dir, name);
+    await pageChecks(page, vp, name.slice(3), errors);
+  }
   await context.close();
 
+  // Empty and error states, in fresh storage
   const empty = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 2, isMobile: vp.mobile, hasTouch: vp.mobile });
   const p2 = await empty.newPage();
   const errors2 = [];
   p2.on("pageerror", (e) => errors2.push(e.message));
   await p2.goto(`${base}/#/list`);
   await p2.waitForSelector("h1");
-  await shoot(p2, dir, "06-list-empty");
-  await pageChecks(p2, vp, "grocery list, empty", errors2);
+  await shoot(p2, dir, "16-list-empty");
+  await pageChecks(p2, vp, "shopping list, empty", errors2);
+  await p2.goto(`${base}/#/no-such-page`);
+  await p2.waitForSelector("h1");
+  record("unknown route shows Not found with a way back", vp.name, (await p2.locator("h1").innerText()) === "Not found");
   await empty.close();
 }
 
@@ -195,7 +222,7 @@ async function walkthrough(browser) {
         await page.screenshot({ path: file, type: "jpeg", quality: 85 });
         frames.push({ file, t: Date.now() });
       } catch {
-        await new Promise((r) => setTimeout(r, 50)); // e.g. mid-reload
+        await new Promise((r) => setTimeout(r, 50));
       }
     }
   })();
@@ -208,181 +235,96 @@ async function walkthrough(browser) {
   await page.goto(`${base}/#/`);
   await page.waitForSelector("h1");
   await pause(1500);
-  // Keyboard: the first Tab should land on the skip link, visibly.
+  // Keyboard: skip link first, then the wordmark, four tabs and the avatar.
   await page.keyboard.press("Tab");
-  const skip = await page.evaluate(() => ({ cls: document.activeElement.className, outline: getComputedStyle(document.activeElement).outlineStyle, top: document.activeElement.getBoundingClientRect().top }));
-  record("keyboard: first Tab shows skip link", vp.name, skip.cls.includes("skip-link") && skip.top >= 0, JSON.stringify(skip));
-  await page.keyboard.press("Enter");
-  await page.waitForTimeout(100);
-  const skipped = await page.evaluate(() => ({ id: document.activeElement.id, outline: getComputedStyle(document.activeElement).outlineStyle, hash: location.hash }));
-  record("keyboard: skip link moves focus to content, keeps the route, no ring on main", vp.name,
-    skipped.id === "app" && skipped.outline === "none" && skipped.hash === "#/", JSON.stringify(skipped));
-  await pause();
+  const skip = await page.evaluate(() => document.activeElement.className);
+  record("keyboard: first Tab shows skip link", vp.name, skip.includes("skip-link"), skip);
+  const order = [];
+  for (let i = 0; i < 6; i++) {
+    await page.keyboard.press("Tab");
+    order.push(await page.evaluate(() => document.activeElement.getAttribute("aria-label") ?? document.activeElement.textContent.trim().replace(/\s+/g, " ")));
+  }
+  record("keyboard: wordmark, Today, Recipes, Pantry, Saved, avatar", vp.name, order.join(" > ") === "mise & match, Today > Today > Recipes > Pantry > Saved > Requirements and settings", order.join(" > "));
 
-  // Keyboard navigation: the new page's title takes focus and shows a compact ring.
-  await page.focus(`a[href="#/recipe/chana-masala"]`);
+  // Keyboard through the adaptation flow
+  await page.focus('a.row-link[href="#/recipe/chana-masala"]');
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => document.title.startsWith("Chana masala"));
   const kb = await page.evaluate(() => ({ tag: document.activeElement.tagName, outline: getComputedStyle(document.activeElement).outlineStyle }));
   record("keyboard navigation: title focused with visible ring", vp.name, kb.tag === "H1" && kb.outline === "solid", JSON.stringify(kb));
   await pause();
-
-  // Pointer navigation: focus still moves to the title for screen readers, with no ring.
-  await page.locator('.back-link').click();
-  await page.waitForFunction(() => document.title === "mise & match");
-  await pause(600);
-  // Keyboard order on a primary screen: skip link, wordmark, the three tabs, avatar, then content.
-  await page.evaluate(() => document.activeElement.blur());
-  const order = [];
-  await page.focus(".skip-link");
-  for (let i = 0; i < 6; i++) {
-    order.push(await page.evaluate(() => {
-      const a = document.activeElement;
-      return a.getAttribute("aria-label") ?? a.textContent.trim().replace(/\s+/g, " ");
-    }));
-    await page.keyboard.press("Tab");
-  }
-  order.push(await page.evaluate(() => document.activeElement.dataset.action ?? document.activeElement.tagName));
-  record("keyboard: focus order skip link, wordmark, tabs, avatar, search", vp.name,
-    order.join(" > ") === "Skip to content > mise & match, Recipes > Recipes > Grocery list > Pantry > Profile and settings > recipe-search", order.join(" > "));
-  await page.mouse.click(5, 300);
-
-  // Find it: search by ingredient, then Use what you have (empty pantry says what to do next).
-  await page.locator('[data-action="recipe-search"]').pressSequentially("chickpea", { delay: 60 });
+  await page.focus('[data-action="start-adapt"]');
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(() => location.hash.startsWith("#/adapt/"));
   await pause();
-  const found = await page.locator(".recipe-card-title, .collection-title").allInnerTexts();
-  record("search: 'chickpea' finds the chickpea recipes", vp.name, found.includes("Chana masala") && found.includes("Chana palak") && !found.includes("Tomato and egg stir-fry"), found.join(", "));
-  await page.locator('[data-action="set-mode"][data-mode="have"]').click();
-  await pause(1200);
-  await page.locator('[data-action="set-mode"][data-mode="all"]').click();
-  await page.locator('[data-action="recipe-search"]').fill("");
-  await pause(600);
-  await page.locator(`a[href="#/recipe/chana-masala"]`).first().click();
-  await page.waitForFunction(() => document.title.startsWith("Chana masala")); // wait for the route render, not the old page's h1
-  const pt = await page.evaluate(() => ({ tag: document.activeElement.tagName, outline: getComputedStyle(document.activeElement).outlineStyle }));
-  record("pointer navigation: title focused, no ring", vp.name, pt.tag === "H1" && pt.outline === "none", JSON.stringify(pt));
+  await page.focus('[data-action="servings"][data-delta="-1"]');
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
   await pause();
-  await visible(page, '[data-action="servings"][data-delta="-1"]').click();
-  await pause(500);
-  await visible(page, '[data-action="servings"][data-delta="-1"]').click();
+  const servings = await page.locator(".stepper output").first().textContent();
+  record("keyboard: servings 4 → 2 with Enter, focus kept on the control", vp.name, servings.trim() === "2" && (await page.evaluate(() => document.activeElement.dataset.delta)) === "-1", servings);
+  await visible(page, '.action-bar [data-action="go-step"]').click();
   await pause();
-  const servings = await visible(page, ".stepper output").textContent();
-  record("portions: 4 → 2", vp.name, servings.trim() === "2", `shows ${servings.trim()}`);
-
-  await page.locator('input[data-action="avail"][data-item="basmati"][value="some"]').scrollIntoViewIfNeeded();
-  await page.locator('input[data-action="avail"][data-item="basmati"][value="some"]').check({ force: true });
-  const qty = page.locator('input[data-action="avail-qty"][data-item="basmati"]');
-  await qty.fill("100");
-  await qty.press("Tab");
+  await page.focus('[data-action="open-swaps"][data-slot="tomatoes"]');
+  await page.keyboard.press("Enter");
   await pause();
-
-  // See it in Pantry, then come back to the recipe.
-  await page.locator(".back-link").click();
-  await page.waitForFunction(() => document.title === "mise & match");
-  await page.locator('nav a[href="#/pantry"]').click();
-  await page.waitForFunction(() => document.title.startsWith("Pantry"));
-  await pause(1500);
-  const riceRow = await page.locator(".pantry-line", { hasText: "basmati" }).locator('input[data-action="pantry-qty"]').inputValue();
-  record("pantry: rice Some 100 g from the recipe shows in Pantry", vp.name, riceRow === "100", `rice ${riceRow}`);
-  await page.locator('nav a[href="#/"]').click();
-  await page.waitForFunction(() => document.title === "mise & match");
-  await page.locator(`a[href="#/recipe/chana-masala"]`).first().click();
-  await page.waitForFunction(() => document.title.startsWith("Chana masala"));
-  await pause();
-
-  await visible(page, '[data-action="open-swaps"][data-slot="tomatoes"]').click();
-  await pause();
-  const sheetTitle = await page.locator("#sheet-title").innerText();
-  record("swap sheet title", vp.name, sheetTitle === "Thyme for a swap.", sheetTitle);
-  await page.locator('.option[data-swap="cm-canned-tomatoes"]').click();
-  await pause(1500);
-  const preview = await page.locator(".sheet-body").innerText();
-  record("swap preview shows quantity, flavor, texture, prep and method", vp.name,
-    ["Flavor", "Texture", "Prep", "Step"].every((w) => preview.includes(w)) && /200 g canned tomatoes/.test(preview), "");
-  await page.locator(".sheet-body").evaluate((el) => el.scrollTo({ top: 400, behavior: "smooth" }));
-  await pause(1200);
-  // Dismiss with Escape, focus should return to the Swap button.
+  record("swap sheet title", vp.name, (await page.locator("#sheet-title").innerText()) === "Thyme for a swap.");
   await page.keyboard.press("Escape");
   await pause(600);
   const back = await page.evaluate(() => document.activeElement?.dataset?.slot ?? "");
   record("dialog: Escape closes and focus returns to trigger", vp.name, back === "tomatoes", `focus on slot ${back}`);
-  await visible(page, '[data-action="open-swaps"][data-slot="tomatoes"]').click();
+  await page.keyboard.press("Enter");
   await page.locator('.option[data-swap="cm-canned-tomatoes"]').click();
-  await pause();
+  await pause(1500);
   await page.locator(".sheet-foot .btn--primary").click();
   await pause(1200);
-
-  await visible(page, '[data-action="preview-swap"][data-swap="cm-paneer"]').scrollIntoViewIfNeeded();
-  await pause(600);
   await visible(page, '[data-action="preview-swap"][data-swap="cm-paneer"]').click();
   await pause(1200);
   await page.locator(".sheet-foot .btn--primary").click();
-  await pause(1000);
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }));
-  await pause(1000);
-  const before = await page.locator(".change-list li").count();
-  await visible(page, '[data-action="remove-swap"][data-swap="cm-paneer"]').click();
-  await pause(1200);
-  const after = await page.locator(".change-list li").count();
-  record("undo: removing Add paneer leaves the tomato swap", vp.name, before === 2 && after === 1, `${before} → ${after} changes`);
-
-  await visible(page, '[data-action="sync-list"]').click();
-  await pause(1200);
-  await page.locator(".back-link").click();
-  await page.waitForFunction(() => document.title === "mise & match");
-  await page.locator('nav a[href="#/list"]').click();
-  await page.waitForFunction(() => document.title.startsWith("Grocery list"));
   await pause();
-  const riceLine = page.locator(".line", { hasText: "basmati" });
-  const riceQty = await riceLine.locator('input[data-action="list-qty"]').inputValue();
-  record("list: rice is 150 − 100 = 50 g", vp.name, riceQty === "50", `rice ${riceQty}`);
-  await riceLine.locator('input[data-action="list-qty"]').fill("100");
-  await riceLine.locator('input[data-action="list-qty"]').press("Tab");
+  await visible(page, '[data-action="session-undo"]').click();
   await pause();
-  await page.locator('.add-item input[name="name"]').fill("Mango");
-  await page.locator('.add-item button[type="submit"]').click();
+  const applied = await page.evaluate(() => window.__mise.state.sessions["chana-masala"].applied);
+  record("undo: removes Add paneer, keeps canned tomatoes", vp.name, applied.join() === "cm-canned-tomatoes", applied.join());
+  await visible(page, '.action-bar [data-action="go-step"]').click();
+  await pause(1500);
+  await page.mouse.wheel(0, 900);
   await pause(1200);
+  await page.evaluate(() => window.scrollTo(0, 0));
 
-  // Check off a bought item: Add to pantry is offered, never automatic.
-  const onion = page.locator(".line", { hasText: "Onion" });
-  await onion.locator('input[type="checkbox"]').check();
+  // Explicit save, then resume after reload
+  await visible(page, '[data-action="save-version"]').click();
   await pause();
-  const autoAdded = await page.evaluate(() => "onion" in JSON.parse(localStorage.getItem("mise-match:v1")).pantry);
-  await page.locator(".line", { hasText: "Onion" }).locator('[data-action="list-to-pantry"]').click();
+  await page.locator('#sheet [data-action="confirm-save-version"]').click();
   await pause(1200);
-  const added = await page.evaluate(() => JSON.parse(localStorage.getItem("mise-match:v1")).pantry.onion);
-  record("list: checking off offers Add to pantry; it adds only when chosen", vp.name, !autoAdded && added?.qty === 1, JSON.stringify({ autoAdded, added }));
-
-  // Avatar opens Profile and settings as a pushed screen with a way back.
-  await page.locator(".avatar").click();
-  await page.waitForFunction(() => document.title.startsWith("Profile"));
-  await pause(1200);
-  const profile = await page.evaluate(() => ({ tabbar: getComputedStyle(document.getElementById("nav")).display, back: !!document.querySelector(".back-link") }));
-  record("avatar: Profile and settings opens as a pushed screen", vp.name, profile.tabbar === "none" && profile.back, JSON.stringify(profile));
-  await page.locator(".back-link").click();
-  await page.waitForFunction(() => document.title === "mise & match");
-  await page.locator('nav a[href="#/list"]').click();
-  await page.waitForFunction(() => document.title.startsWith("Grocery list"));
-
+  const versions = await page.evaluate(() => Object.values(window.__mise.state.versions).length);
+  record("save: version added only on an explicit save", vp.name, versions === 1, `${versions} version`);
+  await visible(page, '[data-action="choose-option"], [data-action="go-step"][data-step="options"]').click().catch(() => {});
+  await page.goto(`${base}/#/adapt/chana-masala/options`);
+  await visible(page, '[data-action="preview-swap"][data-swap="cm-spinach"]').click();
+  await page.locator(".sheet-foot .btn--primary").click();
+  await pause();
   await page.reload();
   await page.waitForSelector("h1");
+  await page.goto(`${base}/#/`);
   await pause(1200);
-  const persisted = await page.evaluate(() => ({
-    rice: [...document.querySelectorAll(".line")].find((l) => l.innerText.includes("basmati"))?.querySelector('input[data-action="list-qty"]').value,
-    mango: document.body.innerText.includes("Mango"),
-  }));
-  record("reload: list edit and manual item persist", vp.name, persisted.rice === "100" && persisted.mango, JSON.stringify(persisted));
-  await page.locator('nav a[href="#/"]').click();
-  await page.waitForFunction(() => document.title === "mise & match");
+  const resume = await page.locator("#cont-h").count();
+  record("reload: unfinished adaptation offered under Pick up where you left off", vp.name, resume === 1);
   await pause();
-  await page.locator(`a[href="#/recipe/chana-masala"]`).first().click();
-  await page.waitForFunction(() => document.title.startsWith("Chana masala"));
-  await pause(1200);
-  const kept = await page.evaluate(() => ({
-    servings: [...document.querySelectorAll(".stepper output")].find((o) => o.offsetParent)?.textContent,
-    changes: [...document.querySelectorAll(".change-list li")].map((l) => l.innerText.split("\n")[0]),
-  }));
-  record("reload: adapted version persists", vp.name, kept.servings === "2" && kept.changes.length === 1, JSON.stringify(kept));
+
+  // Cook without saving, then feedback on the exact version cooked
+  await page.goto(`${base}/#/cook/chana-masala`);
+  await page.waitForSelector("h1");
+  await pause();
+  await visible(page, '[data-action="finish-cooking"]').click();
+  await pause();
+  await page.locator('#sheet input[name="again"][value="yes"]').check();
+  await page.locator('#sheet input[name="familiar"][value="somewhat"]').check();
+  await pause(600);
+  await page.locator('#sheet [data-action="save-feedback"]').click();
+  await pause();
+  const cook = await page.evaluate(() => window.__mise.state.cooks.at(-1));
+  record("cook: record keeps the exact rules and servings, versions unchanged", vp.name, cook.applied.includes("cm-spinach") && cook.servings === 2 && cook.versionId === null && cook.feedback.again === "yes", JSON.stringify({ applied: cook.applied, versionId: cook.versionId }));
   await pageChecks(page, vp, "walkthrough end", errors);
 
   await page.waitForTimeout(1200);
@@ -390,7 +332,6 @@ async function walkthrough(browser) {
   await recorder;
   await context.close();
 
-  // Each frame is shown for as long as it was current, so playback runs in real time.
   const list = frames.map((f, i) => `file '${f.file}'\nduration ${((frames[i + 1]?.t ?? f.t + 1000) - f.t) / 1000}`);
   list.push(`file '${frames.at(-1).file}'`);
   const listFile = join(framesDir, "frames.txt");
@@ -404,7 +345,8 @@ async function walkthrough(browser) {
 }
 
 const server = await ensureServer();
-const browser = await chromium.launch({ channel: "chrome" });
+// Installed Chrome when available (no download needed); otherwise Playwright's own Chromium.
+const browser = await chromium.launch({ channel: "chrome" }).catch(() => chromium.launch());
 try {
   for (const vp of VIEWPORTS) await screens(browser, vp);
   if (args.video) await walkthrough(browser);

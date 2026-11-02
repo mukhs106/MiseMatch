@@ -127,8 +127,8 @@ export function candidates(recipe, servings, constraints, pantry = {}) {
     || 0
     || a.ev.check.dislikes.length - b.ev.check.dislikes.length
     || a.ev.purchases - b.ev.purchases
-    || a.ev.minutes - b.ev.minutes
-    || a.applied.length - b.applied.length;
+    || a.applied.length - b.applied.length
+    || a.ev.minutes - b.ev.minutes;
   eligible.sort(rank);
   needsAnswer.sort(rank);
   notEligible.sort((a, b) => a.blockers.length - b.blockers.length || rank(a, b));

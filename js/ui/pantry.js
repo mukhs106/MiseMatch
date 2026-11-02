@@ -9,7 +9,16 @@ import { SWAPS } from "../data/swaps.js";
 import { pantryChipItems } from "../core/suggest.js";
 import { searchCatalog, displayName, freeKey } from "../core/pantry.js";
 import { unitFamily } from "../core/units.js";
-import { capitalize } from "./home.js";
+import { capitalize } from "./parts.js";
+
+/** Pantry and shopping list share one tab: what you have, and what you still need. */
+export function kitchenTabs(current, open) {
+  return html`
+    <div class="view-toggle kitchen-tabs" role="group" aria-label="Pantry or shopping list">
+      <a class="view-btn" href="#/pantry" ${current === "pantry" ? html`aria-current="page"` : ""}>On hand</a>
+      <a class="view-btn" href="#/list" ${current === "list" ? html`aria-current="page"` : ""}>Shopping list${open ? ` (${open})` : ""}</a>
+    </div>`;
+}
 
 const FAMILY_UNITS = { mass: ["g", "kg"], volume: ["ml", "l", "tsp", "tbsp", "cup"] };
 
@@ -38,13 +47,14 @@ export function pantryView(ctx) {
         <h1 tabindex="-1" data-route-focus>Pantry</h1>
         <p class="muted">Turn ‘what’s left?’ into ‘what’s next.’</p>
       </header>
+      ${kitchenTabs("pantry", state.list.lines.filter((l) => !l.checked).length)}
 
       <form class="pantry-add" data-action="pantry-add-form" role="search" aria-label="Add to your pantry">
         <label class="field">
           <span class="field-label">Add an ingredient</span>
           <input class="input" type="search" data-action="pantry-search" value="${q}" placeholder="Search, for example chickpeas" autocomplete="off" aria-describedby="pantry-help">
         </label>
-        <p id="pantry-help" class="small muted">Amounts are optional. With no amount, recipes count it as “have it, amount unknown.”</p>
+        <p id="pantry-help" class="small muted">Amounts are optional. Without one, you'll be asked whether you have enough when you plan a meal.</p>
         ${q.trim() ? html`
           <ul class="pantry-matches" aria-label="Matching ingredients">
             ${matches.map((id) => html`
@@ -114,7 +124,7 @@ function pantryRow(key, e) {
       <div class="line-row">
         <div class="line-body">
           <span class="line-name">${name}</span>
-          <span class="line-meta small muted">${e.qty != null ? "Shared by every recipe, counted once on your list" : e.some ? "Some, amount not entered" : "Have it, amount unknown"}</span>
+          <span class="line-meta small muted">${e.qty != null ? "Shared by every meal, counted once" : e.some ? "Some, amount not entered" : "Have it, amount unknown"}</span>
         </div>
         <div class="line-qty">
           <label>
