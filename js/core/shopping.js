@@ -34,11 +34,14 @@ function requirements(derived) {
 }
 
 /**
- * @param entries  [{ id, derived }] in list order
- * @param pantry   { [itemId]: { qty?, unit?, some? } } (see core/pantry.js)
- * @returns Map(id -> [{ key, item, name, qty, unit, aisle, note, uncertain }])
+ * @param entries        [{ id, derived }] in list order (id: a planned meal)
+ * @param pantry         { [itemId]: { qty?, unit?, some? } } (see core/pantry.js)
+ * @param confirmations  { "<id>|<item>": "enough" | "buy" } answers for amounts the pantry doesn't know
+ * @returns Map(id -> [{ key, item, name, qty, unit, aisle, note, uncertain, check }])
+ *   check: you have it but no amount is entered. Not treated as enough: it needs
+ *   a confirmation ("I have enough" or "Buy it") before it leaves the list of questions.
  */
-export function allocateNeeds(entries, pantry = {}) {
+export function allocateNeeds(entries, pantry = {}, confirmations = {}) {
   const left = new Map(); // item -> { qty, unit } of the pantry amount not yet used
   const out = new Map();
   for (const { id, derived } of entries) {
@@ -50,8 +53,10 @@ export function allocateNeeds(entries, pantry = {}) {
         continue;
       }
       if (have.qty == null) {
-        // Have it, amount unknown: nothing to buy. "Some" without an amount stays on the list, flagged.
-        if (have.some) needs.push({ ...req, uncertain: true, note: "You have some, but no amount is entered. Check before buying." });
+        const answer = confirmations[`${id}|${req.item}`];
+        if (answer === "enough") continue;
+        if (answer === "buy") needs.push({ ...req, note: "You chose to buy this" });
+        else needs.push({ ...req, check: true, note: have.some ? "You have some, but no amount is entered." : "You have this, but no amount is entered." });
         continue;
       }
       if (!left.has(req.item)) left.set(req.item, { qty: have.qty, unit: have.unit });
@@ -66,7 +71,7 @@ export function allocateNeeds(entries, pantry = {}) {
       pool.qty -= convert(use, req.unit, pool.unit);
       const rest = req.qty - use;
       if (rest <= EPS) continue;
-      needs.push({ ...req, qty: rest, note: use > EPS ? `After ${formatQty(use, req.unit)} from your pantry` : "Your pantry amount is used by a recipe earlier on the list" });
+      needs.push({ ...req, qty: rest, note: use > EPS ? `After ${formatQty(use, req.unit)} from your pantry` : "Your pantry amount is used by a meal earlier on the list" });
     }
     out.set(id, needs);
   }
@@ -81,7 +86,7 @@ export function needsFor(derived, pantry = {}) {
 /** A stable fingerprint of needs, used to tell whether the list is out of date. */
 export function needsSignature(needs) {
   return needs
-    .map((n) => `${n.key}:${formatQty(n.qty, n.unit, n.step)}${n.uncertain ? "?" : ""}`)
+    .map((n) => `${n.key}:${formatQty(n.qty, n.unit, n.step)}${n.uncertain ? "?" : ""}${n.check ? "!" : ""}`)
     .sort()
     .join(",");
 }
@@ -127,7 +132,8 @@ function sameQty(a, b) {
 export function syncRecipe(list, recipe, needs) {
   const next = structuredClone(list);
   const report = { added: 0, updated: 0, removed: 0, conflicts: 0, stillDismissed: [] };
-  const byKey = new Map(needs.map((n) => [n.key, n]));
+  // Amounts waiting for a confirmation are asked about, not bought.
+  const byKey = new Map(needs.filter((n) => !n.check).map((n) => [n.key, n]));
   const dismissed = next.dismissed[recipe.id] ?? {};
 
   for (const line of next.lines) {

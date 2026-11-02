@@ -2,7 +2,8 @@
 // adaptation state: { servings, applied: [swapId, ...] }.
 // The source recipe object is never mutated.
 
-import { getSwap, swapSlot } from "../data/swaps.js";
+import { getSwap } from "../data/swaps.js";
+import { comboStatus } from "./engine.js";
 import { shortName } from "../data/items.js";
 
 export function defaultAdaptation(recipe) {
@@ -116,28 +117,28 @@ function renderTemplate(text, bySlot) {
 }
 
 /**
- * Whether a swap can be added to the current adaptation.
- * @returns {{ ok: boolean, blockers: [{ swap, reason }] }}
+ * Whether a rule can be added to the current adaptation.
+ * blockers: applied rules it can't be combined with (declared conflict or same ingredient).
+ * untested: applied rules it has never been written to combine with. Allowed only
+ * with an explicit "try it untested" choice, and labelled as such everywhere.
+ * @returns {{ ok: boolean, blockers: [{ swap, reason }], untested: Swap[] }}
  */
 export function checkSwap(recipe, adaptation, swapId) {
   const swap = getSwap(swapId);
   if (!swap || swap.recipe !== recipe.id) {
-    return { ok: false, blockers: [], unsupported: "This change isn't available for this recipe." };
+    return { ok: false, blockers: [], untested: [], unsupported: "This change isn't available for this recipe." };
   }
-  const applied = adaptation.applied.map(getSwap).filter(Boolean);
-  if (applied.some((s) => s.id === swapId)) return { ok: false, blockers: [], already: true };
+  if (adaptation.applied.includes(swapId)) return { ok: false, blockers: [], untested: [], already: true };
   const blockers = [];
-  const slot = swapSlot(swap);
-  for (const other of applied) {
-    if (slot && swapSlot(other) === slot) {
-      blockers.push({ swap: other, reason: "Both change the same ingredient. Only one swap per ingredient at a time." });
-      continue;
-    }
-    const declared = (swap.conflicts ?? []).find((c) => c.swap === other.id)
-      ?? (other.conflicts ?? []).find((c) => c.swap === swap.id);
-    if (declared) blockers.push({ swap: other, reason: declared.reason });
+  const untested = [];
+  for (const otherId of adaptation.applied) {
+    const other = getSwap(otherId);
+    if (!other) continue;
+    const pair = comboStatus(recipe.id, [otherId, swapId]);
+    if (pair.blocked.length) blockers.push({ swap: other, reason: pair.blocked[0].reason });
+    else if (pair.untested.length) untested.push(other);
   }
-  return { ok: blockers.length === 0, blockers };
+  return { ok: blockers.length === 0, blockers, untested: untested.filter((u) => !blockers.some((b) => b.swap.id === u.id)) };
 }
 
 /** Apply a swap, optionally removing named blockers first. Returns a new state. */
