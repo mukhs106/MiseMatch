@@ -1,30 +1,49 @@
-// Grocery list: grouped, editable, with conflicts surfaced on the line they affect.
+// Shopping list: planned meals at the top (each tied to an exact version and
+// serving count), amounts to confirm, then lines grouped by aisle. Edits are
+// kept; changes underneath them are flagged, never applied silently.
 
 import { html, plural } from "./html.js";
 import { icon, doodle } from "./icons.js";
 import { getRecipe } from "../data/recipes.js";
 import { computedQty, displayQty, formatShopQty, isListCurrent } from "../core/shopping.js";
 import { practical, unitFamily } from "../core/units.js";
+import { kitchenTabs } from "./pantry.js";
+import { plannedList } from "./plan.js";
+import { confirmRow } from "./adapt.js";
 
-const AISLES = ["Produce", "Frozen", "Refrigerated", "Dairy & eggs", "Pantry", "Bakery", "Spices", "Added by you"];
+const AISLES = ["Produce", "Frozen", "Refrigerated", "Dairy & eggs", "Meat", "Pantry", "Bakery", "Spices", "Added by you"];
 
 export function listView(ctx) {
-  const { list } = ctx.state;
+  const { list, plan } = ctx.state;
   const open = list.lines.filter((l) => !l.checked).length;
   const checked = list.lines.length - open;
   const groups = AISLES.map((aisle) => [aisle, list.lines.filter((l) => l.aisle === aisle)]).filter(([, ls]) => ls.length);
   const other = list.lines.filter((l) => !AISLES.includes(l.aisle));
   if (other.length) groups.push(["Other", other]);
+  const needs = ctx.planNeeds();
+  const checks = plan.flatMap((p) => (needs.get(p.id) ?? []).filter((n) => n.check).map((n) => ({ p, n })));
 
   return html`
     <div class="page list-page">
       <header class="list-head">
-        <h1 tabindex="-1" data-route-focus>Grocery list</h1>
-        <p class="muted">${!list.lines.length
+        <h1 tabindex="-1" data-route-focus>Shopping list</h1>
+        <p class="muted">${!list.lines.length && !plan.length
           ? "Nacho average grocery list."
-          : !open ? "Bean there, done that." : `${plural(open, "item")} to get${checked ? `, ${checked} checked off` : ""}`}</p>
+          : !open && list.lines.length ? "Bean there, done that." : `${plural(open, "item")} to get${checked ? `, ${checked} checked off` : ""}`}</p>
       </header>
+      ${kitchenTabs("list", open)}
+      ${plan.length ? html`
+        <section class="list-meals" aria-labelledby="meals-h">
+          <div class="section-head"><h2 id="meals-h" class="h3">For ${plural(plan.length, "meal")}</h2><a class="btn btn--quiet" href="#/plan">Plan more</a></div>
+          ${plannedList(ctx)}
+        </section>` : ""}
       ${listNotices(ctx)}
+      ${checks.length ? html`
+        <section class="list-confirm" aria-labelledby="conf-h">
+          <h2 id="conf-h" class="h3">Do you have enough?</h2>
+          <p class="small muted">In your pantry without an amount, so not assumed to be enough.</p>
+          <ul class="confirm-list">${checks.map(({ p, n }) => confirmRow(`${p.id}|${n.item}`, { ...n, note: `For ${getRecipe(p.recipeId).title}.` }))}</ul>
+        </section>` : ""}
       <form class="add-item" data-action="list-add" aria-label="Add an item">
         <label class="field add-name">
           <span class="field-label">Add an item</span>
@@ -48,40 +67,32 @@ export function listView(ctx) {
       ` : html`
         <div class="empty">
           ${doodle.pot}
-          <p>Nothing to buy yet. Open a recipe, mark what you have, and choose Add to list. Anything you add here yourself stays put.</p>
-          <a class="btn btn--primary" href="#/">Go to Recipes</a>
+          <p>${plan.length ? "Nothing to buy for your planned meals." : "Nothing to buy yet. Adapt a recipe and add it from the Pantry and shopping step, or plan a few meals. Anything you add here yourself stays put."}</p>
+          ${plan.length ? "" : html`<a class="btn btn--primary" href="#/plan">Plan a few meals</a>`}
         </div>`}
     </div>`;
 }
 
 function listNotices(ctx) {
-  const { list } = ctx.state;
-  const stale = [];
+  const { list, plan } = ctx.state;
+  const needs = ctx.planNeeds();
+  const stale = plan.filter((p) => !isListCurrent(list, p.id, needs.get(p.id) ?? []));
   const removed = [];
-  for (const recipeId of Object.keys(list.synced)) {
-    const recipe = getRecipe(recipeId);
-    if (!recipe) continue;
-    const needs = ctx.needs(recipeId);
-    if (!isListCurrent(list, recipeId, needs)) stale.push(recipe);
-    for (const n of needs) if (list.dismissed[recipeId]?.[n.key]) removed.push({ recipe, need: n });
-  }
+  for (const p of plan) for (const n of needs.get(p.id) ?? []) if (list.dismissed[p.id]?.[n.key]) removed.push({ p, need: n });
   return html`
-    ${stale.map((r) => html`
+    ${stale.length ? html`
       <div class="notice" role="status">
-        <p><strong>${r.title} or your pantry changed</strong> since this was added. The list still shows the earlier amounts.</p>
-        <div class="actions">
-          <button class="btn btn--primary btn--small" data-action="sync-list" data-id="${r.id}">Update list</button>
-          <a class="btn btn--quiet" href="#/recipe/${r.id}">Open recipe</a>
-        </div>
-      </div>`)}
+        <p><strong>Your pantry or a planned meal changed</strong> since the list was made. The list still shows the earlier amounts.</p>
+        <div class="actions"><button class="btn btn--primary btn--small" data-action="sync-list">Update list</button></div>
+      </div>` : ""}
     ${removed.length ? html`
       <details class="notice notice--cool removed">
-        <summary>${plural(removed.length, "item")} you removed ${removed.length === 1 ? "is" : "are"} still in your recipes</summary>
+        <summary>${plural(removed.length, "item")} you removed ${removed.length === 1 ? "is" : "are"} still in your planned meals</summary>
         <ul>
-          ${removed.map(({ recipe, need }) => html`
+          ${removed.map(({ p, need }) => html`
             <li>
-              <span>${need.name} <span class="muted">for ${recipe.title}</span></span>
-              <button class="btn btn--quiet" data-action="list-addback" data-id="${recipe.id}" data-key="${need.key}">Add back</button>
+              <span>${need.name} <span class="muted">for ${getRecipe(p.recipeId).title}</span></span>
+              <button class="btn btn--quiet" data-action="list-addback" data-id="${p.id}" data-key="${need.key}">Add back</button>
             </li>`)}
         </ul>
       </details>` : ""}`;
@@ -111,7 +122,7 @@ function lineView(line, ctx) {
             ? html`<input class="input line-name" value="${line.name}" aria-label="Item name" data-action="list-name" data-line="${id}">`
             : html`<span class="line-name">${line.name}</span>`}
           <span class="line-meta small muted">
-            ${titles.length ? `For ${titles.join(", ")}` : line.manual ? "Added by you" : "No longer in a recipe"}
+            ${titles.length ? `For ${titles.join("; ")}` : line.manual ? "Added by you" : "No longer in a planned meal"}
             ${line.override && !line.conflict ? html` · <span class="edited">edited</span>
               <button class="btn btn--quiet line-reset" data-action="list-resolve" data-line="${id}" data-choice="recipe">Use recipe amount</button>` : ""}
           </span>
@@ -138,7 +149,7 @@ function conflictView(line) {
   if (line.conflict.type === "orphan") {
     return html`
       <div class="notice line-conflict" role="status">
-        <p>No recipe needs this anymore. You ${line.checked ? "checked it off" : "edited it"}, so it's still here.</p>
+        <p>No planned meal needs this anymore. You ${line.checked ? "checked it off" : "edited it"}, so it's still here.</p>
         <div class="actions">
           <button class="btn btn--secondary btn--small" data-action="list-resolve" data-line="${id}" data-choice="remove">Remove</button>
           <button class="btn btn--quiet" data-action="list-resolve" data-line="${id}" data-choice="mine">Keep it</button>
@@ -150,7 +161,7 @@ function conflictView(line) {
   const mine = line.override ? displayQty(line) : null;
   return html`
     <div class="notice line-conflict" role="status">
-      <p>Your recipes now need <strong>${nowText}</strong>.
+      <p>Your planned meals now need <strong>${nowText}</strong>.
         ${mine ? `You set ${mine}.` : "You had already checked this off."}</p>
       <div class="actions">
         <button class="btn btn--secondary btn--small" data-action="list-resolve" data-line="${id}" data-choice="recipe">Use ${nowText}</button>

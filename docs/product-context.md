@@ -1,6 +1,6 @@
 # Product context: mise & match (working name)
 
-Version: 0.5, October 29, 2026. Merges the owner's decision record v0.4 with the implementation record kept in this repository.
+Version: 0.6, November 2, 2026. Adds the adaptation-first refinement (section "Version 0.6") on top of v0.5, which merged the owner's decision record v0.4 with the implementation record kept in this repository.
 Owner: Suhani
 Audience: Claude Code and anyone working in this repository
 Status: living document. Provisional decisions are expected to change.
@@ -12,6 +12,98 @@ Read this before changing product behavior, data structure, copy, or visual styl
 Statuses used throughout: **Confirmed** (explicit owner decision), **Working** (accepted, still refinable), **Provisional** (a default chosen so the build can proceed; expect revision), **Proposed** (a recommendation awaiting owner approval), **Superseded** or **Rejected** (kept so the project does not loop back), **Open** (unresolved).
 
 A requirement in this file is not evidence that it has been built. Verify against the code before reporting anything as done.
+
+## Version 0.6 (November 2, 2026): adaptation-first refinement
+
+This section is the current record. Where it disagrees with older parts of this file (screens, pantry model, "My version" toggle, seed data, known limitations in Part 7), this section wins; the older text is kept as history.
+
+### Direction
+
+The central value is adapting familiar Indian and South Asian comfort food to someone's pantry, portions, dietary requirements and optional nutrition goals, while clearly explaining the consequences. Saving, planning and the shopping list support it. The product keeps its broader promise of reducing the mental load of meal preparation. It is not a calorie tracker and never implies that traditional food needs correcting. Indian and South Asian recipes are the initial focus, not a claim of complete regional expertise.
+
+### Information architecture
+
+| Destination | Purpose |
+| --- | --- |
+| Today (`#/`) | What you can cook now: continue an unfinished adaptation, make a saved version again, dishes that use what you have (each with its reasons: ingredients used, things to buy, goal reached), Plan a few meals. Shopping and import are quiet rows. A "Start here" row opens the chana masala demo until you have your own work. |
+| Recipes (`#/recipes`, `#/recipe/:id`) | The supported collection with search (including regional names) and filters (fits my requirements, saved or adapted). The overview shows the source recipe as written with attribution, Adapt this dish (primary), Cook as written, bookmark, and your versions. |
+| Adaptation (`#/adapt/:id/:step`) | Four steps on one working session: Portions and needs → Options → Compare → Pantry and shopping. Bottom bar: Undo, Save, next step / Cook now. |
+| Pantry (`#/pantry`, `#/list`) | On hand and Shopping list, one tab. The list starts with planned meals (version, servings, update notices) and amounts to confirm. |
+| Saved (`#/saved`) | Your versions (with what they came from), imported drafts and references, bookmarks, cooked history with notes. |
+| Pushed screens | Plan (`#/plan`), Import (`#/import`, `#/draft/:id`), Cook (`#/cook/...`), Requirements and settings (`#/profile`, from the avatar). |
+
+### The flow
+
+Choose a supported recipe (or import a draft) → answer the questions that change the result (nut scope, eggs, soy, sesame, coconut) → set servings and requirements for today → review supported versions, or an explanation when none fits → compare original and your version (ingredients, expected changes, method, nutrition, requirement check) → check pantry quantities, confirm unknown amounts → add the shortfall to the shopping list. Cooking without saving is always available.
+
+### Engine (deterministic, separate from extraction)
+
+- Data: traceable catalog records (`js/data/items.js`), authored rules (`swaps.js`) with recipe context, quantity ranges (`servingsRange`), preparation requirements (`requires`, `planAhead`), instruction changes, incompatibilities (`conflicts`), known-good pairings (`combinesWith`), evidence status, and authored bundles (`bundles.js`).
+- Logic (`js/core/engine.js`): `comboStatus` (supported / untested / blocked) → `evaluate` (derive, check requirements, open questions, label checks, limits, quantity ranges, nutrition against targets, purchases) → `candidates` (original, each rule, each bundle; sorted into eligible, needs an answer, not eligible) → `resolve` (rank eligible by targets, then dislikes, then purchases, then fewer changes, then time; explain conflicts and offer: lower a flexible goal, a supported accompaniment evaluated under the same requirements, or other dishes).
+- Requirements (`js/core/constraints.js`) are four kinds kept apart: hard exclusions (diet, allergens), limits (time), targets (protein and fiber minimums per serving), preferences (dislikes). Hard exclusions and limits filter and are never traded against anything. Nothing is ever called safe; conflicts and product-label checks are listed instead.
+- States the UI distinguishes: missing information (draft validation, unanswered questions), untested combination, no supported result.
+
+### Supported collection and adaptations
+
+All recipes are written for this prototype from common home versions and are not kitchen-tested. All rules and bundles are suggestions (`evidence: suggested`): rule-based predictions, not cooked and checked by the team. There are no team-tested versions and no community reports, and the UI says so.
+
+| Recipe | Serves | Rules | Authored bundles |
+| --- | --- | --- | --- |
+| Chana masala (hero) | 4 | Canned tomatoes; Dried chickpeas; Ground ginger; Add paneer; Add firm tofu; Add frozen spinach | No fresh tomatoes, more protein; …without dairy; More protein and fiber without dairy |
+| Chana palak | 4 | Frozen spinach; Kale; Fresh tomatoes; Add paneer; Add green peas; Brown basmati | More protein and fiber |
+| Paneer bhurji | 2 | Extra-firm tofu; Half paneer, half tofu; Canned tomatoes; Add eggs; Add green peas | none |
+| Masoor dal tadka | 4 | Split moong dal; Oil for the tadka; More dal, less rice; Add spinach; Brown basmati | Plant-based, more dal |
+| Paneer butter masala | 4 | Tofu for paneer; Coconut milk or oat milk for cream; Oil instead of butter; Sunflower seeds for cashews (2–8 servings); Leave out the cashews; More paneer or tofu | Plant-based nut-free with coconut (± more tofu); without coconut (± more tofu); plant-based keeping cashews |
+| Punjabi kadhi (no pakoras) | 4 | Oil for the tadka; Add spinach | none. Plant yogurt is explained as unsupported |
+| Pav bhaji | 4 | Canned tomatoes; Oil instead of butter; More peas and cauliflower | Plant-based, more vegetables |
+| Aloo paratha | 4 | Oil for cooking; Peas in the filling | none. Gluten-free explained as unsupported |
+| Goat curry (mutton curry) | 4 | Lamb instead of goat | none. Nutrition can't be estimated for bone-in weight |
+| Masala chai | 2 | Oat milk; Soy milk | none |
+
+Tomato and egg stir-fry was removed: it is outside the South Asian focus. Version 1 saves that referenced it drop it.
+
+Effects are concrete expected changes (texture, richness, aroma, acidity, cooking behavior, quantities) plus what stays the same, with no numeric flavor score. Every balancing adjustment carries a recipe-specific reason (for example, half the sugar with coconut milk, a quarter more salt with tofu bhurji). Rules say explicitly when spices can't replace lost fat or aroma.
+
+### Data assumptions
+
+- Nutrition: protein, fiber, fat and energy per 100 g, hand-entered as rounded typical values in the style of USDA FoodData Central. Status `fixture`: not checked against specific database records. Shown per serving as ±15% ranges. Missing values (split moong fiber, coconut milk fiber, oat milk fiber, bone-in meat) make that nutrient "can't estimate", never zero. Serving definitions are recorded per recipe, comparisons use the same servings, and a change in food per serving is disclosed.
+- Allergen and diet tags are on catalog items only; brand-dependent products (spice blends, asafoetida, rotis, pav, oat milk, coconut milk, sunflower seeds) carry a label-check note.
+- Regional names and transliterations are aliases of exactly one item; names that could mean several (chana, dal, mutton, rice, methi, cottage cheese) are ambiguous and always asked about. Combined ingredients ("ginger garlic paste") are not collapsed into one.
+- Photos: Pexels, page links pending (`docs/image-sources.md`). Paneer bhurji and masoor dal show a typographic tile rather than another dish.
+
+### Importing
+
+Drafts, never assurances. Extraction (`js/core/importer.js`) is separate from normalization and validation (`js/core/normalize.js`). Order of preference: schema.org Recipe JSON-LD (implemented for HTML), supported page extraction (demo fixtures only), pasted text with Ingredients/Method sections (implemented), screenshots (not available: no OCR integration). Because the app is static with no server, real links can't be fetched; five clearly labelled example.com demo links show structured data, a supported dish, two recipes on one page, a private post and a video without a caption. Every fallback keeps what was entered. Each line keeps its original wording beside the proposed match, quantity, unit, preparation, raw/cooked state, section and source. Validation blocks only the actions an issue affects: a missing cream quantity blocks nutrition; an unclear garnish blocks nothing; a missing serving count blocks scaling and per-serving nutrition; saving as a reference is always allowed. Imported drafts aren't eligible for supported adaptations; a draft that matches a supported dish links to it. Import attribution travels with the draft, and privately importing a recipe does not authorize republishing it.
+
+### Saving, versions, plans and cooking
+
+- Working session per recipe: autosaved, resumable after reload, with an undo history. It never appears in the collection until saved.
+- Save is explicit: Save version, or Update / Save as new when the session started from a saved version. The original is never changed. Versions record what they came from ("Based on the original recipe" / "Based on your …") without technical terms, and a private visibility field ready for later publishing.
+- Planned meals store the version id, revision, rules and servings. Updating a saved version shows "changed since you planned it" with Review update (use the update, or keep what was planned); the list never changes silently.
+- Pantry amounts are shared out once across planned meals in plan order. "Have it, amount unknown" asks "Do you have enough?" (I have enough / Buy it) per meal instead of counting as enough.
+- Cook mode works for the original, a saved version, the unsaved session or an imported draft. "I cooked this" records the exact rules and servings and optionally asks: make it again, how close to the dish you know (separate from enjoyment), what differed, changed ingredients, followed the method. Feedback attaches to the exact version cooked; versions you'd make again appear under Make it again.
+
+### Visual
+
+Pure white surfaces, Apfel Grotezk, burgundy actions, restrained yellow and blue fills, mobile first. Smaller page headings in the flow, photo thumbnails instead of repeated cards, one status message per step, evidence shown as one small label, nutrition and technical detail collapsed. Checked at 430 × 932 (iPhone 14/15 Pro Max class), 393 × 852 (14/15 Pro), 360 × 740 and 1280 × 860, plus 320 px for overflow.
+
+### Limitations
+
+- Recipes, rules and combinations are untested in a kitchen. Nutrition values are fixtures.
+- No server: no real link import, OCR, transcription, accounts or sync. Data lives in one browser.
+- Imported drafts can't be planned on the shopping list or adapted; adaptation is only for the 10 supported recipes.
+- Pantry quantities have no expiry or usage tracking. Feedback is stored but doesn't change rankings yet.
+- Not checked in Safari, Firefox, on a physical phone or with a screen reader.
+
+### Deferred
+
+Public publishing and forks (relationships and attribution are prepared; no feed or sample community content is shown), team cooking trials and a "team-tested" evidence level, verified nutrition data, a server-side importer with per-site extraction and permission checks, OCR and transcription, broader regional coverage.
+
+### Open questions for the owner
+
+1. Should "Make it again" also offer versions cooked once without feedback?
+2. Which dishes should be cooked first to move from suggested to team-tested?
+3. Pexels page links for the eight displayed photos.
 
 ### Evidence gaps
 
@@ -59,6 +151,12 @@ Not inspected by anyone working in the repository: the Figma file and its eight 
 | Oct 29 | "My Recipes" is renamed "Recipes" everywhere | Confirmed (T05) |
 | Oct 29 | Primary destinations are Recipes, Grocery list and Pantry (bottom tab bar on mobile, header at wide widths), plus an avatar entry at top right for Profile and Settings. Recipe detail and Profile are pushed screens with a back button and no tab bar; the swap sheet stays a modal dialog. Routes stay hash-based. | Confirmed (T05) |
 | Oct 29 | Pantry is the single ingredient state and holds optional quantities (no quantity = "have it, amount unknown"). Recipe availability reads from it and writes back to it. Shopping needs subtract each pantry amount once across all listed recipes, allocated in list order; unconvertible units count as amount unknown and are flagged. Supersedes the presence-only shared list and C8 (per-recipe partial amounts). | Confirmed (T05) |
+| Nov 2 | Adaptation-first refinement (Version 0.6 section): Today, Recipes, Pantry, Saved; four-step adaptation flow; deterministic engine with authored rules and bundles; constraints in four kinds; import as drafts; sessions with explicit saved versions; planned meals with reviewable updates | Confirmed (owner prompt); built |
+| Nov 2 | "My version / Original" toggle replaced by Original and Your version side by side; no numeric flavor score | Confirmed; built. Supersedes the toggle |
+| Nov 2 | Retained adapted version (autosaved per recipe) replaced by a working session plus explicit Save; v1 adapted recipes migrate to saved versions | Confirmed; built. Supersedes "one adapted version per recipe" |
+| Nov 2 | "Have it, amount unknown" now asks for confirmation instead of counting as enough | Confirmed; built. Supersedes T05's rule |
+| Nov 2 | Collection is 10 Indian and South Asian dishes; tomato and egg stir-fry removed | Confirmed; built |
+| Nov 2 | Eight Pexels photos displayed (page links pending); dishes without a suitable photo use a typographic tile | Working |
 | Oct 29 | Copy rule: at most one line of wordplay per screen; navigation, buttons, quantities, consequences, errors and allergy text stay plain. Assigned lines: Recipes header "Blend the rules."; swap sheet title "Thyme for a swap."; Pantry header "Turn 'what's left?' into 'what's next.'"; empty grocery list "Nacho average grocery list."; all list items checked "Bean there, done that."; Use what you have with no matches "Dinner, off-script." followed by a plain next step. | Confirmed (T05) |
 
 ### October 22 testing: observations, revisions, and next question
@@ -389,6 +487,8 @@ Five recipes written for the prototype from common home-style versions, not test
 - Verified in Chrome (Playwright, and the in-app browser) at 430 × 932, 360 × 740 and 1280 × 860. Not checked in Safari or Firefox, on a physical phone, or with a screen reader. The UI relies on `:has()` and `<dialog>`.
 
 ### Verification log
+
+**Version 0.6, adaptation-first refinement (2026-11-02).** `npm test` 34 pass (portion scaling, incompatible constraints, unknown quantities, combined swaps, quantity ranges, save behavior, pantry allocation across planned meals, shopping-list updates after a version change, import, normalization, migration). `tools/review/capture.mjs` 223/223 checks at 430 × 932, 393 × 852, 360 × 740 and 1280 × 860 plus a recorded 430 × 932 walkthrough (keyboard order, keyboard navigation through the flow, Escape and focus return, undo, explicit save, resumed session after reload, cook record and feedback). Separate checks: no horizontal overflow at 320–1280 on 16 routes; image loading failure hides the photo and credit; blocked and corrupt storage fall back to memory; contrast of new pairs ≥ 6.1:1 for text. Evidence: `reviews/2026-11-02-adaptation-flow/` (git-ignored). Run in a cloud browser (Playwright Chromium), not on the owner's Mac. Not checked: Safari, Firefox, a physical phone, a screen reader.
 
 **T05, navigation, Recipes and Pantry (2026-10-29).** Evidence: `reviews/2026-10-29-t05-navigation-pantry/` and its ZIP (git-ignored). Before `2b76443` (served from a git worktree): 60/60. After `16b8d05`: 121/121 at 430 × 932, 360 × 740 and 1280 × 860, plus a 41 s walkthrough at 430 × 932 covering keyboard focus order, the skip link, keyboard vs pointer title focus, search by ingredient, Use what you have with an empty pantry, scaling to 2, rice Some 100 g appearing in Pantry, the "Thyme for a swap." sheet with Escape and focus return, apply and undo, list rice 50 g, Add to pantry only when chosen, the avatar opening Profile as a pushed screen, and reload persistence. `npm test` 20 pass (new: pantry-to-recipe sync, single allocation in both orders, unconvertible units, migration). Incident: commit `ec84eef`, made outside the session mid-task, imported two uncommitted view files and briefly broke GitHub Pages; `2706654` restored it.
 
