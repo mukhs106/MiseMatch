@@ -68,7 +68,7 @@
   --warn-text: var(--c-warn);
   --backdrop: transparent;              /* reserved: rgb(31 26 23 / 0.45) */
   --icon-on-fill: invert(1);            /* black icon files on a black fill */
-  --photo-filter: grayscale(1);         /* reserved: none */
+  --photo-filter: none;                 /* food photos show in natural color, not part of the black and white treatment */
 
   /* Type */
   --font-sans: "Apfel Grotezk", "Helvetica Neue", Arial, system-ui, sans-serif;

@@ -524,7 +524,7 @@ Found while merging v0.4; each decision is in the decision log and is now reflec
 
 ## 9. Black and white stage (November 2)
 
-For this stage of development the interface uses one typeface and black and white only. The design system is simplified, not removed: tokens, spacing, type scale, grid and component structure all stay. Where this conflicts with color guidance elsewhere in this file, this part wins until color returns; that guidance stays as the record for later.
+For this stage of development the interface uses one typeface and black and white only. Food photography is the one exception: photos show in natural color. The design system is simplified, not removed: tokens, spacing, type scale, grid and component structure all stay. Where this conflicts with color guidance elsewhere in this file, this part wins until color returns; that guidance stays as the record for later.
 
 ### State without color
 
@@ -542,7 +542,7 @@ For this stage of development the interface uses one typeface and black and whit
 | Current adaptation step | Heavy top rule and bold label; other steps 1 px and regular |
 | Original and Your version | 1 px and 2 px borders, labeled; in comparison tables the old value is struck through and the new value is bold |
 | Radio chips and cook checkboxes | Drawn in black and white, because browser defaults are grey |
-| Recipe photos | Greyscale for this stage, through `--photo-filter`. They carry no meaning. Dishes without a photo keep the outlined typographic tile |
+| Recipe photos | Natural color (`--photo-filter: none`; owner decision, Nov 2, T10, reversing the earlier greyscale treatment). They carry no meaning. Dishes without a photo, and photos that fail to load, show the outlined typographic tile |
 | Idea matching a goal | 2 px border and a black tag with a check |
 | Disabled | Dashed border, regular weight |
 | Secondary text | Smaller size and regular weight, never lighter |
@@ -572,7 +572,6 @@ These are also kept beside each token in `css/tokens.css`.
 | `--text-on-highlight`, `--text-on-selected` | `--c-ink` |
 | `--backdrop` | `rgb(31 26 23 / 0.45)` |
 | `--shadow-sheet` | `0 -8px 32px rgb(31 26 23 / 0.14)` |
-| `--photo-filter` | `none` |
 | `assets/accents/arrow.svg` | stroke `#59000E` |
 | `assets/accents/squiggle.svg`, `spark.svg` | stroke `#FEBD02` |
 | `assets/accents/pot.svg` | stroke `#59000E`, filled dots `#FEBD02` and `#A0B9C4` |
