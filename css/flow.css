@@ -1248,3 +1248,11 @@ h3 {
   white-space: normal;
   text-align: left;
 }
+
+.have-row:has(.have-qty) {
+  grid-template-columns: 1fr;
+}
+
+.have-row:has(.have-qty) .have-ctl {
+  justify-content: flex-start;
+}

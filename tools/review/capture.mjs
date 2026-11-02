@@ -214,23 +214,28 @@ async function walkthrough(browser) {
   const framesDir = join(dir, "frames");
   mkdirSync(framesDir, { recursive: true });
   const frames = [];
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  const pause = (ms = 900) => page.waitForTimeout(ms);
+  const vp = { name: "walkthrough-430x932" };
   let recording = true;
+  // Started after the first page load: screenshots taken while about:blank loads fonts can hang.
+  await page.goto(`${base}/#/`);
+  await page.waitForSelector("h1");
+  await page.evaluate(() => document.fonts.ready);
   const recorder = (async () => {
     while (recording) {
       const file = join(framesDir, `${String(frames.length).padStart(5, "0")}.jpg`);
       try {
         await page.screenshot({ path: file, type: "jpeg", quality: 85 });
         frames.push({ file, t: Date.now() });
-      } catch {
+      } catch (e) {
+        if (!frames.length && process.env.DEBUG) console.error(e.message);
         await new Promise((r) => setTimeout(r, 50));
       }
     }
   })();
-  const errors = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
-  const pause = (ms = 900) => page.waitForTimeout(ms);
-  const vp = { name: "walkthrough-430x932" };
 
   await page.goto(`${base}/#/`);
   await page.waitForSelector("h1");
